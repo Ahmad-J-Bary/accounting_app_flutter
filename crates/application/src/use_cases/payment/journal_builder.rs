@@ -4,8 +4,8 @@ use crate::ports::customer_repository::CustomerRepository;
 use crate::ports::supplier_repository::SupplierRepository;
 use domain::accounting::journal_entry::{JournalLine, JournalType};
 use domain::payments::{Payment, PaymentType};
-use domain::shared::ids::AccountId;
 use domain::shared::MonetaryAmount;
+use domain::shared::ids::AccountId;
 use std::sync::Arc;
 
 /// Maps a PaymentType to the corresponding JournalType.

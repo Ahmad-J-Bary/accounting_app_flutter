@@ -25,12 +25,12 @@ use application::use_cases::opening_balance::{
 };
 use application::use_cases::partner::CreatePartnerUseCase;
 use chrono::{Duration, Utc};
-use domain::accounting::journal_entry::{JournalEntry, JournalLine, JournalType};
 use domain::accounting::MigrationStatus;
+use domain::accounting::journal_entry::{JournalEntry, JournalLine, JournalType};
+use domain::shared::Currency;
 use domain::shared::ids::{AccountId, PartnerId};
 use domain::shared::monetary_amount::MonetaryAmount;
 use domain::shared::money::Money;
-use domain::shared::Currency;
 use infrastructure::db::pool::run_migrations;
 use infrastructure::repositories::{
     SqliteAccountRepository, SqliteCurrencyRepository, SqliteJournalEntryRepository,

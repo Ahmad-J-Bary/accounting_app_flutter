@@ -3,10 +3,10 @@ use super::models::{InvoiceRow, LineRow};
 use application::errors::AppError;
 use domain::sales::invoice_line::InvoiceLine;
 use domain::sales::unified_invoice::{InvoiceType, UnifiedInvoice};
+use domain::shared::MonetaryAmount;
 use domain::shared::currency::Currency;
 use domain::shared::ids::{InvoiceId, MaterialId};
 use domain::shared::money::Money;
-use domain::shared::MonetaryAmount;
 use rust_decimal::Decimal;
 use sqlx::SqlitePool;
 use std::collections::HashMap;
@@ -247,9 +247,14 @@ pub async fn get_next_invoice_number(
     invoice_type: &str,
 ) -> Result<String, AppError> {
     let (query, has_param) = match invoice_type {
-        "Purchase" | "OpeningBalance" => 
-            ("SELECT MAX(CAST(invoice_number AS INTEGER)) FROM unified_invoices WHERE invoice_type IN ('Purchase', 'OpeningBalance')", false),
-        _ => ("SELECT MAX(CAST(invoice_number AS INTEGER)) FROM unified_invoices WHERE invoice_type = ?", true),
+        "Purchase" | "OpeningBalance" => (
+            "SELECT MAX(CAST(invoice_number AS INTEGER)) FROM unified_invoices WHERE invoice_type IN ('Purchase', 'OpeningBalance')",
+            false,
+        ),
+        _ => (
+            "SELECT MAX(CAST(invoice_number AS INTEGER)) FROM unified_invoices WHERE invoice_type = ?",
+            true,
+        ),
     };
 
     let row: (Option<i64>,) = if has_param {

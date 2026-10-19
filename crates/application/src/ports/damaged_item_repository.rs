@@ -1,8 +1,8 @@
 use crate::errors::AppError;
 use async_trait::async_trait;
 use domain::accounting::journal_entry::JournalEntry;
-use domain::inventory::stock_movement::StockMovement;
 use domain::inventory::DamagedItem;
+use domain::inventory::stock_movement::StockMovement;
 use domain::shared::ids::DamagedItemId;
 
 #[async_trait]

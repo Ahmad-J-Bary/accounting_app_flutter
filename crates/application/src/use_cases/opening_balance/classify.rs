@@ -1,5 +1,5 @@
-use domain::accounting::account::Account;
 use domain::accounting::ResidualClassification;
+use domain::accounting::account::Account;
 use domain::shared::ids::AccountId;
 use std::str::FromStr;
 use std::sync::Arc;

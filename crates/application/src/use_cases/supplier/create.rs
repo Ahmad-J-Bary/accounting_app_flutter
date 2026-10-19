@@ -1,5 +1,5 @@
-use domain::shared::ids::SupplierId;
 use domain::shared::Currency;
+use domain::shared::ids::SupplierId;
 use domain::suppliers::Supplier;
 use rust_decimal::Decimal;
 use std::str::FromStr;
@@ -14,7 +14,7 @@ use crate::ports::opening_migration_repository::OpeningMigrationRepository;
 use crate::ports::supplier_repository::SupplierRepository;
 use crate::use_cases::opening_balance::opening_window_active;
 use crate::use_cases::shared::partner_account::{
-    build_opening_balance_entry, build_partner_account, PartnerAccountParams, PartnerKind,
+    PartnerAccountParams, PartnerKind, build_opening_balance_entry, build_partner_account,
 };
 
 pub struct CreateSupplierUseCase {

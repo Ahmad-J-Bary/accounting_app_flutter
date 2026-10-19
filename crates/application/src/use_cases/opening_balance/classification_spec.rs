@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use domain::accounting::account::{Account, AccountCategory};
 use domain::accounting::ResidualClassification;
+use domain::accounting::account::{Account, AccountCategory};
 
 use crate::errors::AppError;
 use crate::ports::account_repository::AccountRepository;

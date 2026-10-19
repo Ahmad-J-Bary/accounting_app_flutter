@@ -120,11 +120,12 @@ async fn reopen_after_close_persists() {
 async fn unknown_id_returns_none() {
     let pool = build_pool().await;
     let repo = SqliteFiscalPeriodRepository::new(pool);
-    assert!(repo
-        .find_by_id(&FiscalPeriodId::new())
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        repo.find_by_id(&FiscalPeriodId::new())
+            .await
+            .unwrap()
+            .is_none()
+    );
 }
 
 fn utils_utc(rfc3339: &str) -> DateTime<Utc> {

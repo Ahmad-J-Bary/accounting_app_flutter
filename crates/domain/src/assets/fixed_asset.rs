@@ -1,5 +1,5 @@
 #![allow(clippy::too_many_arguments)]
-use super::depreciation::{calculate_depreciation, DepreciationMethod};
+use super::depreciation::{DepreciationMethod, calculate_depreciation};
 use crate::shared::Money;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;

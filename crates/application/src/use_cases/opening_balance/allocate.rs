@@ -782,26 +782,32 @@ mod tests {
     #[test]
     fn ratio_sum_below_and_above_100_rejected() {
         // 99.5% — rejected.
-        assert!(validate_ratio_list(&[
-            ("A".into(), Decimal::new(60, 0)),
-            ("B".into(), Decimal::new(3950, 2)),
-        ])
-        .is_err());
+        assert!(
+            validate_ratio_list(&[
+                ("A".into(), Decimal::new(60, 0)),
+                ("B".into(), Decimal::new(3950, 2)),
+            ])
+            .is_err()
+        );
         // 101% — rejected.
-        assert!(validate_ratio_list(&[
-            ("A".into(), Decimal::new(60, 0)),
-            ("B".into(), Decimal::new(41, 0)),
-        ])
-        .is_err());
+        assert!(
+            validate_ratio_list(&[
+                ("A".into(), Decimal::new(60, 0)),
+                ("B".into(), Decimal::new(41, 0)),
+            ])
+            .is_err()
+        );
     }
 
     #[test]
     fn negative_ratio_is_rejected() {
-        assert!(validate_ratio_list(&[
-            ("A".into(), Decimal::new(-5, 0)),
-            ("B".into(), Decimal::new(105, 0)),
-        ])
-        .is_err());
+        assert!(
+            validate_ratio_list(&[
+                ("A".into(), Decimal::new(-5, 0)),
+                ("B".into(), Decimal::new(105, 0)),
+            ])
+            .is_err()
+        );
     }
 
     #[test]

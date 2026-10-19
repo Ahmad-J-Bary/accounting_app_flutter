@@ -1,8 +1,8 @@
 use chrono::Utc;
 use domain::accounting::account::Account;
 use domain::accounting::journal_entry::{JournalEntry, JournalLine, JournalType};
-use domain::shared::money::Money;
 use domain::shared::MonetaryAmount;
+use domain::shared::money::Money;
 use rust_decimal::Decimal;
 use std::sync::Arc;
 

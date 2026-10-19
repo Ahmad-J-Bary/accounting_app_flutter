@@ -1,6 +1,6 @@
 use domain::customers::Customer;
-use domain::shared::ids::CustomerId;
 use domain::shared::Currency;
+use domain::shared::ids::CustomerId;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -14,7 +14,7 @@ use crate::ports::journal_entry_repository::JournalEntryRepository;
 use crate::ports::opening_migration_repository::OpeningMigrationRepository;
 use crate::use_cases::opening_balance::opening_window_active;
 use crate::use_cases::shared::partner_account::{
-    build_opening_balance_entry, build_partner_account, PartnerAccountParams, PartnerKind,
+    PartnerAccountParams, PartnerKind, build_opening_balance_entry, build_partner_account,
 };
 
 pub struct CreateCustomerUseCase {

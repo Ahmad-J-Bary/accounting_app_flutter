@@ -1,10 +1,10 @@
 use super::invoice_line::InvoiceLine;
+use crate::shared::CustomerId;
 use crate::shared::errors::DomainError;
 use crate::shared::ids::InvoiceId;
 #[cfg(test)]
 use crate::shared::ids::MaterialId;
 use crate::shared::money::Money;
-use crate::shared::CustomerId;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -133,8 +133,8 @@ impl Invoice {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::shared::currency::Currency;
     use crate::shared::MonetaryAmount;
+    use crate::shared::currency::Currency;
     use rust_decimal_macros::dec;
 
     fn test_base_currency() -> Currency {

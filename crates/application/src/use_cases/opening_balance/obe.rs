@@ -57,8 +57,8 @@ pub async fn obe_control_net(
 mod tests {
     use super::*;
     use chrono::Utc;
-    use domain::accounting::journal_entry::{JournalEntry, JournalLine, JournalType};
     use domain::accounting::JournalEntryStatus;
+    use domain::accounting::journal_entry::{JournalEntry, JournalLine, JournalType};
     use domain::shared::{Currency, MonetaryAmount};
     use rust_decimal_macros::dec;
     use uuid::Uuid;

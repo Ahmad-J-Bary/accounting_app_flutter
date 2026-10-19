@@ -22,21 +22,20 @@ use application::use_cases::opening_balance::types::{
     SaveOpeningItemsCommand, SetResidualClassificationCommand, UpdateOpeningMigrationLinesCommand,
 };
 use application::use_cases::opening_balance::{
-    readiness_blockers, ApplyResidualToLedgerUseCase, ApproveOpeningBalanceUseCase,
-    CreateOpeningBalanceUseCase, GetOpeningPositionControlUseCase, GetOpeningReconciliationUseCase,
-    LockOpeningBalanceUseCase, PostOpeningBalanceUseCase, SaveOpeningItemsUseCase,
-    SetResidualClassificationUseCase, UpdateOpeningMigrationLinesUseCase,
-    ValidateOpeningBalanceUseCase, KIND_AP, KIND_AR, KIND_BANK, KIND_FIXED_ASSET, KIND_INVENTORY,
-    KIND_LOAN,
+    ApplyResidualToLedgerUseCase, ApproveOpeningBalanceUseCase, CreateOpeningBalanceUseCase,
+    GetOpeningPositionControlUseCase, GetOpeningReconciliationUseCase, KIND_AP, KIND_AR, KIND_BANK,
+    KIND_FIXED_ASSET, KIND_INVENTORY, KIND_LOAN, LockOpeningBalanceUseCase,
+    PostOpeningBalanceUseCase, SaveOpeningItemsUseCase, SetResidualClassificationUseCase,
+    UpdateOpeningMigrationLinesUseCase, ValidateOpeningBalanceUseCase, readiness_blockers,
 };
-use domain::accounting::account::{Account, AccountCategory, AccountPurpose, AccountType};
 use domain::accounting::MigrationStatus;
+use domain::accounting::account::{Account, AccountCategory, AccountPurpose, AccountType};
 use domain::assets::{AssetCategory, AssetType, FixedAsset};
 use domain::customers::Customer;
 use domain::inventory::material::Material;
+use domain::shared::Currency;
 use domain::shared::ids::AccountId;
 use domain::shared::money::Money;
-use domain::shared::Currency;
 use domain::suppliers::Supplier;
 use infrastructure::db::pool::run_migrations;
 use infrastructure::repositories::{

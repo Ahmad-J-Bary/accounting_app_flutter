@@ -18,8 +18,8 @@ use crate::use_cases::shared::fiscal_lifecycle::FiscalLifecyclePolicy;
 use chrono::DateTime;
 use domain::accounting::journal_entry::JournalEntry;
 use domain::payments::Payment;
-use domain::shared::ids::{AccountId, CustomerId, PaymentId, SupplierId};
 use domain::shared::MonetaryAmount;
+use domain::shared::ids::{AccountId, CustomerId, PaymentId, SupplierId};
 use rust_decimal::Decimal;
 use std::sync::Arc;
 

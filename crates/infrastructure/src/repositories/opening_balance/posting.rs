@@ -1,8 +1,8 @@
 use application::errors::AppError;
 use application::ports::opening_posting_repository::OpeningPostingRepository;
 use async_trait::async_trait;
-use domain::accounting::journal_entry::JournalEntry;
 use domain::accounting::OpeningBalanceMigration;
+use domain::accounting::journal_entry::JournalEntry;
 use sqlx::SqlitePool;
 use std::sync::Arc;
 

@@ -31,8 +31,8 @@ use std::str::FromStr as _;
 use crate::sqlx;
 use chrono::Datelike;
 use sha2::{Digest, Sha256};
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use sqlx::SqlitePool;
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 
 /// Canonical backup file name prefix, e.g. `almowakeb_backup_20260819_093000.sqlite`.
 pub const BACKUP_PREFIX: &str = "almowakeb_backup_";

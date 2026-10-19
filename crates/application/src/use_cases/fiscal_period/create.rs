@@ -104,10 +104,11 @@ mod tests {
     async fn rejects_inverted_window() {
         let repo = Arc::new(MockFiscalPeriodRepository::new());
         let uc = CreateFiscalPeriodUseCase::new(repo.clone());
-        assert!(uc
-            .execute(cmd("2026-12-31T00:00:00Z", "2026-01-01T00:00:00Z"))
-            .await
-            .is_err());
+        assert!(
+            uc.execute(cmd("2026-12-31T00:00:00Z", "2026-01-01T00:00:00Z"))
+                .await
+                .is_err()
+        );
     }
 
     #[tokio::test]

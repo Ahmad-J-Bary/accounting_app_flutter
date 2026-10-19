@@ -27,13 +27,13 @@ use application::use_cases::opening_balance::types::{
     SaveOpeningItemsCommand,
 };
 use application::use_cases::opening_balance::{
-    ApproveOpeningBalanceUseCase, CreateOpeningBalanceUseCase, PostOpeningBalanceUseCase,
-    SaveOpeningItemsUseCase, ValidateOpeningBalanceUseCase, KIND_FIXED_ASSET,
+    ApproveOpeningBalanceUseCase, CreateOpeningBalanceUseCase, KIND_FIXED_ASSET,
+    PostOpeningBalanceUseCase, SaveOpeningItemsUseCase, ValidateOpeningBalanceUseCase,
 };
 use domain::accounting::account::{AccountCategory, AccountType};
-use domain::shared::ids::AccountId;
 use domain::shared::Currency;
 use domain::shared::Money;
+use domain::shared::ids::AccountId;
 use infrastructure::db::pool::run_migrations;
 use infrastructure::repositories::{
     SqliteAccountRepository, SqliteAssetRepository, SqliteCurrencyRepository,

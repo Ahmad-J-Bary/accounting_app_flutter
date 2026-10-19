@@ -160,9 +160,9 @@ fn capitalization_currency_amount(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use domain::shared::AccountId;
     use domain::shared::currency::Currency;
     use domain::shared::ids::PartnerId;
-    use domain::shared::AccountId;
 
     #[test]
     fn capitalization_reduces_retained_and_credits_capital() {

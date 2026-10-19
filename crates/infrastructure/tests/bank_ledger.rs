@@ -15,15 +15,15 @@ use application::ports::currency_repository::CurrencyRepository;
 use application::ports::journal_entry_repository::JournalEntryRepository;
 use application::ports::opening_migration_repository::OpeningMigrationRepository;
 use application::ports::settings_repository::SettingsRepository;
-use application::use_cases::account::types::CreateAccountCommand;
 use application::use_cases::account::CreateAccountUseCase;
+use application::use_cases::account::types::CreateAccountCommand;
 use chrono::Utc;
 use domain::accounting::account::{AccountCategory, AccountType};
 use domain::accounting::journal_entry::{JournalEntry, JournalLine, JournalType};
+use domain::shared::AccountId;
 use domain::shared::currency::Currency;
 use domain::shared::monetary_amount::MonetaryAmount;
 use domain::shared::money::Money;
-use domain::shared::AccountId;
 use infrastructure::db::pool::run_migrations;
 use infrastructure::repositories::{
     SqliteAccountRepository, SqliteCurrencyRepository, SqliteJournalEntryRepository,

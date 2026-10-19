@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments)]
+use crate::shared::MaterialId;
 use crate::shared::monetary_amount::MonetaryAmount;
 use crate::shared::money::Money;
-use crate::shared::MaterialId;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 

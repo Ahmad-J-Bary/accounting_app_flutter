@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use domain::accounting::account::Account;
 use domain::accounting::MigrationStatus;
+use domain::accounting::account::Account;
 
 use crate::errors::AppError;
 use crate::ports::opening_migration_repository::OpeningMigrationRepository;

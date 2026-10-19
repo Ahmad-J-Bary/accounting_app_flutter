@@ -2,8 +2,8 @@ use super::models::PartnerRow;
 use application::errors::AppError;
 use chrono::{DateTime, Utc};
 use domain::accounting::partner::{Partner, ProfitSharingType};
-use domain::shared::ids::{AccountId, PartnerId};
 use domain::shared::Currency;
+use domain::shared::ids::{AccountId, PartnerId};
 use rust_decimal::Decimal;
 use std::str::FromStr;
 

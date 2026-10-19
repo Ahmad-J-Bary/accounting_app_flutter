@@ -1,6 +1,6 @@
 use application::errors::AppError;
-use domain::shared::ids::SupplierId;
 use domain::shared::AccountId;
+use domain::shared::ids::SupplierId;
 use domain::suppliers::Supplier;
 use sqlx::SqlitePool;
 

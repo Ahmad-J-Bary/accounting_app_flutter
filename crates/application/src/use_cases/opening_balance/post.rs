@@ -1,5 +1,5 @@
-use domain::accounting::journal_entry::{JournalEntry, JournalLine, JournalType};
 use domain::accounting::JournalEntryStatus;
+use domain::accounting::journal_entry::{JournalEntry, JournalLine, JournalType};
 use domain::shared::{Currency, MonetaryAmount};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -12,7 +12,7 @@ use crate::ports::opening_migration_repository::OpeningMigrationRepository;
 use crate::ports::opening_posting_repository::OpeningPostingRepository;
 use crate::use_cases::journal::ReverseJournalEntryUseCase;
 use crate::use_cases::opening_balance::reconcile::{
-    readiness_blockers, GetOpeningReconciliationUseCase,
+    GetOpeningReconciliationUseCase, readiness_blockers,
 };
 use crate::use_cases::opening_balance::types::{OpeningMigrationDto, PostOpeningBalanceResult};
 

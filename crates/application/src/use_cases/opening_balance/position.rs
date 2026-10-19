@@ -15,7 +15,7 @@ use crate::ports::opening_item_repository::OpeningItemRepository;
 use crate::ports::opening_migration_repository::OpeningMigrationRepository;
 use crate::ports::partner_repository::PartnerRepository;
 use crate::use_cases::opening_balance::reconcile::{
-    readiness_blockers, GetOpeningReconciliationUseCase,
+    GetOpeningReconciliationUseCase, readiness_blockers,
 };
 
 /// Currency-aware Decimal tolerance for the balance check. A difference at or
@@ -730,9 +730,11 @@ mod tests {
         assert!(groups.contains(&"Receivable"));
         assert!(groups.contains(&"Inventory"));
         assert!(groups.contains(&"FixedAsset"));
-        assert!(buckets
-            .liability_detail
-            .iter()
-            .any(|l| l.group_key == "Payable"));
+        assert!(
+            buckets
+                .liability_detail
+                .iter()
+                .any(|l| l.group_key == "Payable")
+        );
     }
 }

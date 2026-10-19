@@ -32,19 +32,19 @@ use application::use_cases::opening_balance::types::{
 };
 use application::use_cases::opening_balance::{
     ApplyResidualToLedgerUseCase, ApproveOpeningBalanceUseCase, CreateOpeningBalanceUseCase,
+    KIND_AP, KIND_AR, KIND_BANK, KIND_FIXED_ASSET, KIND_INVENTORY, KIND_LOAN,
     LockOpeningBalanceUseCase, PostOpeningBalanceUseCase, SaveOpeningItemsUseCase,
-    SetResidualClassificationUseCase, ValidateOpeningBalanceUseCase, KIND_AP, KIND_AR, KIND_BANK,
-    KIND_FIXED_ASSET, KIND_INVENTORY, KIND_LOAN,
+    SetResidualClassificationUseCase, ValidateOpeningBalanceUseCase,
 };
+use domain::accounting::MigrationStatus;
 use domain::accounting::account::{Account, AccountCategory, AccountPurpose, AccountType};
 use domain::accounting::journal_entry::{JournalEntry, JournalLine, JournalType};
-use domain::accounting::MigrationStatus;
 use domain::assets::{AssetCategory, AssetType};
 use domain::customers::Customer;
 use domain::inventory::material::Material;
+use domain::shared::Currency;
 use domain::shared::ids::AccountId;
 use domain::shared::money::Money;
-use domain::shared::Currency;
 use domain::suppliers::Supplier;
 use infrastructure::db::pool::run_migrations;
 use infrastructure::repositories::{

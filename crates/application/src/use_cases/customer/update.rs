@@ -10,7 +10,7 @@ use crate::ports::customer_repository::CustomerRepository;
 use crate::ports::journal_entry_repository::JournalEntryRepository;
 use crate::ports::opening_migration_repository::OpeningMigrationRepository;
 use crate::use_cases::opening_balance::opening_window_active;
-use crate::use_cases::shared::partner_account::{build_balance_adjustment_entry, PartnerKind};
+use crate::use_cases::shared::partner_account::{PartnerKind, build_balance_adjustment_entry};
 
 pub struct UpdateCustomerUseCase {
     customer_repo: Arc<dyn CustomerRepository>,

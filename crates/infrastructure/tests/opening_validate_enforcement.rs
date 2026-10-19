@@ -22,7 +22,7 @@ use application::use_cases::opening_balance::types::{
     SaveOpeningItemsCommand,
 };
 use application::use_cases::opening_balance::{
-    CreateOpeningBalanceUseCase, SaveOpeningItemsUseCase, ValidateOpeningBalanceUseCase, KIND_AR,
+    CreateOpeningBalanceUseCase, KIND_AR, SaveOpeningItemsUseCase, ValidateOpeningBalanceUseCase,
 };
 use domain::accounting::MigrationStatus;
 use domain::customers::Customer;

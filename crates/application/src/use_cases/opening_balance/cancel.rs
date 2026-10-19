@@ -1,5 +1,5 @@
-use domain::accounting::journal_entry::{JournalEntry, JournalLine};
 use domain::accounting::MigrationStatus;
+use domain::accounting::journal_entry::{JournalEntry, JournalLine};
 use std::sync::Arc;
 
 use crate::errors::AppError;

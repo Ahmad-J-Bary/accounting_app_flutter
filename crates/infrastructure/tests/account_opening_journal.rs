@@ -20,12 +20,12 @@ use application::ports::currency_repository::CurrencyRepository;
 use application::ports::settings_repository::SettingsRepository;
 use application::use_cases::account::types::CreateAccountCommand;
 use application::use_cases::account::{CreateAccountUseCase, UpdateAccountUseCase};
+use application::use_cases::opening_balance::CreateOpeningBalanceUseCase;
 use application::use_cases::opening_balance::create::START_MODE_EXISTING;
 use application::use_cases::opening_balance::types::OpeningLineInput;
-use application::use_cases::opening_balance::CreateOpeningBalanceUseCase;
 use domain::accounting::account::{AccountCategory, AccountType};
-use domain::shared::ids::AccountId;
 use domain::shared::Currency;
+use domain::shared::ids::AccountId;
 use infrastructure::db::pool::run_migrations;
 use infrastructure::repositories::{
     SqliteAccountRepository, SqliteCurrencyRepository, SqliteCustomerRepository,

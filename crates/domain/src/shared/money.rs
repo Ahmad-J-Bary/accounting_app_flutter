@@ -1,5 +1,5 @@
-use rust_decimal::prelude::One;
 use rust_decimal::Decimal;
+use rust_decimal::prelude::One;
 use serde::{Deserialize, Serialize};
 use std::ops::{Add, Mul, Sub};
 

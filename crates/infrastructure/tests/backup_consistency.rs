@@ -7,7 +7,7 @@ use std::path::Path;
 use std::str::FromStr;
 use std::time::Duration;
 
-use infrastructure::db::backup::{create_snapshot, missing_tables, verify_backup, REQUIRED_TABLES};
+use infrastructure::db::backup::{REQUIRED_TABLES, create_snapshot, missing_tables, verify_backup};
 use infrastructure::{create_pool, run_migrations};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 

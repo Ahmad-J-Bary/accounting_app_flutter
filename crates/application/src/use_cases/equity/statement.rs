@@ -3,8 +3,8 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-use domain::accounting::partner::ProfitSharingType;
 use domain::accounting::JournalEntryStatus;
+use domain::accounting::partner::ProfitSharingType;
 use domain::shared::AccountId;
 
 use crate::errors::AppError;

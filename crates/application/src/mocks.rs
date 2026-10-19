@@ -17,8 +17,8 @@ use domain::assets::{
     AssetCategory, AssetMovement, AssetType, DepreciationSchedule, FixedAsset, FixedAssetId,
 };
 use domain::settings::CompanySettings;
-use domain::shared::ids::FiscalPeriodId;
 use domain::shared::AccountId;
+use domain::shared::ids::FiscalPeriodId;
 use std::sync::Mutex;
 use uuid::Uuid;
 

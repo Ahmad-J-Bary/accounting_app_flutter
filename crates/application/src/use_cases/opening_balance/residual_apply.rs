@@ -9,7 +9,7 @@ use crate::ports::journal_entry_repository::JournalEntryRepository;
 use crate::ports::opening_migration_repository::OpeningMigrationRepository;
 use crate::ports::opening_posting_repository::OpeningPostingRepository;
 use crate::use_cases::opening_balance::obe::{
-    obe_control_net, residual_source_id, OPENING_EQUITY_ACCOUNT_CODE,
+    OPENING_EQUITY_ACCOUNT_CODE, obe_control_net, residual_source_id,
 };
 
 /// Moves the residual equity (the Opening Balance Control / OBE 53 balance) of

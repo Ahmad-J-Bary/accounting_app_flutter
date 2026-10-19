@@ -4,10 +4,10 @@ use chrono::Utc;
 use domain::accounting::journal_entry::{
     JournalEntry, JournalEntryStatus, JournalLine, JournalType,
 };
+use domain::shared::AccountId;
 use domain::shared::currency::Currency;
 use domain::shared::monetary_amount::MonetaryAmount;
 use domain::shared::money::Money;
-use domain::shared::AccountId;
 use infrastructure::db::pool::run_migrations;
 use infrastructure::repositories::{SqliteAccountRepository, SqliteJournalEntryRepository};
 use rust_decimal::Decimal;

@@ -1,7 +1,7 @@
 use crate::dto::category_dto::{CategoryDto, CreateCategoryRequest};
 use crate::errors::AppError;
 use crate::ports::category_repository::CategoryRepository;
-use domain::inventory::category::{MaterialCategory, DEFAULT_CATEGORY_NAME};
+use domain::inventory::category::{DEFAULT_CATEGORY_NAME, MaterialCategory};
 use std::sync::Arc;
 
 pub struct CreateCategoryUseCase {

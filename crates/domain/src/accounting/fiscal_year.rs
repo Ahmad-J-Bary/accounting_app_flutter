@@ -328,9 +328,11 @@ mod tests {
         fiscal_year
             .finalize_close("admin", "close-1", period_id, None, None)
             .unwrap();
-        assert!(fiscal_year
-            .finalize_close("admin", "close-2", period_id, None, None)
-            .is_err());
+        assert!(
+            fiscal_year
+                .finalize_close("admin", "close-2", period_id, None, None)
+                .is_err()
+        );
     }
 
     #[test]

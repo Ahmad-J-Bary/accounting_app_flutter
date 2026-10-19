@@ -138,10 +138,11 @@ async fn position_is_balanced_and_read_only() {
     assert!(dto.difference_message.is_none());
 
     // The liability and asset lines are classified by purpose semantics.
-    assert!(dto
-        .liability_detail
-        .iter()
-        .any(|l| l.group_key == "Payable"));
+    assert!(
+        dto.liability_detail
+            .iter()
+            .any(|l| l.group_key == "Payable")
+    );
 
     // READ-ONLY invariant: the report never writes journal entries.
     assert_eq!(

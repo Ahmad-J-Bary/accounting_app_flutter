@@ -5,7 +5,7 @@ pub use sqlx;
 
 pub use db::{
     backup, mapper,
-    pool::{create_pool, run_migrations, DbPool},
+    pool::{DbPool, create_pool, run_migrations},
 };
 pub use repositories::SqliteAccountRepository;
 pub use repositories::SqliteAppConfigRepository;

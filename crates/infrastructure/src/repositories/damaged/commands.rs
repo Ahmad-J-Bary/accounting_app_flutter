@@ -1,7 +1,7 @@
 use application::errors::AppError;
 use domain::accounting::journal_entry::JournalEntry;
-use domain::inventory::stock_movement::StockMovement;
 use domain::inventory::DamagedItem;
+use domain::inventory::stock_movement::StockMovement;
 use domain::shared::ids::DamagedItemId;
 use sqlx::SqlitePool;
 

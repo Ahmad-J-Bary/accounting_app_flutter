@@ -30,8 +30,8 @@ use application::use_cases::opening_balance::types::{
     SaveOpeningItemsCommand,
 };
 use application::use_cases::opening_balance::{
-    ApproveOpeningBalanceUseCase, CreateOpeningBalanceUseCase, PostOpeningBalanceUseCase,
-    SaveOpeningItemsUseCase, ValidateOpeningBalanceUseCase, KIND_AR,
+    ApproveOpeningBalanceUseCase, CreateOpeningBalanceUseCase, KIND_AR, PostOpeningBalanceUseCase,
+    SaveOpeningItemsUseCase, ValidateOpeningBalanceUseCase,
 };
 use domain::shared::ids::AccountId;
 use infrastructure::db::pool::run_migrations;

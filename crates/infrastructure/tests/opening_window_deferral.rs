@@ -35,8 +35,8 @@ use application::use_cases::opening_balance::types::{
 };
 use application::use_cases::opening_balance::{
     ApproveOpeningBalanceUseCase, CreateOpeningBalanceUseCase, GetOpeningReconciliationUseCase,
-    LockOpeningBalanceUseCase, PostOpeningBalanceUseCase, SaveOpeningItemsUseCase,
-    ValidateOpeningBalanceUseCase, KIND_INVENTORY,
+    KIND_INVENTORY, LockOpeningBalanceUseCase, PostOpeningBalanceUseCase, SaveOpeningItemsUseCase,
+    ValidateOpeningBalanceUseCase,
 };
 use application::use_cases::supplier::CreateSupplierUseCase;
 use application::use_cases::unified_invoice::{

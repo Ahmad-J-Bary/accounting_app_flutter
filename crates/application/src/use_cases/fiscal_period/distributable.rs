@@ -2,15 +2,15 @@ use std::sync::Arc;
 
 use rust_decimal::Decimal;
 
+use domain::accounting::JournalEntryStatus;
 #[cfg(test)]
 use domain::accounting::account::AccountPurpose;
-use domain::accounting::JournalEntryStatus;
 
 use crate::errors::AppError;
 use crate::ports::account_repository::AccountRepository;
 use crate::ports::journal_entry_repository::{JournalEntryRepository, ReversalScope};
 use crate::use_cases::fiscal_period::types::{
-    DistributableProfitDto, AUTH_ALLOCATION_SOURCE_PREFIX,
+    AUTH_ALLOCATION_SOURCE_PREFIX, DistributableProfitDto,
 };
 
 /// Computes the distributable profit for a window (Sec 18 / Sec 22):

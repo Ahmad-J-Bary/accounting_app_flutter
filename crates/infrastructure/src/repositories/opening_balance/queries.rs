@@ -126,7 +126,9 @@ pub async fn find_by_cutover_date(
     pool: &SqlitePool,
     cutover_date: &str,
 ) -> Result<Vec<OpeningBalanceMigration>, AppError> {
-    let sql = format!("SELECT {MIGRATION_COLUMNS} FROM opening_balance_migrations WHERE date(cutover_date) = date(?) ORDER BY created_at DESC");
+    let sql = format!(
+        "SELECT {MIGRATION_COLUMNS} FROM opening_balance_migrations WHERE date(cutover_date) = date(?) ORDER BY created_at DESC"
+    );
     let rows = sqlx::query_as::<_, MigrationRow>(&sql)
         .bind(cutover_date)
         .fetch_all(pool)

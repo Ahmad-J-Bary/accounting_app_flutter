@@ -3,8 +3,8 @@ use std::sync::Arc;
 
 use application::ports::account_repository::AccountRepository;
 use application::ports::settings_repository::SettingsRepository;
-use application::use_cases::opening_balance::types::OpeningLineInput;
 use application::use_cases::opening_balance::CreateOpeningBalanceUseCase;
+use application::use_cases::opening_balance::types::OpeningLineInput;
 use chrono::Utc;
 use domain::shared::AccountId;
 use infrastructure::db::pool::run_migrations;

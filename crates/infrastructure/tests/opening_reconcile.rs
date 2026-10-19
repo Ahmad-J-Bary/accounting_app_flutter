@@ -24,7 +24,7 @@ use application::use_cases::opening_balance::types::{
     SaveOpeningItemsCommand,
 };
 use application::use_cases::opening_balance::{
-    CreateOpeningBalanceUseCase, GetOpeningReconciliationUseCase, SaveOpeningItemsUseCase, KIND_AR,
+    CreateOpeningBalanceUseCase, GetOpeningReconciliationUseCase, KIND_AR, SaveOpeningItemsUseCase,
 };
 use domain::accounting::account::{Account, AccountCategory, AccountPurpose, AccountType};
 use domain::customers::Customer;

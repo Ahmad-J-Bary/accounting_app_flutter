@@ -9,8 +9,8 @@ use crate::ports::stock_movement_repository::StockMovementRepository;
 use crate::use_cases::shared::fiscal_lifecycle::FiscalLifecyclePolicy;
 use domain::inventory::stock_movement::{MovementType, StockMovement};
 use domain::sales::Invoice;
-use domain::shared::ids::{CustomerId, MaterialId};
 use domain::shared::InvoiceId;
+use domain::shared::ids::{CustomerId, MaterialId};
 use std::sync::Arc;
 use uuid::Uuid;
 
