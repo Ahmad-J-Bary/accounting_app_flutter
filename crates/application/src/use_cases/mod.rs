@@ -23,6 +23,7 @@ pub mod platform;
 pub mod production;
 pub mod purchase_invoice;
 pub mod purchase_return;
+pub mod reports;
 pub mod sales_return;
 pub mod search;
 pub mod settings;

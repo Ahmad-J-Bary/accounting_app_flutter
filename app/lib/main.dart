@@ -1,122 +1,547 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'ledger.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(AccountingApp(gateway: RustLedgerGateway()));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AccountingApp extends StatelessWidget {
+  const AccountingApp({super.key, required this.gateway});
 
-  // This widget is the root of your application.
+  final LedgerGateway gateway;
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'المحاسبة',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorSchemeSeed: const Color(0xFF00695C),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      builder: (context, child) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: child ?? const SizedBox.shrink(),
+      ),
+      home: LedgerHomePage(gateway: gateway),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class LedgerHomePage extends StatefulWidget {
+  const LedgerHomePage({super.key, required this.gateway});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+  final LedgerGateway gateway;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<LedgerHomePage> createState() => _LedgerHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _LedgerHomePageState extends State<LedgerHomePage> {
+  LedgerSnapshot? _data;
+  Object? _error;
+  bool _loading = true;
 
-  void _incrementCounter() {
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _loading = true;
+      _error = null;
     });
+
+    try {
+      final data = await widget.gateway.load();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _data = data;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = error;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _createEntry({
+    required String debitAccountId,
+    required String creditAccountId,
+    required String amount,
+    required String description,
+    required String currency,
+  }) async {
+    await widget.gateway.createEntry(
+      debitAccountId: debitAccountId,
+      creditAccountId: creditAccountId,
+      amount: amount,
+      description: description,
+      currency: currency,
+    );
+    if (!mounted) {
+      return;
+    }
+    await _load();
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final data = _data;
+
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('المحاسبة — ميزان المراجعة'),
+        actions: [
+          IconButton(
+            tooltip: 'تحديث',
+            onPressed: _loading ? null : _load,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: data == null
+          ? (_error != null
+              ? _ErrorView(error: _error!, onRetry: _load)
+              : const _LoadingView())
+          : Column(
+              children: [
+                if (_loading) const LinearProgressIndicator(),
+                if (_error != null)
+                  MaterialBanner(
+                    content: Text('تعذّر تحديث البيانات: $_error'),
+                    actions: [
+                      TextButton(
+                        onPressed: _load,
+                        child: const Text('إعادة المحاولة'),
+                      ),
+                    ],
+                  ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      _TotalsCard(
+                        totalDebit: data.totalDebit,
+                        totalCredit: data.totalCredit,
+                      ),
+                      const SizedBox(height: 16),
+                      JournalEntryForm(
+                        accounts: data.accounts
+                            .where((a) => a.isActive && a.isFinal)
+                            .toList(),
+                        onSubmit: _createEntry,
+                      ),
+                      const SizedBox(height: 16),
+                      _TrialBalanceCard(rows: data.rows),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class _LoadingView extends StatelessWidget {
+  const _LoadingView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text('جارٍ فتح قاعدة البيانات وتشغيل الترحيلات…'),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  const _ErrorView({required this.error, required this.onRetry});
+
+  final Object error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 12),
+            const Text(
+              'تعذّر فتح قاعدة البيانات',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            SelectableText('$error', textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('إعادة المحاولة'),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+    );
+  }
+}
+
+class _TotalsCard extends StatelessWidget {
+  const _TotalsCard({required this.totalDebit, required this.totalCredit});
+
+  final String totalDebit;
+  final String totalCredit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Expanded(
+              child: _AmountTile(
+                label: 'إجمالي المدين',
+                value: formatAmount(totalDebit),
+                color: Colors.teal,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _AmountTile(
+                label: 'إجمالي الدائن',
+                value: formatAmount(totalCredit),
+                color: Colors.indigo,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+class _AmountTile extends StatelessWidget {
+  const _AmountTile({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.bodyMedium),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+class JournalEntryForm extends StatefulWidget {
+  const JournalEntryForm({
+    super.key,
+    required this.accounts,
+    required this.onSubmit,
+  });
+
+  final List<LedgerAccount> accounts;
+  final Future<void> Function({
+    required String debitAccountId,
+    required String creditAccountId,
+    required String amount,
+    required String description,
+    required String currency,
+  }) onSubmit;
+
+  @override
+  State<JournalEntryForm> createState() => _JournalEntryFormState();
+}
+
+class _JournalEntryFormState extends State<JournalEntryForm> {
+  final _amountController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  String? _debitId;
+  String? _creditId;
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant JournalEntryForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final ids = widget.accounts.map((a) => a.id).toSet();
+    if (_debitId != null && !ids.contains(_debitId)) {
+      _debitId = null;
+    }
+    if (_creditId != null && !ids.contains(_creditId)) {
+      _creditId = null;
+    }
+  }
+
+  String _currencyFor(String? accountId) {
+    for (final account in widget.accounts) {
+      if (account.id == accountId) {
+        return account.currency.isEmpty ? 'SYP' : account.currency;
+      }
+    }
+    return 'SYP';
+  }
+
+  void _showMessage(String message, {bool error = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: error ? Colors.red.shade700 : null,
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    if (_busy) {
+      return;
+    }
+
+    final amountText = _amountController.text.trim();
+    final amount = double.tryParse(amountText);
+
+    if (widget.accounts.isEmpty) {
+      _showMessage('لا توجد حسابات نهائية نشطة لإنشاء قيد.', error: true);
+      return;
+    }
+    if (_debitId == null || _creditId == null) {
+      _showMessage('اختر الحساب المدين والحساب الدائن.', error: true);
+      return;
+    }
+    if (_debitId == _creditId) {
+      _showMessage('يجب أن يختلف الحساب المدين عن الحساب الدائن.', error: true);
+      return;
+    }
+    if (amount == null || amount <= 0) {
+      _showMessage('أدخل مبلغاً صحيحاً أكبر من صفر.', error: true);
+      return;
+    }
+
+    setState(() => _busy = true);
+    try {
+      await widget.onSubmit(
+        debitAccountId: _debitId!,
+        creditAccountId: _creditId!,
+        amount: amountText,
+        description: _descriptionController.text.trim(),
+        currency: _currencyFor(_debitId),
+      );
+      if (!mounted) {
+        return;
+      }
+      _amountController.clear();
+      _descriptionController.clear();
+      _showMessage('تم إنشاء القيد بنجاح.');
+    } catch (error) {
+      if (mounted) {
+        _showMessage('فشل إنشاء القيد: $error', error: true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'قيد يومية جديد',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _debitId,
+              decoration: const InputDecoration(
+                labelText: 'الحساب المدين',
+                border: OutlineInputBorder(),
+              ),
+              items: widget.accounts
+                  .map(
+                    (account) => DropdownMenuItem(
+                      value: account.id,
+                      child: Text('${account.code} — ${account.displayName}'),
+                    ),
+                  )
+                  .toList(),
+              onChanged: _busy
+                  ? null
+                  : (value) => setState(() => _debitId = value),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _creditId,
+              decoration: const InputDecoration(
+                labelText: 'الحساب الدائن',
+                border: OutlineInputBorder(),
+              ),
+              items: widget.accounts
+                  .map(
+                    (account) => DropdownMenuItem(
+                      value: account.id,
+                      child: Text('${account.code} — ${account.displayName}'),
+                    ),
+                  )
+                  .toList(),
+              onChanged: _busy
+                  ? null
+                  : (value) => setState(() => _creditId = value),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _amountController,
+              enabled: !_busy,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              ],
+              decoration: const InputDecoration(
+                labelText: 'المبلغ',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _descriptionController,
+              enabled: !_busy,
+              decoration: const InputDecoration(
+                labelText: 'البيان',
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _busy ? null : _submit,
+              icon: _busy
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined),
+              label: Text(_busy ? 'جارٍ الحفظ…' : 'حفظ القيد'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TrialBalanceCard extends StatelessWidget {
+  const _TrialBalanceCard({required this.rows});
+
+  final List<TrialBalanceRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'ميزان المراجعة',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 12),
+            if (rows.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Text(
+                  'لا توجد قيود بعد. أنشئ أول قيد من النموذج أعلاه.',
+                  textAlign: TextAlign.center,
+                ),
+              )
+            else
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: const [
+                    DataColumn(label: Text('الرمز')),
+                    DataColumn(label: Text('الحساب')),
+                    DataColumn(label: Text('مدين'), numeric: true),
+                    DataColumn(label: Text('دائن'), numeric: true),
+                  ],
+                  rows: rows
+                      .map(
+                        (row) => DataRow(
+                          cells: [
+                            DataCell(Text(row.accountCode)),
+                            DataCell(Text(row.accountName)),
+                            DataCell(Text(formatAmount(row.debit))),
+                            DataCell(Text(formatAmount(row.credit))),
+                          ],
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String formatAmount(String raw) {
+  final value = double.tryParse(raw);
+  if (value == null) {
+    return raw;
+  }
+  return value.toStringAsFixed(2);
 }

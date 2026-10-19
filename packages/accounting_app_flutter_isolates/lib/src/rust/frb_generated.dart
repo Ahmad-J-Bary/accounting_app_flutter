@@ -3,6 +3,7 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
+import 'api/accounting.dart';
 import 'api/simple.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -55,7 +56,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 
   @override
   Future<void> executeRustInitializers() async {
-    await api.crateApiSimpleInitApp();
+    await api.crateApiSimpleSetupBridge();
   }
 
   @override
@@ -66,7 +67,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -1918914929;
+  int get rustContentHash => -2103321082;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -78,9 +79,26 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<JournalEntryView> crateApiAccountingCreateJournalEntry({
+    required CreateJournalEntryInput input,
+  });
+
   String crateApiSimpleGreet({required String name});
 
-  Future<void> crateApiSimpleInitApp();
+  Future<void> crateApiAccountingInitApp({required String dbPath});
+
+  Future<List<AccountItem>> crateApiAccountingListAccounts();
+
+  Future<JournalEntryView> crateApiAccountingPostJournalEntry({
+    required String entryId,
+  });
+
+  Future<void> crateApiSimpleSetupBridge();
+
+  Future<TrialBalanceView> crateApiAccountingTrialBalance({
+    String? fromDate,
+    String? toDate,
+  });
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -92,13 +110,46 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<JournalEntryView> crateApiAccountingCreateJournalEntry({
+    required CreateJournalEntryInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_create_journal_entry_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_journal_entry_view,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiAccountingCreateJournalEntryConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingCreateJournalEntryConstMeta =>
+      const TaskConstMeta(
+        debugName: "create_journal_entry",
+        argNames: ["input"],
+      );
+
+  @override
   String crateApiSimpleGreet({required String name}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(name, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -115,7 +166,35 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "greet", argNames: ["name"]);
 
   @override
-  Future<void> crateApiSimpleInitApp() {
+  Future<void> crateApiAccountingInitApp({required String dbPath}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(dbPath, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 3,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiAccountingInitAppConstMeta,
+        argValues: [dbPath],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingInitAppConstMeta =>
+      const TaskConstMeta(debugName: "init_app", argNames: ["dbPath"]);
+
+  @override
+  Future<List<AccountItem>> crateApiAccountingListAccounts() {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
@@ -123,7 +202,67 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 2,
+            funcId: 4,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_account_item,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiAccountingListAccountsConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingListAccountsConstMeta =>
+      const TaskConstMeta(debugName: "list_accounts", argNames: []);
+
+  @override
+  Future<JournalEntryView> crateApiAccountingPostJournalEntry({
+    required String entryId,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(entryId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 5,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_journal_entry_view,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiAccountingPostJournalEntryConstMeta,
+        argValues: [entryId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingPostJournalEntryConstMeta =>
+      const TaskConstMeta(
+        debugName: "post_journal_entry",
+        argNames: ["entryId"],
+      );
+
+  @override
+  Future<void> crateApiSimpleSetupBridge() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 6,
             port: port_,
           );
         },
@@ -131,15 +270,50 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApiSimpleInitAppConstMeta,
+        constMeta: kCrateApiSimpleSetupBridgeConstMeta,
         argValues: [],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiSimpleInitAppConstMeta =>
-      const TaskConstMeta(debugName: "init_app", argNames: []);
+  TaskConstMeta get kCrateApiSimpleSetupBridgeConstMeta =>
+      const TaskConstMeta(debugName: "setup_bridge", argNames: []);
+
+  @override
+  Future<TrialBalanceView> crateApiAccountingTrialBalance({
+    String? fromDate,
+    String? toDate,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_opt_String(fromDate, serializer);
+          sse_encode_opt_String(toDate, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 7,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_trial_balance_view,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiAccountingTrialBalanceConstMeta,
+        argValues: [fromDate, toDate],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingTrialBalanceConstMeta =>
+      const TaskConstMeta(
+        debugName: "trial_balance",
+        argNames: ["fromDate", "toDate"],
+      );
 
   @protected
   String dco_decode_String(dynamic raw) {
@@ -148,9 +322,152 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  AccountItem dco_decode_account_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    return AccountItem(
+      id: dco_decode_String(arr[0]),
+      code: dco_decode_String(arr[1]),
+      nameAr: dco_decode_String(arr[2]),
+      nameEn: dco_decode_String(arr[3]),
+      accountType: dco_decode_String(arr[4]),
+      purpose: dco_decode_String(arr[5]),
+      currency: dco_decode_String(arr[6]),
+      balance: dco_decode_String(arr[7]),
+      isActive: dco_decode_bool(arr[8]),
+      isFinal: dco_decode_bool(arr[9]),
+    );
+  }
+
+  @protected
+  bool dco_decode_bool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as bool;
+  }
+
+  @protected
+  CreateJournalEntryInput dco_decode_box_autoadd_create_journal_entry_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_create_journal_entry_input(raw);
+  }
+
+  @protected
+  CreateJournalEntryInput dco_decode_create_journal_entry_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return CreateJournalEntryInput(
+      journalType: dco_decode_String(arr[0]),
+      sourceId: dco_decode_opt_String(arr[1]),
+      entryDate: dco_decode_String(arr[2]),
+      description: dco_decode_String(arr[3]),
+      lines: dco_decode_list_journal_line_input(arr[4]),
+    );
+  }
+
+  @protected
+  JournalEntryView dco_decode_journal_entry_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return JournalEntryView(
+      id: dco_decode_String(arr[0]),
+      entryNumber: dco_decode_String(arr[1]),
+      journalType: dco_decode_String(arr[2]),
+      entryDate: dco_decode_String(arr[3]),
+      description: dco_decode_String(arr[4]),
+      status: dco_decode_String(arr[5]),
+      totalDebit: dco_decode_String(arr[6]),
+      totalCredit: dco_decode_String(arr[7]),
+    );
+  }
+
+  @protected
+  JournalLineInput dco_decode_journal_line_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return JournalLineInput(
+      accountId: dco_decode_String(arr[0]),
+      partnerId: dco_decode_opt_String(arr[1]),
+      currency: dco_decode_String(arr[2]),
+      fxRate: dco_decode_String(arr[3]),
+      debit: dco_decode_String(arr[4]),
+      credit: dco_decode_String(arr[5]),
+      description: dco_decode_String(arr[6]),
+    );
+  }
+
+  @protected
+  List<AccountItem> dco_decode_list_account_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_account_item).toList();
+  }
+
+  @protected
+  List<JournalLineInput> dco_decode_list_journal_line_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_journal_line_input).toList();
+  }
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
+  }
+
+  @protected
+  List<TrialBalanceLineView> dco_decode_list_trial_balance_line_view(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>)
+        .map(dco_decode_trial_balance_line_view)
+        .toList();
+  }
+
+  @protected
+  String? dco_decode_opt_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_String(raw);
+  }
+
+  @protected
+  TrialBalanceLineView dco_decode_trial_balance_line_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return TrialBalanceLineView(
+      accountId: dco_decode_String(arr[0]),
+      accountCode: dco_decode_String(arr[1]),
+      accountName: dco_decode_String(arr[2]),
+      accountType: dco_decode_String(arr[3]),
+      debitTotal: dco_decode_String(arr[4]),
+      creditTotal: dco_decode_String(arr[5]),
+      balance: dco_decode_String(arr[6]),
+    );
+  }
+
+  @protected
+  TrialBalanceView dco_decode_trial_balance_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return TrialBalanceView(
+      lines: dco_decode_list_trial_balance_line_view(arr[0]),
+      totalDebit: dco_decode_String(arr[1]),
+      totalCredit: dco_decode_String(arr[2]),
+      generatedAt: dco_decode_String(arr[3]),
+    );
   }
 
   @protected
@@ -173,10 +490,203 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  AccountItem sse_decode_account_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_code = sse_decode_String(deserializer);
+    var var_nameAr = sse_decode_String(deserializer);
+    var var_nameEn = sse_decode_String(deserializer);
+    var var_accountType = sse_decode_String(deserializer);
+    var var_purpose = sse_decode_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_balance = sse_decode_String(deserializer);
+    var var_isActive = sse_decode_bool(deserializer);
+    var var_isFinal = sse_decode_bool(deserializer);
+    return AccountItem(
+      id: var_id,
+      code: var_code,
+      nameAr: var_nameAr,
+      nameEn: var_nameEn,
+      accountType: var_accountType,
+      purpose: var_purpose,
+      currency: var_currency,
+      balance: var_balance,
+      isActive: var_isActive,
+      isFinal: var_isFinal,
+    );
+  }
+
+  @protected
+  bool sse_decode_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
+  CreateJournalEntryInput sse_decode_box_autoadd_create_journal_entry_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_create_journal_entry_input(deserializer));
+  }
+
+  @protected
+  CreateJournalEntryInput sse_decode_create_journal_entry_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_journalType = sse_decode_String(deserializer);
+    var var_sourceId = sse_decode_opt_String(deserializer);
+    var var_entryDate = sse_decode_String(deserializer);
+    var var_description = sse_decode_String(deserializer);
+    var var_lines = sse_decode_list_journal_line_input(deserializer);
+    return CreateJournalEntryInput(
+      journalType: var_journalType,
+      sourceId: var_sourceId,
+      entryDate: var_entryDate,
+      description: var_description,
+      lines: var_lines,
+    );
+  }
+
+  @protected
+  JournalEntryView sse_decode_journal_entry_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_entryNumber = sse_decode_String(deserializer);
+    var var_journalType = sse_decode_String(deserializer);
+    var var_entryDate = sse_decode_String(deserializer);
+    var var_description = sse_decode_String(deserializer);
+    var var_status = sse_decode_String(deserializer);
+    var var_totalDebit = sse_decode_String(deserializer);
+    var var_totalCredit = sse_decode_String(deserializer);
+    return JournalEntryView(
+      id: var_id,
+      entryNumber: var_entryNumber,
+      journalType: var_journalType,
+      entryDate: var_entryDate,
+      description: var_description,
+      status: var_status,
+      totalDebit: var_totalDebit,
+      totalCredit: var_totalCredit,
+    );
+  }
+
+  @protected
+  JournalLineInput sse_decode_journal_line_input(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_accountId = sse_decode_String(deserializer);
+    var var_partnerId = sse_decode_opt_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_fxRate = sse_decode_String(deserializer);
+    var var_debit = sse_decode_String(deserializer);
+    var var_credit = sse_decode_String(deserializer);
+    var var_description = sse_decode_String(deserializer);
+    return JournalLineInput(
+      accountId: var_accountId,
+      partnerId: var_partnerId,
+      currency: var_currency,
+      fxRate: var_fxRate,
+      debit: var_debit,
+      credit: var_credit,
+      description: var_description,
+    );
+  }
+
+  @protected
+  List<AccountItem> sse_decode_list_account_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <AccountItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_account_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<JournalLineInput> sse_decode_list_journal_line_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <JournalLineInput>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_journal_line_input(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint8List(len_);
+  }
+
+  @protected
+  List<TrialBalanceLineView> sse_decode_list_trial_balance_line_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <TrialBalanceLineView>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_trial_balance_line_view(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  String? sse_decode_opt_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_String(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  TrialBalanceLineView sse_decode_trial_balance_line_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_accountId = sse_decode_String(deserializer);
+    var var_accountCode = sse_decode_String(deserializer);
+    var var_accountName = sse_decode_String(deserializer);
+    var var_accountType = sse_decode_String(deserializer);
+    var var_debitTotal = sse_decode_String(deserializer);
+    var var_creditTotal = sse_decode_String(deserializer);
+    var var_balance = sse_decode_String(deserializer);
+    return TrialBalanceLineView(
+      accountId: var_accountId,
+      accountCode: var_accountCode,
+      accountName: var_accountName,
+      accountType: var_accountType,
+      debitTotal: var_debitTotal,
+      creditTotal: var_creditTotal,
+      balance: var_balance,
+    );
+  }
+
+  @protected
+  TrialBalanceView sse_decode_trial_balance_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_lines = sse_decode_list_trial_balance_line_view(deserializer);
+    var var_totalDebit = sse_decode_String(deserializer);
+    var var_totalCredit = sse_decode_String(deserializer);
+    var var_generatedAt = sse_decode_String(deserializer);
+    return TrialBalanceView(
+      lines: var_lines,
+      totalDebit: var_totalDebit,
+      totalCredit: var_totalCredit,
+      generatedAt: var_generatedAt,
+    );
   }
 
   @protected
@@ -197,15 +707,107 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  bool sse_decode_bool(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getUint8() != 0;
-  }
-
-  @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
+  }
+
+  @protected
+  void sse_encode_account_item(AccountItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.nameAr, serializer);
+    sse_encode_String(self.nameEn, serializer);
+    sse_encode_String(self.accountType, serializer);
+    sse_encode_String(self.purpose, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_String(self.balance, serializer);
+    sse_encode_bool(self.isActive, serializer);
+    sse_encode_bool(self.isFinal, serializer);
+  }
+
+  @protected
+  void sse_encode_bool(bool self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint8(self ? 1 : 0);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_create_journal_entry_input(
+    CreateJournalEntryInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_create_journal_entry_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_create_journal_entry_input(
+    CreateJournalEntryInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.journalType, serializer);
+    sse_encode_opt_String(self.sourceId, serializer);
+    sse_encode_String(self.entryDate, serializer);
+    sse_encode_String(self.description, serializer);
+    sse_encode_list_journal_line_input(self.lines, serializer);
+  }
+
+  @protected
+  void sse_encode_journal_entry_view(
+    JournalEntryView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.entryNumber, serializer);
+    sse_encode_String(self.journalType, serializer);
+    sse_encode_String(self.entryDate, serializer);
+    sse_encode_String(self.description, serializer);
+    sse_encode_String(self.status, serializer);
+    sse_encode_String(self.totalDebit, serializer);
+    sse_encode_String(self.totalCredit, serializer);
+  }
+
+  @protected
+  void sse_encode_journal_line_input(
+    JournalLineInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.accountId, serializer);
+    sse_encode_opt_String(self.partnerId, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_String(self.fxRate, serializer);
+    sse_encode_String(self.debit, serializer);
+    sse_encode_String(self.credit, serializer);
+    sse_encode_String(self.description, serializer);
+  }
+
+  @protected
+  void sse_encode_list_account_item(
+    List<AccountItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_account_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_journal_line_input(
+    List<JournalLineInput> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_journal_line_input(item, serializer);
+    }
   }
 
   @protected
@@ -216,6 +818,55 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint8List(self);
+  }
+
+  @protected
+  void sse_encode_list_trial_balance_line_view(
+    List<TrialBalanceLineView> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_trial_balance_line_view(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_String(String? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_String(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_trial_balance_line_view(
+    TrialBalanceLineView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.accountId, serializer);
+    sse_encode_String(self.accountCode, serializer);
+    sse_encode_String(self.accountName, serializer);
+    sse_encode_String(self.accountType, serializer);
+    sse_encode_String(self.debitTotal, serializer);
+    sse_encode_String(self.creditTotal, serializer);
+    sse_encode_String(self.balance, serializer);
+  }
+
+  @protected
+  void sse_encode_trial_balance_view(
+    TrialBalanceView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_trial_balance_line_view(self.lines, serializer);
+    sse_encode_String(self.totalDebit, serializer);
+    sse_encode_String(self.totalCredit, serializer);
+    sse_encode_String(self.generatedAt, serializer);
   }
 
   @protected
@@ -233,11 +884,5 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_i_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putInt32(self);
-  }
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putUint8(self ? 1 : 0);
   }
 }

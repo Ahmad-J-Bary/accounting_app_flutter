@@ -4,7 +4,6 @@ pub fn greet(name: String) -> String {
 }
 
 #[flutter_rust_bridge::frb(init)]
-pub fn init_app() {
-    // Default utilities - feel free to customize
+pub fn setup_bridge() {
     flutter_rust_bridge::setup_default_user_utils();
 }

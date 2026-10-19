@@ -6,6 +6,7 @@
 // Static analysis wrongly picks the IO variant, thus ignore this
 // ignore_for_file: argument_type_not_assignable
 
+import 'api/accounting.dart';
 import 'api/simple.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -24,7 +25,47 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String dco_decode_String(dynamic raw);
 
   @protected
+  AccountItem dco_decode_account_item(dynamic raw);
+
+  @protected
+  bool dco_decode_bool(dynamic raw);
+
+  @protected
+  CreateJournalEntryInput dco_decode_box_autoadd_create_journal_entry_input(
+    dynamic raw,
+  );
+
+  @protected
+  CreateJournalEntryInput dco_decode_create_journal_entry_input(dynamic raw);
+
+  @protected
+  JournalEntryView dco_decode_journal_entry_view(dynamic raw);
+
+  @protected
+  JournalLineInput dco_decode_journal_line_input(dynamic raw);
+
+  @protected
+  List<AccountItem> dco_decode_list_account_item(dynamic raw);
+
+  @protected
+  List<JournalLineInput> dco_decode_list_journal_line_input(dynamic raw);
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  List<TrialBalanceLineView> dco_decode_list_trial_balance_line_view(
+    dynamic raw,
+  );
+
+  @protected
+  String? dco_decode_opt_String(dynamic raw);
+
+  @protected
+  TrialBalanceLineView dco_decode_trial_balance_line_view(dynamic raw);
+
+  @protected
+  TrialBalanceView dco_decode_trial_balance_view(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
@@ -36,7 +77,53 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
+  AccountItem sse_decode_account_item(SseDeserializer deserializer);
+
+  @protected
+  bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
+  CreateJournalEntryInput sse_decode_box_autoadd_create_journal_entry_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CreateJournalEntryInput sse_decode_create_journal_entry_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  JournalEntryView sse_decode_journal_entry_view(SseDeserializer deserializer);
+
+  @protected
+  JournalLineInput sse_decode_journal_line_input(SseDeserializer deserializer);
+
+  @protected
+  List<AccountItem> sse_decode_list_account_item(SseDeserializer deserializer);
+
+  @protected
+  List<JournalLineInput> sse_decode_list_journal_line_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  List<TrialBalanceLineView> sse_decode_list_trial_balance_line_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  String? sse_decode_opt_String(SseDeserializer deserializer);
+
+  @protected
+  TrialBalanceLineView sse_decode_trial_balance_line_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  TrialBalanceView sse_decode_trial_balance_view(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
@@ -48,14 +135,74 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
-  bool sse_decode_bool(SseDeserializer deserializer);
+  void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
-  void sse_encode_String(String self, SseSerializer serializer);
+  void sse_encode_account_item(AccountItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_create_journal_entry_input(
+    CreateJournalEntryInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_create_journal_entry_input(
+    CreateJournalEntryInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_journal_entry_view(
+    JournalEntryView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_journal_line_input(
+    JournalLineInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_account_item(
+    List<AccountItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_journal_line_input(
+    List<JournalLineInput> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_trial_balance_line_view(
+    List<TrialBalanceLineView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_String(String? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_trial_balance_line_view(
+    TrialBalanceLineView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_trial_balance_view(
+    TrialBalanceView self,
     SseSerializer serializer,
   );
 
@@ -67,9 +214,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer);
 }
 
 // Section: wire_class
