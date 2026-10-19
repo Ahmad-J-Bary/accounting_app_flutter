@@ -28,7 +28,7 @@ impl DeleteCustomerUseCase {
         let customer = self.customer_repo.find_by_id(&cid).await?;
 
         let (account_id, entry_ids) = if let Some(ref customer) = customer {
-            if let Some(ref account_id) = &customer.account_id {
+            if let Some(account_id) = &customer.account_id {
                 // Gather the deletable journal entries referencing this account.
                 // Only drafts may be removed; posted history is immutable, and
                 // `ensure_deletable` rejects the whole delete if any survive.
