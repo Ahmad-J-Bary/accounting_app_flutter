@@ -355,7 +355,7 @@ pub(crate) async fn insert_entry(
                 // surfacing a conflict error we update the existing entry in
                 // place so the ledger stays idempotent for the same business
                 // event.
-                if let (Some(ref st), Some(ref sid)) = (&source_type, &entry.source_id) {
+                if let (Some(st), Some(sid)) = (&source_type, &entry.source_id) {
                     let conflict_id: Option<String> = sqlx::query_scalar(
                         "SELECT id FROM journal_entries WHERE source_type = ? AND source_id = ? AND id != ? LIMIT 1"
                     )
