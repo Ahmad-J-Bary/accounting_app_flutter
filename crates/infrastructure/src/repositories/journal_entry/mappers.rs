@@ -1,0 +1,121 @@
+use super::models::{JournalEntryRow, JournalLineRow};
+use application::errors::AppError;
+use chrono::{DateTime, Utc};
+use domain::accounting::journal_entry::{
+    JournalEntry, JournalEntryStatus, JournalLine, JournalType,
+};
+use domain::shared::currency::Currency;
+use domain::shared::{AccountId, JournalEntryId, MonetaryAmount, Money};
+use rust_decimal::Decimal;
+use std::str::FromStr;
+use uuid::Uuid;
+
+pub fn row_to_entry(
+    row: JournalEntryRow,
+    lines: Vec<JournalLine>,
+) -> Result<JournalEntry, AppError> {
+    let date = DateTime::parse_from_rfc3339(&row.entry_date)
+        .map(|d| d.with_timezone(&Utc))
+        .unwrap_or_else(|_| Utc::now());
+
+    let journal_type = match row.journal_type.as_str() {
+        "CashReceipt" => JournalType::CashReceipt,
+        "CashPayment" => JournalType::CashPayment,
+        "SupplierReceiptJournal" => JournalType::SupplierReceiptJournal,
+        "CustomerPaymentJournal" => JournalType::CustomerPaymentJournal,
+        "ExpenseVoucher" => JournalType::ExpenseVoucher,
+        "DrawingsVoucher" => JournalType::DrawingsVoucher,
+        "CashOpeningBalance" => JournalType::CashOpeningBalance,
+        "AccountOpeningBalance" => JournalType::AccountOpeningBalance,
+        "CashJournal" => JournalType::CashJournal,
+        "CashSalesJournal" => JournalType::CashSalesJournal,
+        "CreditSalesJournal" => JournalType::CreditSalesJournal,
+        "SalesReturnJournal" => JournalType::SalesReturnJournal,
+        "PurchaseJournal" => JournalType::PurchaseJournal,
+        "PurchaseCostsJournal" => JournalType::PurchaseCostsJournal,
+        "PurchaseReturnJournal" => JournalType::PurchaseReturnJournal,
+        "MaterialOpeningBalance" => JournalType::MaterialOpeningBalance,
+        "DamagedJournal" => JournalType::DamagedJournal,
+        "AdjustmentJournal" => JournalType::AdjustmentJournal,
+        "CapitalContribution" => JournalType::CapitalContribution,
+        "ProfitDistribution" => JournalType::ProfitDistribution,
+        "PartnerDrawing" => JournalType::PartnerDrawing,
+        "Capitalization" => JournalType::Capitalization,
+        "FiscalClosing" => JournalType::FiscalClosing,
+        _ => JournalType::GeneralJournal,
+    };
+
+    let entry_res = JournalEntry::new(
+        row.entry_number,
+        journal_type,
+        lines,
+        date,
+        row.description,
+        row.source_id,
+    )
+    .map_err(|e| AppError::Invalid(e.to_string()));
+
+    let mut entry = entry_res?;
+
+    entry.id = JournalEntryId(Uuid::parse_str(&row.id).unwrap_or_default());
+    entry.created_at = DateTime::parse_from_rfc3339(&row.created_at)
+        .map(|d| d.with_timezone(&Utc))
+        .unwrap_or_else(|_| Utc::now());
+    entry.updated_at = DateTime::parse_from_rfc3339(&row.updated_at)
+        .map(|d| d.with_timezone(&Utc))
+        .unwrap_or_else(|_| Utc::now());
+
+    entry.posted_at = row
+        .posted_at
+        .and_then(|d| DateTime::parse_from_rfc3339(&d).ok())
+        .map(|d| d.with_timezone(&Utc));
+
+    entry.reversed_at = row
+        .reversed_at
+        .and_then(|d| DateTime::parse_from_rfc3339(&d).ok())
+        .map(|d| d.with_timezone(&Utc));
+
+    entry.source_type = row.source_type;
+    entry.reversal_of_entry_id = row
+        .reversal_of_entry_id
+        .and_then(|id| Uuid::parse_str(&id).ok())
+        .map(JournalEntryId);
+
+    entry.status = match row.status.as_str() {
+        "Posted" => JournalEntryStatus::Posted,
+        "Cancelled" => JournalEntryStatus::Cancelled,
+        "Reversed" => JournalEntryStatus::Reversed,
+        _ => JournalEntryStatus::Draft,
+    };
+
+    Ok(entry)
+}
+
+pub fn row_to_line(r: JournalLineRow) -> JournalLine {
+    let account_id = AccountId(Uuid::parse_str(&r.account_id).unwrap_or_default());
+    let partner_id = r.partner_id.and_then(|id| Uuid::parse_str(&id).ok());
+
+    let currency = Currency::new(&r.currency, &r.currency, &r.currency, "", 2, false);
+    let fx_rate = Decimal::from_str(&r.fx_rate).unwrap_or(Decimal::ONE);
+
+    let debit = MonetaryAmount {
+        original: Money::new(
+            Decimal::from_str(&r.debit).unwrap_or(Decimal::ZERO),
+            currency.clone(),
+        ),
+        base_amount: Decimal::from_str(&r.debit_base).unwrap_or(Decimal::ZERO),
+        fx_rate,
+    };
+    let credit = MonetaryAmount {
+        original: Money::new(
+            Decimal::from_str(&r.credit).unwrap_or(Decimal::ZERO),
+            currency.clone(),
+        ),
+        base_amount: Decimal::from_str(&r.credit_base).unwrap_or(Decimal::ZERO),
+        fx_rate,
+    };
+    let mut line = JournalLine::new(account_id, debit, credit, r.description);
+    line.id = r.id;
+    line.partner_id = partner_id;
+    line
+}

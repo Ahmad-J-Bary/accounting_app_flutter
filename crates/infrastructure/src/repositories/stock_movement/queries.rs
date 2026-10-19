@@ -1,0 +1,573 @@
+use super::mappers::row_to_movement;
+use super::models::StockMovementRow;
+use application::dto::stock_dto::{StockMovementDetailDto, StockMovementDto};
+use application::errors::AppError;
+use domain::inventory::stock_movement::StockMovement;
+use domain::shared::ids::{MaterialId, StockMovementId};
+use rust_decimal::Decimal;
+use sqlx::SqlitePool;
+use std::collections::HashMap;
+
+const COLUMNS: &str = "id, material_id, quantity, unit_cost, unit_cost_base, total_cost, total_cost_base, raw_total_cost_base, original_currency, fx_rate, movement_type, reason, reference, document_number, warehouse_id, movement_date, created_at, signed_quantity";
+
+pub async fn find_by_id(
+    pool: &SqlitePool,
+    id: &StockMovementId,
+) -> Result<Option<StockMovement>, AppError> {
+    let row = sqlx::query_as::<_, StockMovementRow>(&format!(
+        "SELECT {} FROM stock_movements WHERE id = ?",
+        COLUMNS
+    ))
+    .bind(id.to_string())
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+
+    row.map(row_to_movement).transpose()
+}
+
+pub async fn list_all(pool: &SqlitePool) -> Result<Vec<StockMovement>, AppError> {
+    let rows = sqlx::query_as::<_, StockMovementRow>(&format!(
+        "SELECT {} FROM stock_movements ORDER BY movement_date DESC",
+        COLUMNS
+    ))
+    .fetch_all(pool)
+    .await
+    .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+
+    rows.into_iter().map(row_to_movement).collect()
+}
+
+pub async fn list_by_material(
+    pool: &SqlitePool,
+    material_id: &MaterialId,
+) -> Result<Vec<StockMovement>, AppError> {
+    let rows = sqlx::query_as::<_, StockMovementRow>(&format!(
+        "SELECT {} FROM stock_movements WHERE material_id = ? ORDER BY movement_date DESC",
+        COLUMNS
+    ))
+    .bind(material_id.to_string())
+    .fetch_all(pool)
+    .await
+    .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+
+    rows.into_iter().map(row_to_movement).collect()
+}
+
+pub async fn list_by_reference(
+    pool: &SqlitePool,
+    reference: &str,
+) -> Result<Vec<StockMovement>, AppError> {
+    let rows = sqlx::query_as::<_, StockMovementRow>(
+        &format!("SELECT {} FROM stock_movements WHERE reference = ? OR document_number = ? ORDER BY movement_date ASC", COLUMNS)
+    )
+    .bind(reference)
+    .bind(reference)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+
+    rows.into_iter().map(row_to_movement).collect()
+}
+
+pub async fn list_by_document_number(
+    pool: &SqlitePool,
+    document_number: &str,
+    movement_type: Option<&str>,
+) -> Result<Vec<StockMovement>, AppError> {
+    let sql = if movement_type.is_some() {
+        format!(
+            "SELECT {} FROM stock_movements WHERE (document_number = ? OR (reference = ? AND document_number IS NULL)) AND movement_type = ? ORDER BY movement_date ASC",
+            COLUMNS
+        )
+    } else {
+        format!(
+            "SELECT {} FROM stock_movements WHERE document_number = ? OR (reference = ? AND document_number IS NULL) ORDER BY movement_date ASC",
+            COLUMNS
+        )
+    };
+
+    let mut query = sqlx::query_as::<_, StockMovementRow>(&sql)
+        .bind(document_number)
+        .bind(document_number);
+
+    if let Some(mt) = movement_type {
+        query = query.bind(mt);
+    }
+
+    let rows = query
+        .fetch_all(pool)
+        .await
+        .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+
+    rows.into_iter().map(row_to_movement).collect()
+}
+
+pub async fn get_stock_balance(
+    pool: &SqlitePool,
+    material_id: &MaterialId,
+) -> Result<Decimal, AppError> {
+    let movements = list_by_material(pool, material_id).await?;
+    let mut balance = Decimal::ZERO;
+    for m in movements {
+        if let Some(sq) = m.signed_quantity {
+            balance += sq;
+        } else if m.is_inflow() {
+            balance += m.quantity;
+        } else if m.is_outflow() {
+            balance -= m.quantity;
+        }
+    }
+    Ok(balance)
+}
+
+pub async fn get_material_summary(
+    pool: &SqlitePool,
+    material_id: &MaterialId,
+) -> Result<application::ports::stock_movement_repository::MaterialInventorySummary, AppError> {
+    let movements = list_by_material(pool, material_id).await?;
+
+    let mut total_received = Decimal::ZERO;
+    let mut total_sold = Decimal::ZERO;
+    let mut total_damaged = Decimal::ZERO;
+    let mut total_available = Decimal::ZERO;
+    let mut total_inflow_cost = Decimal::ZERO;
+    let mut total_inflow_cost_base = Decimal::ZERO;
+    let mut total_raw_inflow_cost_base = Decimal::ZERO;
+
+    let mut last_purchase_price = Decimal::ZERO;
+    let mut last_purchase_price_base = Decimal::ZERO;
+    let mut last_sale_price = Decimal::ZERO;
+    let mut last_sale_price_base = Decimal::ZERO;
+
+    // movements are ordered by date DESC
+    let mut found_last_purchase = false;
+    let mut found_last_sale = false;
+
+    for m in &movements {
+        if let Some(sq) = m.signed_quantity {
+            if sq.is_sign_positive() {
+                total_received += sq;
+            } else {
+                total_damaged -= sq;
+            }
+            total_available += sq;
+        } else if m.is_inflow() {
+            if matches!(
+                m.movement_type,
+                domain::inventory::stock_movement::MovementType::SalesReturn
+            ) {
+                total_available += m.quantity;
+            } else {
+                total_available += m.quantity;
+                total_received += m.quantity;
+                total_inflow_cost += m.total_cost;
+                total_inflow_cost_base += m.total_cost_base;
+                total_raw_inflow_cost_base += m.raw_total_cost_base;
+            }
+
+            if !found_last_purchase
+                && (matches!(
+                    m.movement_type,
+                    domain::inventory::stock_movement::MovementType::Purchase
+                ) || matches!(
+                    m.movement_type,
+                    domain::inventory::stock_movement::MovementType::In
+                ) || matches!(
+                    m.movement_type,
+                    domain::inventory::stock_movement::MovementType::OpeningBalance
+                ))
+            {
+                last_purchase_price = m.unit_cost;
+                last_purchase_price_base = m.unit_cost_base;
+                found_last_purchase = true;
+            }
+        } else if m.is_outflow() {
+            total_available -= m.quantity;
+
+            if matches!(
+                m.movement_type,
+                domain::inventory::stock_movement::MovementType::Sale
+            ) {
+                total_sold += m.quantity;
+                if !found_last_sale {
+                    last_sale_price = m.unit_cost;
+                    last_sale_price_base = m.unit_cost_base;
+                    found_last_sale = true;
+                }
+            } else if matches!(
+                m.movement_type,
+                domain::inventory::stock_movement::MovementType::Damaged
+            ) {
+                total_damaged += m.quantity;
+            } else if matches!(
+                m.movement_type,
+                domain::inventory::stock_movement::MovementType::PurchaseReturn
+            ) {
+                total_received -= m.quantity;
+                total_inflow_cost -= m.total_cost;
+                total_inflow_cost_base -= m.total_cost_base;
+                total_raw_inflow_cost_base -= m.raw_total_cost_base;
+            }
+        }
+    }
+
+    let average_cost = if total_received > Decimal::ZERO {
+        total_inflow_cost / total_received
+    } else {
+        Decimal::ZERO
+    };
+
+    let average_cost_base = if total_received > Decimal::ZERO {
+        total_inflow_cost_base / total_received
+    } else {
+        Decimal::ZERO
+    };
+
+    let average_raw_price_base = if total_received > Decimal::ZERO {
+        total_raw_inflow_cost_base / total_received
+    } else {
+        Decimal::ZERO
+    };
+
+    Ok(
+        application::ports::stock_movement_repository::MaterialInventorySummary {
+            total_received,
+            total_sold,
+            total_available,
+            total_damaged,
+            last_purchase_price,
+            last_purchase_price_base,
+            last_sale_price,
+            last_sale_price_base,
+            average_cost,
+            average_cost_base,
+            average_raw_price_base,
+        },
+    )
+}
+
+#[derive(sqlx::FromRow)]
+pub struct MovementDetailRow {
+    pub id: String,
+    pub material_id: String,
+    pub movement_type: String,
+    pub quantity: String,
+    pub unit_cost: String,
+    pub unit_cost_base: String,
+    pub total_cost: String,
+    pub total_cost_base: String,
+    pub original_currency: Option<String>,
+    pub fx_rate: String,
+    pub reference: Option<String>,
+    #[allow(dead_code)]
+    pub document_number: Option<String>,
+    pub reason: Option<String>,
+    pub movement_date: String,
+    pub warehouse_id: Option<String>,
+    pub warehouse_name: Option<String>,
+    pub invoice_number: Option<String>,
+    pub invoice_type: Option<String>,
+    pub customer_name: Option<String>,
+    pub supplier_name: Option<String>,
+}
+
+fn movement_type_label(t: &str) -> String {
+    match t {
+        "Purchase" | "MovementType::Purchase" => "شراء".to_string(),
+        "Sale" | "MovementType::Sale" => "بيع".to_string(),
+        "OpeningBalance" | "MovementType::OpeningBalance" => "بضاعة أول المدة".to_string(),
+        "In" | "MovementType::In" => "إدخال".to_string(),
+        "Out" | "MovementType::Out" => "إخراج".to_string(),
+        "Damaged" | "MovementType::Damaged" => "تالف".to_string(),
+        "Adjustment" | "MovementType::Adjustment" => "تسوية".to_string(),
+        "Transfer" | "MovementType::Transfer" => "تحويل".to_string(),
+        "SalesReturn" | "MovementType::SalesReturn" => "مرتجع مبيعات".to_string(),
+        "PurchaseReturn" | "MovementType::PurchaseReturn" => "مرتجع مشتريات".to_string(),
+        _ => t.to_string(),
+    }
+}
+
+fn movement_type_is_inflow(t: &str) -> bool {
+    matches!(
+        t,
+        "Purchase"
+            | "MovementType::Purchase"
+            | "In"
+            | "MovementType::In"
+            | "OpeningBalance"
+            | "MovementType::OpeningBalance"
+            | "Transfer"
+            | "MovementType::Transfer"
+            | "SalesReturn"
+            | "MovementType::SalesReturn"
+    )
+}
+
+pub async fn list_detailed_by_material(
+    pool: &SqlitePool,
+    material_id: &MaterialId,
+) -> Result<Vec<StockMovementDetailDto>, AppError> {
+    let rows = sqlx::query_as::<_, MovementDetailRow>(
+        r#"
+        SELECT
+            sm.id,
+            sm.material_id,
+            sm.movement_type,
+            sm.quantity,
+            sm.unit_cost,
+            sm.unit_cost_base,
+            sm.total_cost,
+            sm.total_cost_base,
+            sm.original_currency,
+            sm.fx_rate,
+            sm.reference,
+            sm.document_number,
+            sm.reason,
+            sm.movement_date,
+            sm.warehouse_id,
+            w.name AS warehouse_name,
+            ui.invoice_number,
+            ui.invoice_type,
+            COALESCE(c.name, cr.name) AS customer_name,
+            COALESCE(s.name, sr2.name) AS supplier_name
+        FROM stock_movements sm
+        LEFT JOIN unified_invoices ui ON COALESCE(sm.document_number, sm.reference) = ui.invoice_number AND (
+            (sm.movement_type = 'Purchase' AND ui.invoice_type IN ('Purchase', 'PurchaseCosts')) OR
+            (sm.movement_type = 'Sale' AND ui.invoice_type = 'Sales') OR
+            (sm.movement_type = 'OpeningBalance' AND ui.invoice_type = 'OpeningBalance')
+        )
+        LEFT JOIN customers c         ON ui.customer_id  = c.id
+        LEFT JOIN suppliers s         ON ui.supplier_id  = s.id
+        LEFT JOIN sales_returns sr    ON COALESCE(sm.document_number, sm.reference) = sr.return_number AND sm.movement_type = 'SalesReturn'
+        LEFT JOIN customers cr        ON sr.customer_id = cr.id
+        LEFT JOIN purchase_returns pr ON COALESCE(sm.document_number, sm.reference) = pr.return_number AND sm.movement_type = 'PurchaseReturn'
+        LEFT JOIN suppliers sr2       ON pr.supplier_id = sr2.id
+        LEFT JOIN warehouses w        ON sm.warehouse_id = w.id
+        WHERE sm.material_id = ?
+        ORDER BY sm.movement_date ASC, sm.created_at ASC
+        "#
+    )
+    .bind(material_id.to_string())
+    .fetch_all(pool)
+    .await
+    .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+
+    let mut balance = Decimal::ZERO;
+    let mut result = Vec::with_capacity(rows.len());
+
+    for row in rows {
+        let qty: Decimal = row.quantity.parse().unwrap_or(Decimal::ZERO);
+        let inflow = movement_type_is_inflow(&row.movement_type);
+
+        let balance_before = balance;
+        if inflow {
+            balance += qty;
+        } else {
+            balance -= qty;
+        }
+        let balance_after = balance;
+
+        let party_name = row.customer_name.or(row.supplier_name);
+        let label = movement_type_label(&row.movement_type);
+        let ref_str = row.reference.clone().unwrap_or_default();
+
+        result.push(StockMovementDetailDto {
+            id: row.id,
+            material_id: row.material_id,
+            movement_type: row.movement_type.replace("MovementType::", ""),
+            movement_type_label: label,
+            quantity: qty.to_string(),
+            unit_cost: row.unit_cost,
+            unit_cost_base: row.unit_cost_base,
+            total_cost: row.total_cost,
+            total_cost_base: row.total_cost_base,
+            currency: row.original_currency,
+            fx_rate: row.fx_rate,
+            reference: ref_str,
+            notes: row.reason.unwrap_or_default(),
+            movement_date: row.movement_date,
+            invoice_number: row.invoice_number,
+            invoice_type: row.invoice_type,
+            party_name,
+            warehouse_id: row.warehouse_id,
+            warehouse_name: row.warehouse_name,
+            balance_before: balance_before.to_string(),
+            balance_after: balance_after.to_string(),
+            is_inflow: inflow,
+        });
+    }
+
+    Ok(result)
+}
+
+pub async fn get_next_inventory_reference(pool: &SqlitePool) -> Result<String, AppError> {
+    let row: Option<(Option<i64>,)> = sqlx::query_as(
+        "SELECT MAX(CAST(reference AS INTEGER)) FROM stock_movements WHERE reference GLOB '[0-9]*'",
+    )
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+
+    let max_val = row.and_then(|r| r.0).unwrap_or(0);
+    Ok((max_val + 1).to_string())
+}
+
+#[derive(sqlx::FromRow)]
+struct MovementWithNameRow {
+    pub id: String,
+    pub material_id: String,
+    pub quantity: String,
+    pub unit_cost: String,
+    pub unit_cost_base: String,
+    pub total_cost: String,
+    pub total_cost_base: String,
+    pub original_currency: Option<String>,
+    pub fx_rate: String,
+    pub movement_type: String,
+    pub reason: Option<String>,
+    pub reference: Option<String>,
+    pub document_number: Option<String>,
+    pub warehouse_id: Option<String>,
+    pub movement_date: String,
+    pub created_at: String,
+    pub signed_quantity: Option<String>,
+    pub material_name: Option<String>,
+}
+
+pub async fn list_all_with_material_names(
+    pool: &SqlitePool,
+) -> Result<Vec<(StockMovementDto, Option<String>)>, AppError> {
+    let rows = sqlx::query_as::<_, MovementWithNameRow>(
+        r#"
+        SELECT
+            sm.id, sm.material_id, sm.quantity, sm.unit_cost, sm.unit_cost_base,
+            sm.total_cost, sm.total_cost_base,
+            sm.original_currency, sm.fx_rate, sm.movement_type, sm.reason,
+            sm.reference, sm.document_number, sm.warehouse_id,
+            sm.movement_date, sm.created_at, sm.signed_quantity,
+            m.name AS material_name
+        FROM stock_movements sm
+        LEFT JOIN materials m ON sm.material_id = m.id
+        ORDER BY sm.movement_date DESC
+        "#,
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+
+    Ok(rows
+        .into_iter()
+        .map(|r| {
+            let doc_num = r.document_number.clone();
+            (
+                StockMovementDto {
+                    id: r.id,
+                    material_id: r.material_id,
+                    material_name: r.material_name,
+                    quantity: r.quantity,
+                    movement_type: r.movement_type,
+                    unit_cost: Some(r.unit_cost),
+                    unit_cost_base: Some(r.unit_cost_base),
+                    total_cost: Some(r.total_cost),
+                    total_cost_base: Some(r.total_cost_base),
+                    original_currency: r.original_currency,
+                    fx_rate: Some(r.fx_rate),
+                    reason: r.reason,
+                    reference: r.reference,
+                    source_document_id: None,
+                    warehouse_id: r.warehouse_id,
+                    movement_date: r.movement_date,
+                    created_at: r.created_at,
+                    signed_quantity: r.signed_quantity,
+                },
+                doc_num,
+            )
+        })
+        .collect())
+}
+
+pub async fn resolve_source_document_ids(
+    pool: &SqlitePool,
+    document_numbers: &[String],
+) -> Result<HashMap<String, String>, AppError> {
+    if document_numbers.is_empty() {
+        return Ok(HashMap::new());
+    }
+
+    let mut result: HashMap<String, String> = HashMap::new();
+
+    // 1. Unified invoices (highest priority)
+    {
+        let placeholders: Vec<&str> = document_numbers.iter().map(|_| "?").collect();
+        let sql = format!(
+            "SELECT invoice_number, id FROM unified_invoices WHERE invoice_number IN ({})",
+            placeholders.join(", ")
+        );
+        let mut query = sqlx::query_as::<_, (String, String)>(&sql);
+        for dn in document_numbers {
+            query = query.bind(dn);
+        }
+        if let Ok(rows) = query.fetch_all(pool).await {
+            for (invoice_number, id) in rows {
+                result.insert(invoice_number, id);
+            }
+        }
+    }
+
+    // 2. Legacy sales invoices (fill only missing)
+    {
+        let placeholders: Vec<&str> = document_numbers.iter().map(|_| "?").collect();
+        let sql = format!(
+            "SELECT invoice_number, id FROM sales_invoices WHERE invoice_number IN ({})",
+            placeholders.join(", ")
+        );
+        let mut query = sqlx::query_as::<_, (String, String)>(&sql);
+        for dn in document_numbers {
+            query = query.bind(dn);
+        }
+        if let Ok(rows) = query.fetch_all(pool).await {
+            for (invoice_number, id) in rows {
+                result.entry(invoice_number).or_insert(id);
+            }
+        }
+    }
+
+    // 3. Sales returns (overwrite)
+    {
+        let placeholders: Vec<&str> = document_numbers.iter().map(|_| "?").collect();
+        let sql = format!(
+            "SELECT return_number, id FROM sales_returns WHERE return_number IN ({})",
+            placeholders.join(", ")
+        );
+        let mut query = sqlx::query_as::<_, (String, String)>(&sql);
+        for dn in document_numbers {
+            query = query.bind(dn);
+        }
+        if let Ok(rows) = query.fetch_all(pool).await {
+            for (return_number, id) in rows {
+                result.insert(return_number, id);
+            }
+        }
+    }
+
+    // 4. Purchase returns (overwrite)
+    {
+        let placeholders: Vec<&str> = document_numbers.iter().map(|_| "?").collect();
+        let sql = format!(
+            "SELECT return_number, id FROM purchase_returns WHERE return_number IN ({})",
+            placeholders.join(", ")
+        );
+        let mut query = sqlx::query_as::<_, (String, String)>(&sql);
+        for dn in document_numbers {
+            query = query.bind(dn);
+        }
+        if let Ok(rows) = query.fetch_all(pool).await {
+            for (return_number, id) in rows {
+                result.insert(return_number, id);
+            }
+        }
+    }
+
+    Ok(result)
+}

@@ -1,0 +1,236 @@
+use crate::errors::AppError;
+use crate::ports::consumable_repository::ConsumableRepository;
+use crate::ports::journal_entry_repository::JournalEntryRepository;
+use chrono::Utc;
+use domain::accounting::{JournalEntry, JournalLine};
+use domain::assets::{AssetMovement, AssetMovementType, Consumable, ConsumableId};
+use domain::shared::{AccountId, MonetaryAmount, Money};
+use rust_decimal::Decimal;
+use std::sync::Arc;
+use uuid::Uuid;
+
+pub struct ConsumableUseCases {
+    repo: Arc<dyn ConsumableRepository>,
+    journal_repo: Arc<dyn JournalEntryRepository>,
+}
+
+pub struct CreateConsumableRequest {
+    pub code: String,
+    pub name: String,
+    pub category_id: Uuid,
+    pub unit_cost: Money,
+    pub fx_rate: Decimal,
+    pub asset_account_id: Uuid,
+    pub expense_account_id: Uuid,
+}
+
+impl ConsumableUseCases {
+    pub fn new(
+        repo: Arc<dyn ConsumableRepository>,
+        journal_repo: Arc<dyn JournalEntryRepository>,
+    ) -> Self {
+        Self { repo, journal_repo }
+    }
+
+    pub async fn create_item(
+        &self,
+        req: CreateConsumableRequest,
+    ) -> Result<ConsumableId, AppError> {
+        let item = Consumable::new(
+            req.code,
+            req.name,
+            req.category_id,
+            req.unit_cost,
+            req.fx_rate,
+            req.asset_account_id,
+            req.expense_account_id,
+        );
+        self.repo.save(&item).await?;
+        Ok(item.id)
+    }
+
+    pub async fn add_stock(&self, id: Uuid, quantity: Decimal) -> Result<(), AppError> {
+        let mut item = self
+            .repo
+            .find_by_id(&ConsumableId(id))
+            .await?
+            .ok_or_else(|| AppError::NotFound("Item not found".to_string()))?;
+
+        item.add_stock(quantity);
+
+        // Log movement
+        let movement = AssetMovement::new(
+            item.id.0,
+            AssetMovementType::Adjustment,
+            Utc::now(),
+            item.unit_cost.clone() * quantity,
+            format!("زيادة الكمية: {}", quantity),
+        );
+
+        // Commit item + movement in ONE transaction (Sec 9 atomicity).
+        self.repo
+            .save_with_accounting(&item, &[movement], &[])
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn issue_item(
+        &self,
+        id: Uuid,
+        quantity: Decimal,
+        description: String,
+    ) -> Result<(), AppError> {
+        let mut item = self
+            .repo
+            .find_by_id(&ConsumableId(id))
+            .await?
+            .ok_or_else(|| AppError::NotFound("Item not found".to_string()))?;
+
+        let total_value = item.issue(quantity).map_err(AppError::Invalid)?;
+
+        // Log movement
+        let movement = AssetMovement::new(
+            item.id.0,
+            AssetMovementType::Issue,
+            Utc::now(),
+            total_value.clone(),
+            description.clone(),
+        );
+
+        // Journal Entry
+        let mut lines = Vec::new();
+        let debit_ma = MonetaryAmount::new(total_value.clone(), item.fx_rate);
+        let credit_zero = MonetaryAmount::zero(item.unit_cost.currency().clone());
+        lines.push(JournalLine::new(
+            AccountId(item.expense_account_id),
+            debit_ma,
+            credit_zero.clone(),
+            format!("صرف مستهلكات: {} - {}", item.name, description),
+        ));
+
+        let debit_zero = MonetaryAmount::zero(item.unit_cost.currency().clone());
+        let credit_ma = MonetaryAmount::new(total_value.clone(), item.fx_rate);
+        lines.push(JournalLine::new(
+            AccountId(item.asset_account_id),
+            debit_zero,
+            credit_ma,
+            format!("تخفيض مخزون مستهلكات: {}", item.name),
+        ));
+
+        let entry = JournalEntry::new(
+            self.journal_repo.get_next_entry_number().await?,
+            domain::accounting::JournalType::GeneralJournal,
+            lines,
+            Utc::now(),
+            format!("صرف مستهلكات: {}", item.name),
+            Some(item.id.0.to_string()),
+        )
+        .map_err(|e| AppError::Invalid(e.to_string()))?;
+
+        // Commit item + movement + journal in ONE transaction (Sec 9 atomicity).
+        self.repo
+            .save_with_accounting(&item, &[movement], &[entry])
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn list_items(&self) -> Result<Vec<Consumable>, AppError> {
+        self.repo.list_all().await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mocks::MockJournalRepository;
+    use domain::shared::Currency;
+    use rust_decimal_macros::dec;
+
+    fn test_currency() -> Currency {
+        Currency::new("BASE", "عملة أساسية", "Base Currency", "B", 2, true)
+    }
+
+    pub struct MockConsumableRepo {
+        pub items: std::sync::Mutex<Vec<Consumable>>,
+        pub entries: std::sync::Mutex<Vec<domain::accounting::JournalEntry>>,
+    }
+
+    #[async_trait::async_trait]
+    impl ConsumableRepository for MockConsumableRepo {
+        async fn save(&self, item: &Consumable) -> Result<(), AppError> {
+            let mut items = self.items.lock().unwrap();
+            items.retain(|i| i.id.0 != item.id.0);
+            items.push(item.clone());
+            Ok(())
+        }
+        async fn find_by_id(&self, id: &ConsumableId) -> Result<Option<Consumable>, AppError> {
+            let items = self.items.lock().unwrap();
+            Ok(items.iter().find(|i| i.id.0 == id.0).cloned())
+        }
+        async fn list_all(&self) -> Result<Vec<Consumable>, AppError> {
+            Ok(self.items.lock().unwrap().clone())
+        }
+        async fn delete(&self, _id: &ConsumableId) -> Result<(), AppError> {
+            Ok(())
+        }
+        async fn save_with_accounting(
+            &self,
+            item: &Consumable,
+            _movements: &[domain::assets::AssetMovement],
+            entries: &[domain::accounting::JournalEntry],
+        ) -> Result<(), AppError> {
+            self.save(item).await?;
+            let mut store = self.entries.lock().unwrap();
+            for e in entries {
+                store.push(e.clone());
+            }
+            Ok(())
+        }
+    }
+
+    #[tokio::test]
+    async fn test_consumable_lifecycle() {
+        let repo = Arc::new(MockConsumableRepo {
+            items: std::sync::Mutex::new(Vec::new()),
+            entries: std::sync::Mutex::new(Vec::new()),
+        });
+        let journal_repo = Arc::new(MockJournalRepository::default());
+        let use_cases = ConsumableUseCases::new(repo.clone(), journal_repo.clone());
+
+        // 1. Create
+        let id = use_cases
+            .create_item(CreateConsumableRequest {
+                code: "C1".to_string(),
+                name: "Ink".to_string(),
+                category_id: Uuid::new_v4(),
+                unit_cost: Money::new(dec!(50), test_currency()),
+                fx_rate: dec!(1),
+                asset_account_id: Uuid::new_v4(),
+                expense_account_id: Uuid::new_v4(),
+            })
+            .await
+            .unwrap();
+
+        // 2. Add Stock
+        use_cases.add_stock(id.0, dec!(10)).await.unwrap();
+
+        let items = use_cases.list_items().await.unwrap();
+        assert_eq!(items[0].quantity_on_hand, dec!(10));
+
+        // 3. Issue
+        use_cases
+            .issue_item(id.0, dec!(2), "Printing".to_string())
+            .await
+            .unwrap();
+
+        let updated = use_cases.list_items().await.unwrap();
+        assert_eq!(updated[0].quantity_on_hand, dec!(8));
+
+        // Check Accounting
+        let entries = repo.entries.lock().unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].lines[0].debit.amount(), dec!(100)); // 2 * 50
+    }
+}

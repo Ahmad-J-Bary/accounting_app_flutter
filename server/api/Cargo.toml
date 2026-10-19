@@ -1,0 +1,9 @@
+[package]
+name = "accounting-server"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+accounting-core = { path = "../../packages/core" }
+axum = "0.8"
+tokio = { workspace = true }

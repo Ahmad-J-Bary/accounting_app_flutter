@@ -1,0 +1,9 @@
+name: _accounting_app_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.11.0
+
+workspace:
+  - app
+  - packages/accounting_app_flutter_isolates

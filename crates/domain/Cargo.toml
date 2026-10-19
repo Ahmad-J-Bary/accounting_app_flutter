@@ -1,0 +1,12 @@
+[package]
+name = "domain"
+version = "0.11.2"
+edition = "2024"
+
+[dependencies]
+serde = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+rust_decimal = { workspace = true }
+chrono = { workspace = true }
+rust_decimal_macros = "1.40.0"
