@@ -1,0 +1,53 @@
+name: Quality Gates
+
+on:
+  push:
+    branches:
+      - main
+      - "fix/**"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: Rust format, check and tests
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      - name: Install pinned Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1.16.1
+      - name: Check Rust formatting
+        run: cargo fmt --all -- --check
+      - name: Check the full Rust workspace
+        run: cargo check --workspace
+      - name: Run Rust workspace tests
+        run: cargo test --workspace -- --test-threads=1
+
+  flutter-windows:
+    name: Flutter analysis, tests and Windows build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      - name: Install Flutter 3.41.9
+        uses: subosito/flutter-action@v2.23.0
+        with:
+          channel: stable
+          flutter-version: "3.41.9"
+          cache: true
+      - name: Resolve Dart workspace dependencies
+        run: flutter pub get
+      - name: Analyze Flutter app
+        working-directory: app
+        run: flutter analyze
+      - name: Test Flutter app
+        working-directory: app
+        run: flutter test
+      - name: Build Windows release
+        working-directory: app
+        run: flutter build windows
