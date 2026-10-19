@@ -9,7 +9,7 @@ use domain::shared::ids::{PurchaseInvoiceId, SupplierId};
 pub trait PurchaseInvoiceRepository: Send + Sync {
     async fn save(&self, invoice: &PurchaseInvoice) -> Result<(), AppError>;
     async fn find_by_id(&self, id: &PurchaseInvoiceId)
-        -> Result<Option<PurchaseInvoice>, AppError>;
+    -> Result<Option<PurchaseInvoice>, AppError>;
     async fn list_all(&self) -> Result<Vec<PurchaseInvoice>, AppError>;
     async fn list_by_supplier(
         &self,

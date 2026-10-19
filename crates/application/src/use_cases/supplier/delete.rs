@@ -28,7 +28,7 @@ impl DeleteSupplierUseCase {
         let supplier = self.supplier_repo.find_by_id(&sid).await?;
 
         let (account_id, entry_ids) = if let Some(ref supplier) = supplier {
-            if let Some(ref account_id) = &supplier.account_id {
+            if let Some(account_id) = &supplier.account_id {
                 // Gather the deletable journal entries referencing this account.
                 // Only drafts may be removed; posted history is immutable, and
                 // `ensure_deletable` rejects the whole delete if any survive.

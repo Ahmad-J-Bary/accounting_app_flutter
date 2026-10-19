@@ -102,7 +102,7 @@ impl UpdateSupplierUseCase {
         // Sync the linked account name in memory (persisted atomically below).
         // During the window the balance keeps its static value.
         let mut synced_account = None;
-        if let Some(ref account_id) = &supplier.account_id {
+        if let Some(account_id) = &supplier.account_id {
             let mut account = self
                 .account_repo
                 .find_by_id(account_id)
