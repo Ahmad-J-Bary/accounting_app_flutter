@@ -141,10 +141,10 @@ impl CurrencyCommands {
 
     pub async fn delete_currency(&self, code: &str) -> Result<(), AppError> {
         // Prevent deleting the base currency
-        if let Some(c) = self.currency_repo.find_by_code(code).await? {
-            if c.is_base {
-                return Err(AppError::Invalid("لا يمكن حذف العملة الأساسية".to_string()));
-            }
+        if let Some(c) = self.currency_repo.find_by_code(code).await?
+            && c.is_base
+        {
+            return Err(AppError::Invalid("لا يمكن حذف العملة الأساسية".to_string()));
         }
         self.currency_repo.delete(code).await
     }

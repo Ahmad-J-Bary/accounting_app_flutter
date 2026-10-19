@@ -16,10 +16,9 @@ impl AccountValidation {
             .find_by_code(code.trim())
             .await
             .map_err(|e| AccountUseCaseError::RepositoryError(e.to_string()))?
+            && current_id.map(|x| x != &existing.id).unwrap_or(true)
         {
-            if current_id.map(|x| x != &existing.id).unwrap_or(true) {
-                return Err(AccountUseCaseError::CodeExists(code.to_string()));
-            }
+            return Err(AccountUseCaseError::CodeExists(code.to_string()));
         }
         Ok(())
     }

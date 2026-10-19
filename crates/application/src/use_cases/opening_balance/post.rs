@@ -262,10 +262,10 @@ impl PostOpeningBalanceUseCase {
             if !is_opening {
                 continue;
             }
-            if let Some(source) = journal.source_id.as_deref() {
-                if OPEN_PIVOT_PREFIXES.iter().any(|p| source.starts_with(p)) {
-                    continue; // the migration's own aggregate / artifacts
-                }
+            if let Some(source) = journal.source_id.as_deref()
+                && OPEN_PIVOT_PREFIXES.iter().any(|p| source.starts_with(p))
+            {
+                continue; // the migration's own aggregate / artifacts
             }
 
             for line in &journal.lines {

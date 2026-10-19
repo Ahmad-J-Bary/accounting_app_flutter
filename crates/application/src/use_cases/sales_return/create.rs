@@ -76,10 +76,10 @@ impl CreateSalesReturnUseCase {
         self.repo.save(&ret).await?;
 
         let mut dto = SalesReturnDto::from(ret);
-        if let Ok(id) = CustomerId::from_str(&dto.customer_id) {
-            if let Ok(Some(c)) = self.customer_repo.find_by_id(&id).await {
-                dto.customer_name = Some(c.name);
-            }
+        if let Ok(id) = CustomerId::from_str(&dto.customer_id)
+            && let Ok(Some(c)) = self.customer_repo.find_by_id(&id).await
+        {
+            dto.customer_name = Some(c.name);
         }
         Ok(dto)
     }

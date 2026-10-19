@@ -115,48 +115,46 @@ impl ReopenInvoiceUseCase {
         match invoice.invoice_type {
             InvoiceType::Sales => {
                 let sales_deferred = total - amount_paid - discount_amount;
-                if sales_deferred > Decimal::ZERO {
-                    if let Some(cid) = &invoice.customer_id {
-                        if let Some(mut customer) = self.customer_repo.find_by_id(cid).await? {
-                            let converted = super::post::convert_to_partner_currency(
-                                sales_deferred,
-                                &invoice.currency_code,
-                                invoice.exchange_rate,
-                                &customer.currency.code,
-                                &self.currency_repo,
-                                &self.exchange_rate_repo,
-                            )
-                            .await?;
-                            customer
-                                .decrease_debit(converted)
-                                .map_err(|e| AppError::Invalid(e.to_string()))?;
-                            self.customer_repo.update(&customer).await?;
-                        }
-                    }
+                if sales_deferred > Decimal::ZERO
+                    && let Some(cid) = &invoice.customer_id
+                    && let Some(mut customer) = self.customer_repo.find_by_id(cid).await?
+                {
+                    let converted = super::post::convert_to_partner_currency(
+                        sales_deferred,
+                        &invoice.currency_code,
+                        invoice.exchange_rate,
+                        &customer.currency.code,
+                        &self.currency_repo,
+                        &self.exchange_rate_repo,
+                    )
+                    .await?;
+                    customer
+                        .decrease_debit(converted)
+                        .map_err(|e| AppError::Invalid(e.to_string()))?;
+                    self.customer_repo.update(&customer).await?;
                 }
             }
             InvoiceType::Purchase => {
                 let total_discount = invoice.discount_amount.amount();
                 let net_credit =
                     purchase_net_supplier_credit(total, extra_costs, total_discount, amount_paid);
-                if net_credit > Decimal::ZERO {
-                    if let Some(sid) = &invoice.supplier_id {
-                        if let Some(mut supplier) = self.supplier_repo.find_by_id(sid).await? {
-                            let converted = super::post::convert_to_partner_currency(
-                                net_credit,
-                                &invoice.currency_code,
-                                invoice.exchange_rate,
-                                &supplier.currency.code,
-                                &self.currency_repo,
-                                &self.exchange_rate_repo,
-                            )
-                            .await?;
-                            supplier
-                                .decrease_credit(converted)
-                                .map_err(|e| AppError::Invalid(e.to_string()))?;
-                            self.supplier_repo.update(&supplier).await?;
-                        }
-                    }
+                if net_credit > Decimal::ZERO
+                    && let Some(sid) = &invoice.supplier_id
+                    && let Some(mut supplier) = self.supplier_repo.find_by_id(sid).await?
+                {
+                    let converted = super::post::convert_to_partner_currency(
+                        net_credit,
+                        &invoice.currency_code,
+                        invoice.exchange_rate,
+                        &supplier.currency.code,
+                        &self.currency_repo,
+                        &self.exchange_rate_repo,
+                    )
+                    .await?;
+                    supplier
+                        .decrease_credit(converted)
+                        .map_err(|e| AppError::Invalid(e.to_string()))?;
+                    self.supplier_repo.update(&supplier).await?;
                 }
             }
             _ => {}

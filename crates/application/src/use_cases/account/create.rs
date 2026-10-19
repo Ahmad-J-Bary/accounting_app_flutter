@@ -233,45 +233,43 @@ impl CreateAccountUseCase {
             .as_ref()
             .map(|p| p.to_string() == RECEIVABLES_PARENT_ID)
             .unwrap_or(false);
-        if is_receivable {
-            if let Some(ref customer_repo) = self.customer_repo {
-                // Extract customer number: suffix of the code
-                let parent_code = self
-                    .account_repo
-                    .find_by_id(cmd.parent_id.as_ref().unwrap())
-                    .await
-                    .ok()
-                    .flatten()
-                    .map(|p| p.code)
-                    .unwrap_or_default();
-                let customer_num = if account.code.starts_with(&parent_code) {
-                    &account.code[parent_code.len()..]
-                } else {
-                    &account.code
-                };
+        if is_receivable && let Some(ref customer_repo) = self.customer_repo {
+            // Extract customer number: suffix of the code
+            let parent_code = self
+                .account_repo
+                .find_by_id(cmd.parent_id.as_ref().unwrap())
+                .await
+                .ok()
+                .flatten()
+                .map(|p| p.code)
+                .unwrap_or_default();
+            let customer_num = if account.code.starts_with(&parent_code) {
+                &account.code[parent_code.len()..]
+            } else {
+                &account.code
+            };
 
-                let customer_id = CustomerId::new();
+            let customer_id = CustomerId::new();
 
-                let customer = Customer::new_with_id(
-                    customer_id,
-                    customer_num.to_string(),
-                    account.name_ar.clone(),
-                    cmd.phone.clone(),
-                    cmd.address.clone(),
-                    Some(account.id),
-                    debit,
-                    credit,
-                    account.opening_balance,
-                    account.currency.clone(),
-                    cmd.notes.clone(),
-                );
+            let customer = Customer::new_with_id(
+                customer_id,
+                customer_num.to_string(),
+                account.name_ar.clone(),
+                cmd.phone.clone(),
+                cmd.address.clone(),
+                Some(account.id),
+                debit,
+                credit,
+                account.opening_balance,
+                account.currency.clone(),
+                cmd.notes.clone(),
+            );
 
-                if let Ok(customer) = customer {
-                    let _ = customer_repo.save(&customer).await;
-                    let mut updated_account = account.clone();
-                    updated_account.linked_customer_id = Some(customer.id);
-                    let _ = self.account_repo.save(&updated_account).await;
-                }
+            if let Ok(customer) = customer {
+                let _ = customer_repo.save(&customer).await;
+                let mut updated_account = account.clone();
+                updated_account.linked_customer_id = Some(customer.id);
+                let _ = self.account_repo.save(&updated_account).await;
             }
         }
 
@@ -281,45 +279,43 @@ impl CreateAccountUseCase {
             .as_ref()
             .map(|p| p.to_string() == PAYABLES_PARENT_ID)
             .unwrap_or(false);
-        if is_payable {
-            if let Some(ref supplier_repo) = self.supplier_repo {
-                // Extract supplier number: suffix of the code
-                let parent_code = self
-                    .account_repo
-                    .find_by_id(cmd.parent_id.as_ref().unwrap())
-                    .await
-                    .ok()
-                    .flatten()
-                    .map(|p| p.code)
-                    .unwrap_or_default();
-                let supplier_num = if account.code.starts_with(&parent_code) {
-                    &account.code[parent_code.len()..]
-                } else {
-                    &account.code
-                };
+        if is_payable && let Some(ref supplier_repo) = self.supplier_repo {
+            // Extract supplier number: suffix of the code
+            let parent_code = self
+                .account_repo
+                .find_by_id(cmd.parent_id.as_ref().unwrap())
+                .await
+                .ok()
+                .flatten()
+                .map(|p| p.code)
+                .unwrap_or_default();
+            let supplier_num = if account.code.starts_with(&parent_code) {
+                &account.code[parent_code.len()..]
+            } else {
+                &account.code
+            };
 
-                let supplier_id = SupplierId::new();
+            let supplier_id = SupplierId::new();
 
-                let supplier = Supplier::new_with_id(
-                    supplier_id,
-                    supplier_num.to_string(),
-                    account.name_ar.clone(),
-                    cmd.phone.clone(),
-                    cmd.address.clone(),
-                    Some(account.id),
-                    debit,
-                    credit,
-                    account.opening_balance,
-                    account.currency.clone(),
-                    cmd.notes.clone(),
-                );
+            let supplier = Supplier::new_with_id(
+                supplier_id,
+                supplier_num.to_string(),
+                account.name_ar.clone(),
+                cmd.phone.clone(),
+                cmd.address.clone(),
+                Some(account.id),
+                debit,
+                credit,
+                account.opening_balance,
+                account.currency.clone(),
+                cmd.notes.clone(),
+            );
 
-                if let Ok(supplier) = supplier {
-                    let _ = supplier_repo.save(&supplier).await;
-                    let mut updated_account = account.clone();
-                    updated_account.linked_supplier_id = Some(supplier.id);
-                    let _ = self.account_repo.save(&updated_account).await;
-                }
+            if let Ok(supplier) = supplier {
+                let _ = supplier_repo.save(&supplier).await;
+                let mut updated_account = account.clone();
+                updated_account.linked_supplier_id = Some(supplier.id);
+                let _ = self.account_repo.save(&updated_account).await;
             }
         }
 

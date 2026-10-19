@@ -189,18 +189,18 @@ impl PostPurchaseReturnUseCase {
             .ok_or_else(|| AppError::NotFound("حساب مرتجع المشتريات غير موجود: 32".into()))?;
 
         // Debit: Supplier account — total (full return value debited to supplier)
-        if let Some(supplier) = self.supplier_repo.find_by_id(&ret.supplier_id).await? {
-            if let Some(acc_id) = supplier.account_id {
-                return_journal_lines.push(
-                    JournalLine::new(
-                        acc_id,
-                        MonetaryAmount::new(Money::new(total, doc_currency.clone()), fx_rate),
-                        MonetaryAmount::zero(doc_currency.clone()),
-                        format!("مرتجع مشتريات رقم {}", ret.return_number),
-                    )
-                    .with_partner(ret.supplier_id.0),
-                );
-            }
+        if let Some(supplier) = self.supplier_repo.find_by_id(&ret.supplier_id).await?
+            && let Some(acc_id) = supplier.account_id
+        {
+            return_journal_lines.push(
+                JournalLine::new(
+                    acc_id,
+                    MonetaryAmount::new(Money::new(total, doc_currency.clone()), fx_rate),
+                    MonetaryAmount::zero(doc_currency.clone()),
+                    format!("مرتجع مشتريات رقم {}", ret.return_number),
+                )
+                .with_partner(ret.supplier_id.0),
+            );
         }
 
         // Credit: Purchase Returns account — total
@@ -248,24 +248,21 @@ impl PostPurchaseReturnUseCase {
                 ),
             ));
 
-            if let Some(supplier) = self.supplier_repo.find_by_id(&ret.supplier_id).await? {
-                if let Some(supp_acc_id) = supplier.account_id {
-                    cash_journal_lines.push(
-                        JournalLine::new(
-                            supp_acc_id,
-                            MonetaryAmount::zero(doc_currency.clone()),
-                            MonetaryAmount::new(
-                                Money::new(cash_amount, doc_currency.clone()),
-                                fx_rate,
-                            ),
-                            format!(
-                                "سند قبض من مورد مرتبط بمرتجع مشتريات رقم {}",
-                                ret.return_number
-                            ),
-                        )
-                        .with_partner(ret.supplier_id.0),
-                    );
-                }
+            if let Some(supplier) = self.supplier_repo.find_by_id(&ret.supplier_id).await?
+                && let Some(supp_acc_id) = supplier.account_id
+            {
+                cash_journal_lines.push(
+                    JournalLine::new(
+                        supp_acc_id,
+                        MonetaryAmount::zero(doc_currency.clone()),
+                        MonetaryAmount::new(Money::new(cash_amount, doc_currency.clone()), fx_rate),
+                        format!(
+                            "سند قبض من مورد مرتبط بمرتجع مشتريات رقم {}",
+                            ret.return_number
+                        ),
+                    )
+                    .with_partner(ret.supplier_id.0),
+                );
             }
 
             let cash_entry_number = self.journal_repo.get_next_entry_number().await?;
@@ -288,29 +285,29 @@ impl PostPurchaseReturnUseCase {
             entries.push(cash_entry);
 
             // 5. Create payment record for audit trail
-            if let Some(supplier) = self.supplier_repo.find_by_id(&ret.supplier_id).await? {
-                if let Some(supp_acc_id) = supplier.account_id {
-                    let mut payment = Payment::new(
-                        format!("SRC-{}", ret.return_number),
-                        PaymentType::SupplierReceipt,
-                        cash_amount,
-                        base_currency.code.clone(),
-                        Decimal::ONE,
-                        ret.return_date,
-                        Some(cash_account.id), // debit: cash
-                        Some(supp_acc_id),     // credit: supplier account
-                        None,
-                        Some(ret.supplier_id),
-                        Some(format!("return:{}", ret.id.0)),
-                        Some(format!(
-                            "مقبوضات نقدية مرتبطة بمرتجع مشتريات {}",
-                            ret.return_number
-                        )),
-                    )
-                    .map_err(|e| AppError::Invalid(e.to_string()))?;
-                    payment.journal_entry_number = Some(cash_entry_number);
-                    payments.push(payment);
-                }
+            if let Some(supplier) = self.supplier_repo.find_by_id(&ret.supplier_id).await?
+                && let Some(supp_acc_id) = supplier.account_id
+            {
+                let mut payment = Payment::new(
+                    format!("SRC-{}", ret.return_number),
+                    PaymentType::SupplierReceipt,
+                    cash_amount,
+                    base_currency.code.clone(),
+                    Decimal::ONE,
+                    ret.return_date,
+                    Some(cash_account.id), // debit: cash
+                    Some(supp_acc_id),     // credit: supplier account
+                    None,
+                    Some(ret.supplier_id),
+                    Some(format!("return:{}", ret.id.0)),
+                    Some(format!(
+                        "مقبوضات نقدية مرتبطة بمرتجع مشتريات {}",
+                        ret.return_number
+                    )),
+                )
+                .map_err(|e| AppError::Invalid(e.to_string()))?;
+                payment.journal_entry_number = Some(cash_entry_number);
+                payments.push(payment);
             }
         }
 

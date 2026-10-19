@@ -207,10 +207,10 @@ pub async fn list_with_filters(
     if to_date.is_some() {
         query_str.push_str(" AND je.entry_date <= ?");
     }
-    if let Some(jt) = journal_type {
-        if jt != JournalType::GeneralJournal {
-            query_str.push_str(" AND je.journal_type = ?");
-        }
+    if let Some(jt) = journal_type
+        && jt != JournalType::GeneralJournal
+    {
+        query_str.push_str(" AND je.journal_type = ?");
     }
     if account_id.is_some() {
         query_str.push_str(" AND jl.account_id = ?");
@@ -239,10 +239,10 @@ pub async fn list_with_filters(
     if let Some(date) = to_date {
         query = query.bind(date.to_rfc3339());
     }
-    if let Some(jt) = journal_type {
-        if jt != JournalType::GeneralJournal {
-            query = query.bind(format!("{:?}", jt));
-        }
+    if let Some(jt) = journal_type
+        && jt != JournalType::GeneralJournal
+    {
+        query = query.bind(format!("{:?}", jt));
     }
     if let Some(acc_id) = account_id {
         query = query.bind(acc_id.0.to_string());

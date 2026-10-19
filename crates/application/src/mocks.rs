@@ -233,35 +233,35 @@ impl JournalEntryRepository for MockJournalRepository {
                 {
                     return false;
                 }
-                if let Some(from) = from_date {
-                    if e.entry_date < from {
-                        return false;
-                    }
+                if let Some(from) = from_date
+                    && e.entry_date < from
+                {
+                    return false;
                 }
-                if let Some(to) = to_date {
-                    if e.entry_date > to {
-                        return false;
-                    }
+                if let Some(to) = to_date
+                    && e.entry_date > to
+                {
+                    return false;
                 }
-                if let Some(jt) = journal_type.as_ref() {
-                    if &e.journal_type != jt {
-                        return false;
-                    }
+                if let Some(jt) = journal_type.as_ref()
+                    && &e.journal_type != jt
+                {
+                    return false;
                 }
-                if let Some(acc) = account_id.as_ref() {
-                    if !e.lines.iter().any(|l| &l.account_id == acc) {
-                        return false;
-                    }
+                if let Some(acc) = account_id.as_ref()
+                    && !e.lines.iter().any(|l| &l.account_id == acc)
+                {
+                    return false;
                 }
-                if let Some(pid) = partner_id {
-                    if !e.lines.iter().any(|l| l.partner_id == Some(pid)) {
-                        return false;
-                    }
+                if let Some(pid) = partner_id
+                    && !e.lines.iter().any(|l| l.partner_id == Some(pid))
+                {
+                    return false;
                 }
-                if let Some(s) = status.as_ref() {
-                    if &e.status != s {
-                        return false;
-                    }
+                if let Some(s) = status.as_ref()
+                    && &e.status != s
+                {
+                    return false;
                 }
                 true
             })

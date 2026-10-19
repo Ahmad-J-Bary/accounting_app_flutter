@@ -34,15 +34,14 @@ fn adjust_shares_to_sum(raw: Vec<Decimal>, target: Decimal) -> Vec<Decimal> {
     }
     let total: Decimal = shares.iter().sum();
     let gap = target - total;
-    if !gap.is_zero() {
-        if let Some(biggest) = shares
+    if !gap.is_zero()
+        && let Some(biggest) = shares
             .iter()
             .enumerate()
             .max_by(|a, b| a.1.abs().cmp(&b.1.abs()))
             .map(|(i, _)| i)
-        {
-            shares[biggest] += gap;
-        }
+    {
+        shares[biggest] += gap;
     }
     shares
 }

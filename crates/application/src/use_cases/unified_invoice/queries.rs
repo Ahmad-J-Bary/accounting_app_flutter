@@ -67,32 +67,30 @@ impl InvoiceQueries {
     }
 
     pub async fn populate_dto(&self, mut dto: InvoiceDto) -> Result<InvoiceDto, AppError> {
-        if let Some(ref cid) = dto.customer_id {
-            if let Ok(id) = CustomerId::from_str(cid) {
-                if let Ok(Some(customer)) = self.customer_repo.find_by_id(&id).await {
-                    dto.customer_name = Some(customer.name);
-                }
-            }
+        if let Some(ref cid) = dto.customer_id
+            && let Ok(id) = CustomerId::from_str(cid)
+            && let Ok(Some(customer)) = self.customer_repo.find_by_id(&id).await
+        {
+            dto.customer_name = Some(customer.name);
         }
-        if let Some(ref sid) = dto.supplier_id {
-            if let Ok(id) = SupplierId::from_str(sid) {
-                if let Ok(Some(supplier)) = self.supplier_repo.find_by_id(&id).await {
-                    dto.supplier_name = Some(supplier.name);
-                }
-            }
+        if let Some(ref sid) = dto.supplier_id
+            && let Ok(id) = SupplierId::from_str(sid)
+            && let Ok(Some(supplier)) = self.supplier_repo.find_by_id(&id).await
+        {
+            dto.supplier_name = Some(supplier.name);
         }
 
         for line in &mut dto.lines {
-            if let Ok(mid) = MaterialId::from_str(&line.material_id) {
-                if let Ok(Some(material)) = self.material_repo.find_by_id(&mid).await {
-                    line.material_name = Some(material.name);
-                    line.barcode = Some(material.barcode);
-                    line.code = Some(material.code);
-                    if let Some(cid) = material.category_ids.first() {
-                        if let Ok(Some(cat)) = self.category_repo.find_by_id(cid).await {
-                            line.category_name = Some(cat.name);
-                        }
-                    }
+            if let Ok(mid) = MaterialId::from_str(&line.material_id)
+                && let Ok(Some(material)) = self.material_repo.find_by_id(&mid).await
+            {
+                line.material_name = Some(material.name);
+                line.barcode = Some(material.barcode);
+                line.code = Some(material.code);
+                if let Some(cid) = material.category_ids.first()
+                    && let Ok(Some(cat)) = self.category_repo.find_by_id(cid).await
+                {
+                    line.category_name = Some(cat.name);
                 }
             }
         }

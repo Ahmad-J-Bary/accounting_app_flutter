@@ -42,17 +42,17 @@ pub async fn enrich_payment(
     supplier_repo: &Arc<dyn SupplierRepository>,
 ) -> PaymentDto {
     let mut customer_name = None;
-    if let Some(cid) = &p.customer_id {
-        if let Ok(Some(customer)) = customer_repo.find_by_id(cid).await {
-            customer_name = Some(customer.name.clone());
-        }
+    if let Some(cid) = &p.customer_id
+        && let Ok(Some(customer)) = customer_repo.find_by_id(cid).await
+    {
+        customer_name = Some(customer.name.clone());
     }
 
     let mut supplier_name = None;
-    if let Some(sid) = &p.supplier_id {
-        if let Ok(Some(supplier)) = supplier_repo.find_by_id(sid).await {
-            supplier_name = Some(supplier.name.clone());
-        }
+    if let Some(sid) = &p.supplier_id
+        && let Ok(Some(supplier)) = supplier_repo.find_by_id(sid).await
+    {
+        supplier_name = Some(supplier.name.clone());
     }
 
     PaymentDto {

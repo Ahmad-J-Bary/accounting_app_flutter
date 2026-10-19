@@ -195,13 +195,13 @@ fn map_to_dto(
     let mut dto = JournalEntryDto::from(entry);
 
     for line in &mut dto.lines {
-        if let Ok(acc_id) = line.account_id.parse::<AccountId>() {
-            if let Some(acc) = account_map.get(&acc_id) {
-                line.account_name = Some(acc.name_ar.clone());
-                line.account_code = Some(acc.code.clone());
-                line.account_purpose = Some(acc.purpose.to_str().to_string());
-                line.account_type = Some(format!("{:?}", acc.account_type));
-            }
+        if let Ok(acc_id) = line.account_id.parse::<AccountId>()
+            && let Some(acc) = account_map.get(&acc_id)
+        {
+            line.account_name = Some(acc.name_ar.clone());
+            line.account_code = Some(acc.code.clone());
+            line.account_purpose = Some(acc.purpose.to_str().to_string());
+            line.account_type = Some(format!("{:?}", acc.account_type));
         }
     }
 

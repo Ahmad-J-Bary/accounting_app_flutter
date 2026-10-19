@@ -57,12 +57,13 @@ impl ExecuteVoiceCommandUseCase {
                 let route = route_destination_for(&route_id).ok_or_else(|| {
                     AppError::NotFound(format!("الوجهة الصوتية غير معروفة: {route_id}"))
                 })?;
-                if let Some(permission_key) = route.permission_key {
-                    if !context.has_permission("Admin") && !context.has_permission(permission_key) {
-                        return Err(AppError::Forbidden(format!(
-                            "لا تملك صلاحية الوصول إلى الوجهة: {route_id}"
-                        )));
-                    }
+                if let Some(permission_key) = route.permission_key
+                    && !context.has_permission("Admin")
+                    && !context.has_permission(permission_key)
+                {
+                    return Err(AppError::Forbidden(format!(
+                        "لا تملك صلاحية الوصول إلى الوجهة: {route_id}"
+                    )));
                 }
                 Ok(VoiceExecutionResultDto {
                     state: "success".into(),

@@ -52,16 +52,16 @@ impl PurchaseReturnQueries {
         &self,
         mut dto: PurchaseReturnDto,
     ) -> Result<PurchaseReturnDto, AppError> {
-        if let Ok(sid) = SupplierId::from_str(&dto.supplier_id) {
-            if let Ok(Some(s)) = self.supplier_repo.find_by_id(&sid).await {
-                dto.supplier_name = Some(s.name);
-            }
+        if let Ok(sid) = SupplierId::from_str(&dto.supplier_id)
+            && let Ok(Some(s)) = self.supplier_repo.find_by_id(&sid).await
+        {
+            dto.supplier_name = Some(s.name);
         }
         for line in &mut dto.lines {
-            if let Ok(mid) = MaterialId::from_str(&line.material_id) {
-                if let Ok(Some(m)) = self.material_repo.find_by_id(&mid).await {
-                    line.material_name = Some(m.name);
-                }
+            if let Ok(mid) = MaterialId::from_str(&line.material_id)
+                && let Ok(Some(m)) = self.material_repo.find_by_id(&mid).await
+            {
+                line.material_name = Some(m.name);
             }
         }
         Ok(dto)

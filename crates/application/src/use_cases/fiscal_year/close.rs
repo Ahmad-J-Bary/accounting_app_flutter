@@ -68,10 +68,9 @@ impl CloseFiscalYearUseCase {
             .year_repo
             .find_close_run(&fiscal_year_id, &cmd.operation_key)
             .await?
+            && existing_run.status == FiscalYearCloseRunStatus::Completed
         {
-            if existing_run.status == FiscalYearCloseRunStatus::Completed {
-                return Ok(to_dto(&fiscal_year, Some(close_run_to_dto(&existing_run))));
-            }
+            return Ok(to_dto(&fiscal_year, Some(close_run_to_dto(&existing_run))));
         }
 
         validate_year_close(&fiscal_year, &closing_period_id, self.period_repo.clone()).await?;

@@ -38,10 +38,10 @@ impl CurrencySetupUseCase {
         if active.is_empty() {
             return Ok(false);
         }
-        if let Ok(settings) = self.settings_repo.get().await {
-            if settings.company_name.trim().is_empty() {
-                return Ok(false);
-            }
+        if let Ok(settings) = self.settings_repo.get().await
+            && settings.company_name.trim().is_empty()
+        {
+            return Ok(false);
         }
         Ok(true)
     }
@@ -87,27 +87,22 @@ impl CurrencySetupUseCase {
 
         if let Some(sec) = secondary_code {
             let sec_code = sec.trim().to_uppercase();
-            if sec_code != code {
-                if let Some(sec_info) = all.iter().find(|c| c.code == sec_code) {
-                    let sec_currency = Currency::new(
-                        &sec_info.code,
-                        &sec_info.name_ar,
-                        &sec_info.name_en,
-                        &sec_info.symbol,
-                        sec_info.decimals,
-                        false,
-                    );
-                    self.currency_repo.save(&sec_currency).await?;
+            if sec_code != code
+                && let Some(sec_info) = all.iter().find(|c| c.code == sec_code)
+            {
+                let sec_currency = Currency::new(
+                    &sec_info.code,
+                    &sec_info.name_ar,
+                    &sec_info.name_en,
+                    &sec_info.symbol,
+                    sec_info.decimals,
+                    false,
+                );
+                self.currency_repo.save(&sec_currency).await?;
 
-                    let er = ExchangeRate::new(
-                        &code,
-                        &sec_code,
-                        Decimal::ONE,
-                        RateType::Middle,
-                        Utc::now(),
-                    );
-                    self.rate_repo.save(&er).await?;
-                }
+                let er =
+                    ExchangeRate::new(&code, &sec_code, Decimal::ONE, RateType::Middle, Utc::now());
+                self.rate_repo.save(&er).await?;
             }
         }
 

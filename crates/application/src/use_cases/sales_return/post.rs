@@ -213,18 +213,18 @@ impl PostSalesReturnUseCase {
         ));
 
         // Credit: Customer account — total (full return value credited to customer)
-        if let Some(customer) = self.customer_repo.find_by_id(&ret.customer_id).await? {
-            if let Some(acc_id) = customer.account_id {
-                return_journal_lines.push(
-                    JournalLine::new(
-                        acc_id,
-                        MonetaryAmount::zero(doc_currency.clone()),
-                        MonetaryAmount::new(Money::new(total, doc_currency.clone()), fx_rate),
-                        format!("مرتجع مبيعات رقم {}", ret.return_number),
-                    )
-                    .with_partner(ret.customer_id.0),
-                );
-            }
+        if let Some(customer) = self.customer_repo.find_by_id(&ret.customer_id).await?
+            && let Some(acc_id) = customer.account_id
+        {
+            return_journal_lines.push(
+                JournalLine::new(
+                    acc_id,
+                    MonetaryAmount::zero(doc_currency.clone()),
+                    MonetaryAmount::new(Money::new(total, doc_currency.clone()), fx_rate),
+                    format!("مرتجع مبيعات رقم {}", ret.return_number),
+                )
+                .with_partner(ret.customer_id.0),
+            );
         }
 
         if !return_journal_lines.is_empty() {
@@ -254,24 +254,21 @@ impl PostSalesReturnUseCase {
 
             let mut cash_journal_lines = Vec::new();
 
-            if let Some(customer) = self.customer_repo.find_by_id(&ret.customer_id).await? {
-                if let Some(cust_acc_id) = customer.account_id {
-                    cash_journal_lines.push(
-                        JournalLine::new(
-                            cust_acc_id,
-                            MonetaryAmount::new(
-                                Money::new(cash_amount, doc_currency.clone()),
-                                fx_rate,
-                            ),
-                            MonetaryAmount::zero(doc_currency.clone()),
-                            format!(
-                                "سند دفع لعميل مرتبط بمرتجع مبيعات رقم {}",
-                                ret.return_number
-                            ),
-                        )
-                        .with_partner(ret.customer_id.0),
-                    );
-                }
+            if let Some(customer) = self.customer_repo.find_by_id(&ret.customer_id).await?
+                && let Some(cust_acc_id) = customer.account_id
+            {
+                cash_journal_lines.push(
+                    JournalLine::new(
+                        cust_acc_id,
+                        MonetaryAmount::new(Money::new(cash_amount, doc_currency.clone()), fx_rate),
+                        MonetaryAmount::zero(doc_currency.clone()),
+                        format!(
+                            "سند دفع لعميل مرتبط بمرتجع مبيعات رقم {}",
+                            ret.return_number
+                        ),
+                    )
+                    .with_partner(ret.customer_id.0),
+                );
             }
 
             cash_journal_lines.push(JournalLine::new(
@@ -304,29 +301,29 @@ impl PostSalesReturnUseCase {
             entries.push(cash_entry);
 
             // 5. Create payment record for audit trail
-            if let Some(customer) = self.customer_repo.find_by_id(&ret.customer_id).await? {
-                if let Some(cust_acc_id) = customer.account_id {
-                    let mut payment = Payment::new(
-                        format!("CPY-{}", ret.return_number),
-                        PaymentType::CustomerPayment,
-                        cash_amount,
-                        base_currency.code.clone(),
-                        Decimal::ONE,
-                        ret.return_date,
-                        Some(cust_acc_id),     // debit: customer account
-                        Some(cash_account.id), // credit: cash
-                        Some(ret.customer_id),
-                        None,
-                        Some(format!("return:{}", ret.id.0)),
-                        Some(format!(
-                            "دفعة نقدية مرتبطة بمرتجع مبيعات {}",
-                            ret.return_number
-                        )),
-                    )
-                    .map_err(|e| AppError::Invalid(e.to_string()))?;
-                    payment.journal_entry_number = Some(cash_entry_number);
-                    payments.push(payment);
-                }
+            if let Some(customer) = self.customer_repo.find_by_id(&ret.customer_id).await?
+                && let Some(cust_acc_id) = customer.account_id
+            {
+                let mut payment = Payment::new(
+                    format!("CPY-{}", ret.return_number),
+                    PaymentType::CustomerPayment,
+                    cash_amount,
+                    base_currency.code.clone(),
+                    Decimal::ONE,
+                    ret.return_date,
+                    Some(cust_acc_id),     // debit: customer account
+                    Some(cash_account.id), // credit: cash
+                    Some(ret.customer_id),
+                    None,
+                    Some(format!("return:{}", ret.id.0)),
+                    Some(format!(
+                        "دفعة نقدية مرتبطة بمرتجع مبيعات {}",
+                        ret.return_number
+                    )),
+                )
+                .map_err(|e| AppError::Invalid(e.to_string()))?;
+                payment.journal_entry_number = Some(cash_entry_number);
+                payments.push(payment);
             }
         }
 

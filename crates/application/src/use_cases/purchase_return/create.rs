@@ -82,10 +82,10 @@ impl CreatePurchaseReturnUseCase {
         self.repo.save(&ret).await?;
 
         let mut dto = PurchaseReturnDto::from(ret);
-        if let Ok(id) = SupplierId::from_str(&dto.supplier_id) {
-            if let Ok(Some(s)) = self.supplier_repo.find_by_id(&id).await {
-                dto.supplier_name = Some(s.name);
-            }
+        if let Ok(id) = SupplierId::from_str(&dto.supplier_id)
+            && let Ok(Some(s)) = self.supplier_repo.find_by_id(&id).await
+        {
+            dto.supplier_name = Some(s.name);
         }
         Ok(dto)
     }

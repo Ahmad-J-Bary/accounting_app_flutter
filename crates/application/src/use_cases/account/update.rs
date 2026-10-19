@@ -88,12 +88,11 @@ impl UpdateAccountUseCase {
             account.currency = new_currency;
         }
 
-        if let Some(er_str) = &cmd.exchange_rate {
-            if let Ok(new_er) = Decimal::from_str(er_str) {
-                if new_er > Decimal::ZERO {
-                    account.exchange_rate = new_er;
-                }
-            }
+        if let Some(er_str) = &cmd.exchange_rate
+            && let Ok(new_er) = Decimal::from_str(er_str)
+            && new_er > Decimal::ZERO
+        {
+            account.exchange_rate = new_er;
         }
 
         account.code = cmd.code.trim().to_string();
@@ -178,77 +177,75 @@ impl UpdateAccountUseCase {
         }
 
         // Sync with linked customer if any
-        if let Some(customer_id) = &account.linked_customer_id {
-            if let Some(ref customer_repo) = self.customer_repo {
-                if let Ok(Some(mut customer)) = customer_repo.find_by_id(customer_id).await {
-                    let debit = cmd
-                        .debit
-                        .as_deref()
-                        .and_then(|s| Decimal::from_str(s).ok())
-                        .unwrap_or(customer.debit);
-                    let credit = cmd
-                        .credit
-                        .as_deref()
-                        .and_then(|s| Decimal::from_str(s).ok())
-                        .unwrap_or(customer.credit);
-                    let currency = cmd
-                        .currency
-                        .as_deref()
-                        .map(|s| Currency::new(s, s, s, "", 2, false))
-                        .unwrap_or(customer.currency.clone());
+        if let Some(customer_id) = &account.linked_customer_id
+            && let Some(ref customer_repo) = self.customer_repo
+            && let Ok(Some(mut customer)) = customer_repo.find_by_id(customer_id).await
+        {
+            let debit = cmd
+                .debit
+                .as_deref()
+                .and_then(|s| Decimal::from_str(s).ok())
+                .unwrap_or(customer.debit);
+            let credit = cmd
+                .credit
+                .as_deref()
+                .and_then(|s| Decimal::from_str(s).ok())
+                .unwrap_or(customer.credit);
+            let currency = cmd
+                .currency
+                .as_deref()
+                .map(|s| Currency::new(s, s, s, "", 2, false))
+                .unwrap_or(customer.currency.clone());
 
-                    let _ = customer.update_info(
-                        account.name_ar.clone(),
-                        cmd.phone.as_ref().cloned().or(customer.phone.clone()),
-                        cmd.address.as_ref().cloned().or(customer.address.clone()),
-                        cmd.notes.as_ref().cloned().or(customer.notes.clone()),
-                    );
-                    customer.debit = debit;
-                    customer.credit = credit;
-                    customer.currency = currency;
-                    customer.opening_balance = account.opening_balance;
-                    customer.balance = debit - credit;
+            let _ = customer.update_info(
+                account.name_ar.clone(),
+                cmd.phone.as_ref().cloned().or(customer.phone.clone()),
+                cmd.address.as_ref().cloned().or(customer.address.clone()),
+                cmd.notes.as_ref().cloned().or(customer.notes.clone()),
+            );
+            customer.debit = debit;
+            customer.credit = credit;
+            customer.currency = currency;
+            customer.opening_balance = account.opening_balance;
+            customer.balance = debit - credit;
 
-                    let _ = customer_repo.save(&customer).await;
-                }
-            }
+            let _ = customer_repo.save(&customer).await;
         }
 
         // Sync with linked supplier if any
-        if let Some(supplier_id) = &account.linked_supplier_id {
-            if let Some(ref supplier_repo) = self.supplier_repo {
-                if let Ok(Some(mut supplier)) = supplier_repo.find_by_id(supplier_id).await {
-                    let debit = cmd
-                        .debit
-                        .as_deref()
-                        .and_then(|s| Decimal::from_str(s).ok())
-                        .unwrap_or(supplier.debit);
-                    let credit = cmd
-                        .credit
-                        .as_deref()
-                        .and_then(|s| Decimal::from_str(s).ok())
-                        .unwrap_or(supplier.credit);
-                    let currency = cmd
-                        .currency
-                        .as_deref()
-                        .map(|s| Currency::new(s, s, s, "", 2, false))
-                        .unwrap_or(supplier.currency.clone());
+        if let Some(supplier_id) = &account.linked_supplier_id
+            && let Some(ref supplier_repo) = self.supplier_repo
+            && let Ok(Some(mut supplier)) = supplier_repo.find_by_id(supplier_id).await
+        {
+            let debit = cmd
+                .debit
+                .as_deref()
+                .and_then(|s| Decimal::from_str(s).ok())
+                .unwrap_or(supplier.debit);
+            let credit = cmd
+                .credit
+                .as_deref()
+                .and_then(|s| Decimal::from_str(s).ok())
+                .unwrap_or(supplier.credit);
+            let currency = cmd
+                .currency
+                .as_deref()
+                .map(|s| Currency::new(s, s, s, "", 2, false))
+                .unwrap_or(supplier.currency.clone());
 
-                    let _ = supplier.update_info(
-                        account.name_ar.clone(),
-                        cmd.phone.as_ref().cloned().or(supplier.phone.clone()),
-                        cmd.address.as_ref().cloned().or(supplier.address.clone()),
-                        cmd.notes.as_ref().cloned().or(supplier.notes.clone()),
-                    );
-                    supplier.debit = debit;
-                    supplier.credit = credit;
-                    supplier.currency = currency;
-                    supplier.opening_balance = account.opening_balance;
-                    supplier.balance = credit - debit;
+            let _ = supplier.update_info(
+                account.name_ar.clone(),
+                cmd.phone.as_ref().cloned().or(supplier.phone.clone()),
+                cmd.address.as_ref().cloned().or(supplier.address.clone()),
+                cmd.notes.as_ref().cloned().or(supplier.notes.clone()),
+            );
+            supplier.debit = debit;
+            supplier.credit = credit;
+            supplier.currency = currency;
+            supplier.opening_balance = account.opening_balance;
+            supplier.balance = credit - debit;
 
-                    let _ = supplier_repo.save(&supplier).await;
-                }
-            }
+            let _ = supplier_repo.save(&supplier).await;
         }
 
         Ok(account)
