@@ -35,6 +35,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool dco_decode_bool(dynamic raw);
 
   @protected
+  CategoryCreateInput dco_decode_box_autoadd_category_create_input(dynamic raw);
+
+  @protected
+  CategoryUpdateInput dco_decode_box_autoadd_category_update_input(dynamic raw);
+
+  @protected
   CreateJournalEntryInput dco_decode_box_autoadd_create_journal_entry_input(
     dynamic raw,
   );
@@ -49,6 +55,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   MaterialCreateInput dco_decode_box_autoadd_material_create_input(dynamic raw);
 
   @protected
+  MaterialUnitCreateInput dco_decode_box_autoadd_material_unit_create_input(
+    dynamic raw,
+  );
+
+  @protected
   MaterialUpdateInput dco_decode_box_autoadd_material_update_input(dynamic raw);
 
   @protected
@@ -59,6 +70,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SupplierUpdateInput dco_decode_box_autoadd_supplier_update_input(dynamic raw);
+
+  @protected
+  CategoryCreateInput dco_decode_category_create_input(dynamic raw);
+
+  @protected
+  CategoryDeleteResult dco_decode_category_delete_result(dynamic raw);
+
+  @protected
+  CategoryItem dco_decode_category_item(dynamic raw);
+
+  @protected
+  CategoryUpdateInput dco_decode_category_update_input(dynamic raw);
 
   @protected
   CompanySetupView dco_decode_company_setup_view(dynamic raw);
@@ -91,6 +114,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<AccountItem> dco_decode_list_account_item(dynamic raw);
 
   @protected
+  List<CategoryItem> dco_decode_list_category_item(dynamic raw);
+
+  @protected
   List<CustomerItem> dco_decode_list_customer_item(dynamic raw);
 
   @protected
@@ -98,6 +124,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<MaterialItem> dco_decode_list_material_item(dynamic raw);
+
+  @protected
+  List<MaterialUnitInput> dco_decode_list_material_unit_input(dynamic raw);
+
+  @protected
+  List<MaterialUnitItem> dco_decode_list_material_unit_item(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
@@ -118,6 +150,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MaterialItem dco_decode_material_item(dynamic raw);
+
+  @protected
+  MaterialUnitCreateInput dco_decode_material_unit_create_input(dynamic raw);
+
+  @protected
+  MaterialUnitInput dco_decode_material_unit_input(dynamic raw);
+
+  @protected
+  MaterialUnitItem dco_decode_material_unit_item(dynamic raw);
 
   @protected
   MaterialUpdateInput dco_decode_material_update_input(dynamic raw);
@@ -168,6 +209,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
+  CategoryCreateInput sse_decode_box_autoadd_category_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CategoryUpdateInput sse_decode_box_autoadd_category_update_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   CreateJournalEntryInput sse_decode_box_autoadd_create_journal_entry_input(
     SseDeserializer deserializer,
   );
@@ -188,6 +239,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  MaterialUnitCreateInput sse_decode_box_autoadd_material_unit_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   MaterialUpdateInput sse_decode_box_autoadd_material_update_input(
     SseDeserializer deserializer,
   );
@@ -204,6 +260,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SupplierUpdateInput sse_decode_box_autoadd_supplier_update_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CategoryCreateInput sse_decode_category_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CategoryDeleteResult sse_decode_category_delete_result(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CategoryItem sse_decode_category_item(SseDeserializer deserializer);
+
+  @protected
+  CategoryUpdateInput sse_decode_category_update_input(
     SseDeserializer deserializer,
   );
 
@@ -244,6 +318,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<AccountItem> sse_decode_list_account_item(SseDeserializer deserializer);
 
   @protected
+  List<CategoryItem> sse_decode_list_category_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<CustomerItem> sse_decode_list_customer_item(
     SseDeserializer deserializer,
   );
@@ -255,6 +334,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<MaterialItem> sse_decode_list_material_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<MaterialUnitInput> sse_decode_list_material_unit_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<MaterialUnitItem> sse_decode_list_material_unit_item(
     SseDeserializer deserializer,
   );
 
@@ -283,6 +372,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MaterialItem sse_decode_material_item(SseDeserializer deserializer);
+
+  @protected
+  MaterialUnitCreateInput sse_decode_material_unit_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MaterialUnitInput sse_decode_material_unit_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MaterialUnitItem sse_decode_material_unit_item(SseDeserializer deserializer);
 
   @protected
   MaterialUpdateInput sse_decode_material_update_input(
@@ -345,6 +447,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_bool(bool self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_category_create_input(
+    CategoryCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_category_update_input(
+    CategoryUpdateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_create_journal_entry_input(
     CreateJournalEntryInput self,
     SseSerializer serializer,
@@ -369,6 +483,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_material_unit_create_input(
+    MaterialUnitCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_material_update_input(
     MaterialUpdateInput self,
     SseSerializer serializer,
@@ -389,6 +509,27 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_supplier_update_input(
     SupplierUpdateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_category_create_input(
+    CategoryCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_category_delete_result(
+    CategoryDeleteResult self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_category_item(CategoryItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_category_update_input(
+    CategoryUpdateInput self,
     SseSerializer serializer,
   );
 
@@ -444,6 +585,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_category_item(
+    List<CategoryItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_customer_item(
     List<CustomerItem> self,
     SseSerializer serializer,
@@ -458,6 +605,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_material_item(
     List<MaterialItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_material_unit_input(
+    List<MaterialUnitInput> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_material_unit_item(
+    List<MaterialUnitItem> self,
     SseSerializer serializer,
   );
 
@@ -493,6 +652,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_material_item(MaterialItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_material_unit_create_input(
+    MaterialUnitCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_material_unit_input(
+    MaterialUnitInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_material_unit_item(
+    MaterialUnitItem self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_material_update_input(

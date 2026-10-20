@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'categories.dart';
 import 'ledger.dart';
 
 String? _requiredText(String? value) {
@@ -215,7 +216,8 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
                 ),
                 items: codes
                     .map(
-                      (code) => DropdownMenuItem(value: code, child: Text(code)),
+                      (code) =>
+                          DropdownMenuItem(value: code, child: Text(code)),
                     )
                     .toList(),
                 onChanged: _isEdit
@@ -310,6 +312,7 @@ class _SupplierFormPageState extends State<SupplierFormPage> {
   late final TextEditingController _notes;
   late final TextEditingController _openingBalance;
   late String _currency;
+  late bool _isActive;
   bool _saving = false;
   String? _error;
 
@@ -327,6 +330,7 @@ class _SupplierFormPageState extends State<SupplierFormPage> {
       text: supplier?.openingBalance ?? '0',
     );
     _currency = supplier?.currency ?? widget.baseCurrency;
+    _isActive = supplier?.isActive ?? true;
   }
 
   @override
@@ -358,6 +362,7 @@ class _SupplierFormPageState extends State<SupplierFormPage> {
           phone: _optional(_phone.text),
           address: _optional(_address.text),
           notes: _optional(_notes.text),
+          isActive: _isActive,
         );
       } else {
         await widget.gateway.createSupplier(
@@ -440,7 +445,8 @@ class _SupplierFormPageState extends State<SupplierFormPage> {
                 ),
                 items: codes
                     .map(
-                      (code) => DropdownMenuItem(value: code, child: Text(code)),
+                      (code) =>
+                          DropdownMenuItem(value: code, child: Text(code)),
                     )
                     .toList(),
                 onChanged: _isEdit
@@ -464,7 +470,7 @@ class _SupplierFormPageState extends State<SupplierFormPage> {
                 decoration: InputDecoration(
                   labelText: 'الرصيد الافتتاحي (دائن)',
                   helperText: _isEdit
-                      ? 'لا يمكن تعديل الرصيد الافتتاحي من هنا؛ استخدم قيود التسوية.'
+                      ? 'يمكن تعديل الرصيد الافتتاحي من شاشة «الأرصدة الافتتاحية».'
                       : 'المبلغ الذي علينا دفعه للمورد عند بداية النظام.',
                   border: const OutlineInputBorder(),
                 ),
@@ -480,6 +486,18 @@ class _SupplierFormPageState extends State<SupplierFormPage> {
                   border: OutlineInputBorder(),
                 ),
               ),
+              if (_isEdit) ...[
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('نشط'),
+                  subtitle: const Text(
+                    'المورد غير النشط يبقى في السجلات ولا يظهر في القوائم التشغيلية.',
+                  ),
+                  value: _isActive,
+                  onChanged: (value) => setState(() => _isActive = value),
+                ),
+              ],
               const SizedBox(height: 20),
               FilledButton.icon(
                 onPressed: _saving ? null : _save,
@@ -506,12 +524,14 @@ class MaterialFormPage extends StatefulWidget {
     required this.gateway,
     required this.currencies,
     required this.baseCurrency,
+    required this.categories,
     this.material,
   });
 
   final LedgerGateway gateway;
   final List<CurrencyOption> currencies;
   final String baseCurrency;
+  final List<LedgerCategory> categories;
   final LedgerMaterial? material;
 
   @override
@@ -533,6 +553,8 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
   late final TextEditingController _expiryDays;
   late String _currency;
   late bool _hasExpiry;
+  final Set<String> _selectedCategoryIds = {};
+  final List<_ExtraUnitControllers> _extraUnits = [];
   bool _saving = false;
   String? _error;
 
@@ -559,6 +581,15 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
     );
     _currency = material?.currency ?? widget.baseCurrency;
     _hasExpiry = material?.hasExpiry ?? false;
+    _selectedCategoryIds.addAll(material?.categoryIds ?? const []);
+    if (_selectedCategoryIds.isEmpty) {
+      for (final category in widget.categories) {
+        if (category.isSystem) {
+          _selectedCategoryIds.add(category.id);
+          break;
+        }
+      }
+    }
   }
 
   @override
@@ -574,7 +605,23 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
     _salePrice.dispose();
     _notes.dispose();
     _expiryDays.dispose();
+    for (final unit in _extraUnits) {
+      unit.dispose();
+    }
     super.dispose();
+  }
+
+  void _addExtraUnit() {
+    setState(() {
+      _extraUnits.add(_ExtraUnitControllers());
+    });
+  }
+
+  void _removeExtraUnit(int index) {
+    setState(() {
+      final unit = _extraUnits.removeAt(index);
+      unit.dispose();
+    });
   }
 
   Future<void> _save() async {
@@ -588,6 +635,17 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
     });
 
     final expiryDays = int.tryParse(_expiryDays.text.trim()) ?? 30;
+    final extraUnits = _extraUnits
+        .map(
+          (unit) => MaterialUnitDraft(
+            name: unit.name.text.trim(),
+            conversionFactor: unit.factor.text.trim().isEmpty
+                ? '1'
+                : unit.factor.text.trim(),
+            barcode: _optional(unit.barcode.text),
+          ),
+        )
+        .toList();
 
     try {
       if (_isEdit) {
@@ -602,6 +660,7 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
           minimumStock: _minimumStock.text.trim().isEmpty
               ? '0'
               : _minimumStock.text.trim(),
+          categoryIds: _selectedCategoryIds.toList(),
           notes: _optional(_notes.text),
           purchasePrice: _optional(_purchasePrice.text),
           salePrice: _optional(_salePrice.text),
@@ -622,6 +681,8 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
           conversionFactor: _conversionFactor.text.trim().isEmpty
               ? '1'
               : _conversionFactor.text.trim(),
+          extraUnits: extraUnits,
+          categoryIds: _selectedCategoryIds.toList(),
           purchasePrice: _optional(_purchasePrice.text),
           salePrice: _optional(_salePrice.text),
           currency: _currency,
@@ -643,6 +704,147 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
         _error = describeError(error);
       });
     }
+  }
+
+  Widget _buildCategoryChips() {
+    final visible = widget.categories
+        .where(
+          (category) =>
+              category.isActive || _selectedCategoryIds.contains(category.id),
+        )
+        .toList();
+    if (visible.isEmpty) {
+      return const Text(
+        'لا توجد تصنيفات نشطة. أنشئ تصنيفًا من شاشة التصنيفات.',
+      );
+    }
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: visible
+          .map(
+            (category) => FilterChip(
+              label: Text(categoryLabel(category, widget.categories)),
+              selected: _selectedCategoryIds.contains(category.id),
+              onSelected: (selected) {
+                setState(() {
+                  if (selected) {
+                    if (category.isSystem) {
+                      _selectedCategoryIds.clear();
+                    } else {
+                      _selectedCategoryIds.removeWhere(
+                        (id) => widget.categories.any(
+                          (candidate) =>
+                              candidate.id == id && candidate.isSystem,
+                        ),
+                      );
+                    }
+                    _selectedCategoryIds.add(category.id);
+                  } else {
+                    _selectedCategoryIds.remove(category.id);
+                  }
+                });
+              },
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _buildExtraUnits() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'وحدات إضافية',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _addExtraUnit,
+                  icon: const Icon(Icons.add),
+                  label: const Text('إضافة وحدة'),
+                ),
+              ],
+            ),
+            Text(
+              'الوحدة الأساسية هي وحدة المخزون والأسعار. أضف وحدات مثل الكرتونة أو الكيس مع معامل التحويل.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            if (_extraUnits.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text('لم تُضف وحدات إضافية.'),
+              ),
+            ..._extraUnits.asMap().entries.map((entry) {
+              final index = entry.key;
+              final unit = entry.value;
+              return Column(
+                key: ObjectKey(unit),
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Divider(height: 24),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: unit.name,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'اسم الوحدة',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: _requiredText,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          controller: unit.factor,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9.]'),
+                            ),
+                          ],
+                          decoration: const InputDecoration(
+                            labelText: 'معامل التحويل',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: _positiveNumber,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'حذف الوحدة',
+                        onPressed: () => _removeExtraUnit(index),
+                        icon: const Icon(Icons.delete_outline),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: unit.barcode,
+                    decoration: const InputDecoration(
+                      labelText: 'باركود الوحدة (اختياري)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              );
+            }),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -715,6 +917,16 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
                 ),
               ),
               const SizedBox(height: 12),
+              InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'التصنيفات',
+                  helperText:
+                      'يمكن اختيار أكثر من تصنيف. يُستخدم التصنيف الافتراضي عند عدم الاختيار.',
+                  border: OutlineInputBorder(),
+                ),
+                child: _buildCategoryChips(),
+              ),
+              const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -750,6 +962,7 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
                   ),
                 ],
               ),
+              if (!_isEdit) ...[const SizedBox(height: 12), _buildExtraUnits()],
               const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -773,7 +986,9 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      initialValue: codes.contains(_currency) ? _currency : null,
+                      initialValue: codes.contains(_currency)
+                          ? _currency
+                          : null,
                       decoration: const InputDecoration(
                         labelText: 'عملة الأسعار',
                         border: OutlineInputBorder(),
@@ -881,6 +1096,18 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
         ),
       ),
     );
+  }
+}
+
+class _ExtraUnitControllers {
+  final name = TextEditingController();
+  final factor = TextEditingController(text: '1');
+  final barcode = TextEditingController();
+
+  void dispose() {
+    name.dispose();
+    factor.dispose();
+    barcode.dispose();
   }
 }
 

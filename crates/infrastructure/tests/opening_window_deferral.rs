@@ -341,6 +341,7 @@ async fn supplier_update_defers_adjustment_while_window_open() {
         opening_balance: Some("950".into()),
         currency: Some("S".into()),
         notes: None,
+        is_active: true,
     })
     .await
     .expect("update supplier during window");

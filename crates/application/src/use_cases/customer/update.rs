@@ -1,5 +1,7 @@
 use chrono::Utc;
+use domain::customers::Customer;
 use domain::shared::ids::{AccountId, CustomerId};
+use rust_decimal::Decimal;
 use std::sync::Arc;
 
 use crate::dto::customer_dto::{CustomerDto, UpdateCustomerRequest};
@@ -50,6 +52,7 @@ impl UpdateCustomerUseCase {
 
         let old_debit = customer.debit;
         let old_credit = customer.credit;
+        let direct_balance_update = req.debit.is_some() || req.credit.is_some();
 
         customer
             .update_info(
@@ -79,7 +82,12 @@ impl UpdateCustomerUseCase {
         }
 
         if let Some(ref ob) = req.opening_balance {
-            customer.opening_balance = crate::utils::parse_decimal(Some(ob), "رصيد الافتتاح")?;
+            let new_opening = crate::utils::parse_decimal(Some(ob), "رصيد الافتتاح")?;
+            if direct_balance_update {
+                customer.opening_balance = new_opening;
+            } else {
+                apply_opening_balance_delta(&mut customer, new_opening);
+            }
         }
 
         if let Some(ref cur) = req.currency {
@@ -158,5 +166,73 @@ impl UpdateCustomerUseCase {
             .await?;
 
         Ok(CustomerDto::from(customer))
+    }
+}
+
+/// Applies an opening-balance change as a delta so later activity (invoices,
+/// payments, returns) is preserved. The linked account and adjustment journal
+/// follow the resulting balance change, which equals the opening delta.
+fn apply_opening_balance_delta(customer: &mut Customer, new_opening: Decimal) {
+    let delta = new_opening - customer.opening_balance;
+    customer.opening_balance = new_opening;
+
+    if delta > Decimal::ZERO {
+        customer.debit += delta;
+    } else if delta < Decimal::ZERO {
+        let decrease = -delta;
+        if customer.debit >= decrease {
+            customer.debit -= decrease;
+        } else {
+            let remainder = decrease - customer.debit;
+            customer.debit = Decimal::ZERO;
+            customer.credit += remainder;
+        }
+    }
+
+    customer.balance = customer.debit - customer.credit;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use domain::shared::currency::Currency;
+    use rust_decimal_macros::dec;
+
+    fn sample_customer(debit: Decimal, credit: Decimal, opening: Decimal) -> Customer {
+        let mut customer = Customer::new(
+            "C1".into(),
+            "Test customer".into(),
+            None,
+            None,
+            None,
+            debit,
+            credit,
+            opening,
+            Currency::new("SYP", "ليرة سورية", "Syrian Pound", "ل.س", 2, true),
+            None,
+        )
+        .expect("valid customer");
+        customer.balance = debit - credit;
+        customer
+    }
+
+    #[test]
+    fn increasing_opening_balance_adds_to_debit_and_preserves_activity() {
+        let mut customer = sample_customer(dec!(80), dec!(20), dec!(50));
+        apply_opening_balance_delta(&mut customer, dec!(70));
+        assert_eq!(customer.opening_balance, dec!(70));
+        assert_eq!(customer.debit, dec!(100));
+        assert_eq!(customer.credit, dec!(20));
+        assert_eq!(customer.balance, dec!(80));
+    }
+
+    #[test]
+    fn decreasing_opening_balance_moves_excess_to_credit() {
+        let mut customer = sample_customer(dec!(10), dec!(20), dec!(50));
+        apply_opening_balance_delta(&mut customer, dec!(20));
+        assert_eq!(customer.opening_balance, dec!(20));
+        assert_eq!(customer.debit, Decimal::ZERO);
+        assert_eq!(customer.credit, dec!(40));
+        assert_eq!(customer.balance, dec!(-40));
     }
 }

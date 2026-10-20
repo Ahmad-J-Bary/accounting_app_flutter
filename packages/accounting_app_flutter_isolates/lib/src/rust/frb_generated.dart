@@ -68,7 +68,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -1124305389;
+  int get rustContentHash => 876332350;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -80,6 +80,14 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<List<MaterialUnitItem>> crateApiAccountingAddMaterialUnit({
+    required MaterialUnitCreateInput input,
+  });
+
+  Future<CategoryItem> crateApiAccountingCreateCategory({
+    required CategoryCreateInput input,
+  });
+
   Future<CustomerItem> crateApiAccountingCreateCustomer({
     required CustomerCreateInput input,
   });
@@ -96,9 +104,18 @@ abstract class RustLibApi extends BaseApi {
     required SupplierCreateInput input,
   });
 
+  Future<CategoryDeleteResult> crateApiAccountingDeleteCategory({
+    required String id,
+  });
+
   Future<void> crateApiAccountingDeleteCustomer({required String id});
 
   Future<void> crateApiAccountingDeleteMaterial({required String id});
+
+  Future<List<MaterialUnitItem>> crateApiAccountingDeleteMaterialUnit({
+    required String materialId,
+    required String unitId,
+  });
 
   Future<void> crateApiAccountingDeleteSupplier({required String id});
 
@@ -112,7 +129,13 @@ abstract class RustLibApi extends BaseApi {
 
   Future<List<AccountItem>> crateApiAccountingListAccounts();
 
+  Future<List<CategoryItem>> crateApiAccountingListCategories();
+
   Future<List<CustomerItem>> crateApiAccountingListCustomers();
+
+  Future<List<MaterialUnitItem>> crateApiAccountingListMaterialUnits({
+    required String materialId,
+  });
 
   Future<List<MaterialItem>> crateApiAccountingListMaterials();
 
@@ -131,6 +154,10 @@ abstract class RustLibApi extends BaseApi {
   Future<TrialBalanceView> crateApiAccountingTrialBalance({
     String? fromDate,
     String? toDate,
+  });
+
+  Future<CategoryItem> crateApiAccountingUpdateCategory({
+    required CategoryUpdateInput input,
   });
 
   Future<CustomerItem> crateApiAccountingUpdateCustomer({
@@ -157,6 +184,66 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<List<MaterialUnitItem>> crateApiAccountingAddMaterialUnit({
+    required MaterialUnitCreateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_material_unit_create_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_material_unit_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingAddMaterialUnitConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingAddMaterialUnitConstMeta =>
+      const TaskConstMeta(debugName: "add_material_unit", argNames: ["input"]);
+
+  @override
+  Future<CategoryItem> crateApiAccountingCreateCategory({
+    required CategoryCreateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_category_create_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 2,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_category_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingCreateCategoryConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingCreateCategoryConstMeta =>
+      const TaskConstMeta(debugName: "create_category", argNames: ["input"]);
+
+  @override
   Future<CustomerItem> crateApiAccountingCreateCustomer({
     required CustomerCreateInput input,
   }) {
@@ -168,7 +255,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 1,
+            funcId: 3,
             port: port_,
           );
         },
@@ -198,7 +285,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 2,
+            funcId: 4,
             port: port_,
           );
         },
@@ -231,7 +318,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 3,
+            funcId: 5,
             port: port_,
           );
         },
@@ -261,7 +348,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 6,
             port: port_,
           );
         },
@@ -280,6 +367,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "create_supplier", argNames: ["input"]);
 
   @override
+  Future<CategoryDeleteResult> crateApiAccountingDeleteCategory({
+    required String id,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 7,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_category_delete_result,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingDeleteCategoryConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingDeleteCategoryConstMeta =>
+      const TaskConstMeta(debugName: "delete_category", argNames: ["id"]);
+
+  @override
   Future<void> crateApiAccountingDeleteCustomer({required String id}) {
     return handler.executeNormal(
       NormalTask(
@@ -289,7 +406,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 5,
+            funcId: 8,
             port: port_,
           );
         },
@@ -317,7 +434,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 6,
+            funcId: 9,
             port: port_,
           );
         },
@@ -336,6 +453,41 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "delete_material", argNames: ["id"]);
 
   @override
+  Future<List<MaterialUnitItem>> crateApiAccountingDeleteMaterialUnit({
+    required String materialId,
+    required String unitId,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(materialId, serializer);
+          sse_encode_String(unitId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 10,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_material_unit_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingDeleteMaterialUnitConstMeta,
+        argValues: [materialId, unitId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingDeleteMaterialUnitConstMeta =>
+      const TaskConstMeta(
+        debugName: "delete_material_unit",
+        argNames: ["materialId", "unitId"],
+      );
+
+  @override
   Future<void> crateApiAccountingDeleteSupplier({required String id}) {
     return handler.executeNormal(
       NormalTask(
@@ -345,7 +497,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 11,
             port: port_,
           );
         },
@@ -372,7 +524,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 12,
             port: port_,
           );
         },
@@ -397,7 +549,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(name, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -423,7 +575,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 10,
+            funcId: 14,
             port: port_,
           );
         },
@@ -450,7 +602,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 15,
             port: port_,
           );
         },
@@ -477,7 +629,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 12,
+            funcId: 16,
             port: port_,
           );
         },
@@ -496,6 +648,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "list_accounts", argNames: []);
 
   @override
+  Future<List<CategoryItem>> crateApiAccountingListCategories() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 17,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_category_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingListCategoriesConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingListCategoriesConstMeta =>
+      const TaskConstMeta(debugName: "list_categories", argNames: []);
+
+  @override
   Future<List<CustomerItem>> crateApiAccountingListCustomers() {
     return handler.executeNormal(
       NormalTask(
@@ -504,7 +683,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 13,
+            funcId: 18,
             port: port_,
           );
         },
@@ -523,6 +702,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "list_customers", argNames: []);
 
   @override
+  Future<List<MaterialUnitItem>> crateApiAccountingListMaterialUnits({
+    required String materialId,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(materialId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 19,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_material_unit_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingListMaterialUnitsConstMeta,
+        argValues: [materialId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingListMaterialUnitsConstMeta =>
+      const TaskConstMeta(
+        debugName: "list_material_units",
+        argNames: ["materialId"],
+      );
+
+  @override
   Future<List<MaterialItem>> crateApiAccountingListMaterials() {
     return handler.executeNormal(
       NormalTask(
@@ -531,7 +743,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 20,
             port: port_,
           );
         },
@@ -558,7 +770,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 15,
+            funcId: 21,
             port: port_,
           );
         },
@@ -588,7 +800,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 16,
+            funcId: 22,
             port: port_,
           );
         },
@@ -618,7 +830,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 17,
+            funcId: 23,
             port: port_,
           );
         },
@@ -648,7 +860,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 18,
+            funcId: 24,
             port: port_,
           );
         },
@@ -680,7 +892,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 19,
+            funcId: 25,
             port: port_,
           );
         },
@@ -702,6 +914,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<CategoryItem> crateApiAccountingUpdateCategory({
+    required CategoryUpdateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_category_update_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 26,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_category_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingUpdateCategoryConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingUpdateCategoryConstMeta =>
+      const TaskConstMeta(debugName: "update_category", argNames: ["input"]);
+
+  @override
   Future<CustomerItem> crateApiAccountingUpdateCustomer({
     required CustomerUpdateInput input,
   }) {
@@ -713,7 +955,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 20,
+            funcId: 27,
             port: port_,
           );
         },
@@ -743,7 +985,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 21,
+            funcId: 28,
             port: port_,
           );
         },
@@ -773,7 +1015,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 22,
+            funcId: 29,
             port: port_,
           );
         },
@@ -800,7 +1042,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 23,
+            funcId: 30,
             port: port_,
           );
         },
@@ -864,6 +1106,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CategoryCreateInput dco_decode_box_autoadd_category_create_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_category_create_input(raw);
+  }
+
+  @protected
+  CategoryUpdateInput dco_decode_box_autoadd_category_update_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_category_update_input(raw);
+  }
+
+  @protected
   CreateJournalEntryInput dco_decode_box_autoadd_create_journal_entry_input(
     dynamic raw,
   ) {
@@ -896,6 +1154,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  MaterialUnitCreateInput dco_decode_box_autoadd_material_unit_create_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_material_unit_create_input(raw);
+  }
+
+  @protected
   MaterialUpdateInput dco_decode_box_autoadd_material_update_input(
     dynamic raw,
   ) {
@@ -923,6 +1189,63 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_supplier_update_input(raw);
+  }
+
+  @protected
+  CategoryCreateInput dco_decode_category_create_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return CategoryCreateInput(
+      name: dco_decode_String(arr[0]),
+      parentId: dco_decode_opt_String(arr[1]),
+      codePrefix: dco_decode_opt_String(arr[2]),
+    );
+  }
+
+  @protected
+  CategoryDeleteResult dco_decode_category_delete_result(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return CategoryDeleteResult(
+      materialsReassigned: dco_decode_i_32(arr[0]),
+      subsDeleted: dco_decode_i_32(arr[1]),
+    );
+  }
+
+  @protected
+  CategoryItem dco_decode_category_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return CategoryItem(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      parentId: dco_decode_opt_String(arr[2]),
+      codePrefix: dco_decode_opt_String(arr[3]),
+      isActive: dco_decode_bool(arr[4]),
+      materialCount: dco_decode_i_32(arr[5]),
+      systemKey: dco_decode_opt_String(arr[6]),
+    );
+  }
+
+  @protected
+  CategoryUpdateInput dco_decode_category_update_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return CategoryUpdateInput(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      parentId: dco_decode_opt_String(arr[2]),
+      isActive: dco_decode_bool(arr[3]),
+      codePrefix: dco_decode_opt_String(arr[4]),
+    );
   }
 
   @protected
@@ -1000,8 +1323,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   CustomerUpdateInput dco_decode_customer_update_input(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 7)
-      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return CustomerUpdateInput(
       id: dco_decode_String(arr[0]),
       code: dco_decode_String(arr[1]),
@@ -1009,7 +1332,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       phone: dco_decode_opt_String(arr[3]),
       address: dco_decode_opt_String(arr[4]),
       notes: dco_decode_opt_String(arr[5]),
-      isActive: dco_decode_bool(arr[6]),
+      openingBalance: dco_decode_opt_String(arr[6]),
+      isActive: dco_decode_bool(arr[7]),
     );
   }
 
@@ -1067,6 +1391,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<CategoryItem> dco_decode_list_category_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_category_item).toList();
+  }
+
+  @protected
   List<CustomerItem> dco_decode_list_customer_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_customer_item).toList();
@@ -1082,6 +1412,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<MaterialItem> dco_decode_list_material_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_material_item).toList();
+  }
+
+  @protected
+  List<MaterialUnitInput> dco_decode_list_material_unit_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_material_unit_input).toList();
+  }
+
+  @protected
+  List<MaterialUnitItem> dco_decode_list_material_unit_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_material_unit_item).toList();
   }
 
   @protected
@@ -1116,8 +1458,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   MaterialCreateInput dco_decode_material_create_input(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 13)
-      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
+    if (arr.length != 15)
+      throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
     return MaterialCreateInput(
       name: dco_decode_String(arr[0]),
       nameEn: dco_decode_opt_String(arr[1]),
@@ -1126,12 +1468,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       minimumStock: dco_decode_String(arr[4]),
       unitName: dco_decode_String(arr[5]),
       conversionFactor: dco_decode_String(arr[6]),
-      purchasePrice: dco_decode_opt_String(arr[7]),
-      salePrice: dco_decode_opt_String(arr[8]),
-      currency: dco_decode_String(arr[9]),
-      notes: dco_decode_opt_String(arr[10]),
-      hasExpiry: dco_decode_bool(arr[11]),
-      expiryAlertBeforeDays: dco_decode_i_32(arr[12]),
+      extraUnits: dco_decode_list_material_unit_input(arr[7]),
+      categoryIds: dco_decode_list_String(arr[8]),
+      purchasePrice: dco_decode_opt_String(arr[9]),
+      salePrice: dco_decode_opt_String(arr[10]),
+      currency: dco_decode_String(arr[11]),
+      notes: dco_decode_opt_String(arr[12]),
+      hasExpiry: dco_decode_bool(arr[13]),
+      expiryAlertBeforeDays: dco_decode_i_32(arr[14]),
     );
   }
 
@@ -1139,8 +1483,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   MaterialItem dco_decode_material_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 25)
-      throw Exception('unexpected arr length: expect 25 but see ${arr.length}');
+    if (arr.length != 26)
+      throw Exception('unexpected arr length: expect 26 but see ${arr.length}');
     return MaterialItem(
       id: dco_decode_String(arr[0]),
       name: dco_decode_String(arr[1]),
@@ -1158,15 +1502,58 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       averageCost: dco_decode_String(arr[13]),
       averageCostBase: dco_decode_String(arr[14]),
       unitsCount: dco_decode_i_32(arr[15]),
-      hasExpiry: dco_decode_bool(arr[16]),
-      expiryAlertBeforeDays: dco_decode_i_32(arr[17]),
-      costingMethod: dco_decode_String(arr[18]),
-      purchasePrice: dco_decode_String(arr[19]),
-      salePrice: dco_decode_String(arr[20]),
-      currency: dco_decode_String(arr[21]),
-      notes: dco_decode_opt_String(arr[22]),
-      unitName: dco_decode_String(arr[23]),
-      conversionFactor: dco_decode_String(arr[24]),
+      units: dco_decode_list_material_unit_item(arr[16]),
+      hasExpiry: dco_decode_bool(arr[17]),
+      expiryAlertBeforeDays: dco_decode_i_32(arr[18]),
+      costingMethod: dco_decode_String(arr[19]),
+      purchasePrice: dco_decode_String(arr[20]),
+      salePrice: dco_decode_String(arr[21]),
+      currency: dco_decode_String(arr[22]),
+      notes: dco_decode_opt_String(arr[23]),
+      unitName: dco_decode_String(arr[24]),
+      conversionFactor: dco_decode_String(arr[25]),
+    );
+  }
+
+  @protected
+  MaterialUnitCreateInput dco_decode_material_unit_create_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return MaterialUnitCreateInput(
+      materialId: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      conversionFactor: dco_decode_String(arr[2]),
+      barcode: dco_decode_opt_String(arr[3]),
+    );
+  }
+
+  @protected
+  MaterialUnitInput dco_decode_material_unit_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return MaterialUnitInput(
+      name: dco_decode_String(arr[0]),
+      conversionFactor: dco_decode_String(arr[1]),
+      barcode: dco_decode_opt_String(arr[2]),
+    );
+  }
+
+  @protected
+  MaterialUnitItem dco_decode_material_unit_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return MaterialUnitItem(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      conversionFactor: dco_decode_String(arr[2]),
+      barcode: dco_decode_opt_String(arr[3]),
+      isBase: dco_decode_bool(arr[4]),
     );
   }
 
@@ -1174,8 +1561,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   MaterialUpdateInput dco_decode_material_update_input(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 12)
-      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
+    if (arr.length != 13)
+      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
     return MaterialUpdateInput(
       id: dco_decode_String(arr[0]),
       name: dco_decode_String(arr[1]),
@@ -1183,12 +1570,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       barcode: dco_decode_String(arr[3]),
       code: dco_decode_String(arr[4]),
       minimumStock: dco_decode_String(arr[5]),
-      notes: dco_decode_opt_String(arr[6]),
-      purchasePrice: dco_decode_opt_String(arr[7]),
-      salePrice: dco_decode_opt_String(arr[8]),
-      currency: dco_decode_opt_String(arr[9]),
-      hasExpiry: dco_decode_bool(arr[10]),
-      expiryAlertBeforeDays: dco_decode_i_32(arr[11]),
+      categoryIds: dco_decode_list_String(arr[6]),
+      notes: dco_decode_opt_String(arr[7]),
+      purchasePrice: dco_decode_opt_String(arr[8]),
+      salePrice: dco_decode_opt_String(arr[9]),
+      currency: dco_decode_opt_String(arr[10]),
+      hasExpiry: dco_decode_bool(arr[11]),
+      expiryAlertBeforeDays: dco_decode_i_32(arr[12]),
     );
   }
 
@@ -1272,8 +1660,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   SupplierUpdateInput dco_decode_supplier_update_input(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 6)
-      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return SupplierUpdateInput(
       id: dco_decode_String(arr[0]),
       code: dco_decode_String(arr[1]),
@@ -1281,6 +1669,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       phone: dco_decode_opt_String(arr[3]),
       address: dco_decode_opt_String(arr[4]),
       notes: dco_decode_opt_String(arr[5]),
+      openingBalance: dco_decode_opt_String(arr[6]),
+      isActive: dco_decode_bool(arr[7]),
     );
   }
 
@@ -1392,6 +1782,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CategoryCreateInput sse_decode_box_autoadd_category_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_category_create_input(deserializer));
+  }
+
+  @protected
+  CategoryUpdateInput sse_decode_box_autoadd_category_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_category_update_input(deserializer));
+  }
+
+  @protected
   CreateJournalEntryInput sse_decode_box_autoadd_create_journal_entry_input(
     SseDeserializer deserializer,
   ) {
@@ -1424,6 +1830,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  MaterialUnitCreateInput sse_decode_box_autoadd_material_unit_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_material_unit_create_input(deserializer));
+  }
+
+  @protected
   MaterialUpdateInput sse_decode_box_autoadd_material_update_input(
     SseDeserializer deserializer,
   ) {
@@ -1453,6 +1867,74 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_supplier_update_input(deserializer));
+  }
+
+  @protected
+  CategoryCreateInput sse_decode_category_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_name = sse_decode_String(deserializer);
+    var var_parentId = sse_decode_opt_String(deserializer);
+    var var_codePrefix = sse_decode_opt_String(deserializer);
+    return CategoryCreateInput(
+      name: var_name,
+      parentId: var_parentId,
+      codePrefix: var_codePrefix,
+    );
+  }
+
+  @protected
+  CategoryDeleteResult sse_decode_category_delete_result(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_materialsReassigned = sse_decode_i_32(deserializer);
+    var var_subsDeleted = sse_decode_i_32(deserializer);
+    return CategoryDeleteResult(
+      materialsReassigned: var_materialsReassigned,
+      subsDeleted: var_subsDeleted,
+    );
+  }
+
+  @protected
+  CategoryItem sse_decode_category_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_parentId = sse_decode_opt_String(deserializer);
+    var var_codePrefix = sse_decode_opt_String(deserializer);
+    var var_isActive = sse_decode_bool(deserializer);
+    var var_materialCount = sse_decode_i_32(deserializer);
+    var var_systemKey = sse_decode_opt_String(deserializer);
+    return CategoryItem(
+      id: var_id,
+      name: var_name,
+      parentId: var_parentId,
+      codePrefix: var_codePrefix,
+      isActive: var_isActive,
+      materialCount: var_materialCount,
+      systemKey: var_systemKey,
+    );
+  }
+
+  @protected
+  CategoryUpdateInput sse_decode_category_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_parentId = sse_decode_opt_String(deserializer);
+    var var_isActive = sse_decode_bool(deserializer);
+    var var_codePrefix = sse_decode_opt_String(deserializer);
+    return CategoryUpdateInput(
+      id: var_id,
+      name: var_name,
+      parentId: var_parentId,
+      isActive: var_isActive,
+      codePrefix: var_codePrefix,
+    );
   }
 
   @protected
@@ -1560,6 +2042,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_phone = sse_decode_opt_String(deserializer);
     var var_address = sse_decode_opt_String(deserializer);
     var var_notes = sse_decode_opt_String(deserializer);
+    var var_openingBalance = sse_decode_opt_String(deserializer);
     var var_isActive = sse_decode_bool(deserializer);
     return CustomerUpdateInput(
       id: var_id,
@@ -1568,6 +2051,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       phone: var_phone,
       address: var_address,
       notes: var_notes,
+      openingBalance: var_openingBalance,
       isActive: var_isActive,
     );
   }
@@ -1647,6 +2131,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<CategoryItem> sse_decode_list_category_item(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <CategoryItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_category_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<CustomerItem> sse_decode_list_customer_item(
     SseDeserializer deserializer,
   ) {
@@ -1684,6 +2182,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <MaterialItem>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_material_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<MaterialUnitInput> sse_decode_list_material_unit_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <MaterialUnitInput>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_material_unit_input(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<MaterialUnitItem> sse_decode_list_material_unit_item(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <MaterialUnitItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_material_unit_item(deserializer));
     }
     return ans_;
   }
@@ -1749,6 +2275,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_minimumStock = sse_decode_String(deserializer);
     var var_unitName = sse_decode_String(deserializer);
     var var_conversionFactor = sse_decode_String(deserializer);
+    var var_extraUnits = sse_decode_list_material_unit_input(deserializer);
+    var var_categoryIds = sse_decode_list_String(deserializer);
     var var_purchasePrice = sse_decode_opt_String(deserializer);
     var var_salePrice = sse_decode_opt_String(deserializer);
     var var_currency = sse_decode_String(deserializer);
@@ -1763,6 +2291,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       minimumStock: var_minimumStock,
       unitName: var_unitName,
       conversionFactor: var_conversionFactor,
+      extraUnits: var_extraUnits,
+      categoryIds: var_categoryIds,
       purchasePrice: var_purchasePrice,
       salePrice: var_salePrice,
       currency: var_currency,
@@ -1791,6 +2321,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_averageCost = sse_decode_String(deserializer);
     var var_averageCostBase = sse_decode_String(deserializer);
     var var_unitsCount = sse_decode_i_32(deserializer);
+    var var_units = sse_decode_list_material_unit_item(deserializer);
     var var_hasExpiry = sse_decode_bool(deserializer);
     var var_expiryAlertBeforeDays = sse_decode_i_32(deserializer);
     var var_costingMethod = sse_decode_String(deserializer);
@@ -1817,6 +2348,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       averageCost: var_averageCost,
       averageCostBase: var_averageCostBase,
       unitsCount: var_unitsCount,
+      units: var_units,
       hasExpiry: var_hasExpiry,
       expiryAlertBeforeDays: var_expiryAlertBeforeDays,
       costingMethod: var_costingMethod,
@@ -1826,6 +2358,55 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       notes: var_notes,
       unitName: var_unitName,
       conversionFactor: var_conversionFactor,
+    );
+  }
+
+  @protected
+  MaterialUnitCreateInput sse_decode_material_unit_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_materialId = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_conversionFactor = sse_decode_String(deserializer);
+    var var_barcode = sse_decode_opt_String(deserializer);
+    return MaterialUnitCreateInput(
+      materialId: var_materialId,
+      name: var_name,
+      conversionFactor: var_conversionFactor,
+      barcode: var_barcode,
+    );
+  }
+
+  @protected
+  MaterialUnitInput sse_decode_material_unit_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_name = sse_decode_String(deserializer);
+    var var_conversionFactor = sse_decode_String(deserializer);
+    var var_barcode = sse_decode_opt_String(deserializer);
+    return MaterialUnitInput(
+      name: var_name,
+      conversionFactor: var_conversionFactor,
+      barcode: var_barcode,
+    );
+  }
+
+  @protected
+  MaterialUnitItem sse_decode_material_unit_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_conversionFactor = sse_decode_String(deserializer);
+    var var_barcode = sse_decode_opt_String(deserializer);
+    var var_isBase = sse_decode_bool(deserializer);
+    return MaterialUnitItem(
+      id: var_id,
+      name: var_name,
+      conversionFactor: var_conversionFactor,
+      barcode: var_barcode,
+      isBase: var_isBase,
     );
   }
 
@@ -1840,6 +2421,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_barcode = sse_decode_String(deserializer);
     var var_code = sse_decode_String(deserializer);
     var var_minimumStock = sse_decode_String(deserializer);
+    var var_categoryIds = sse_decode_list_String(deserializer);
     var var_notes = sse_decode_opt_String(deserializer);
     var var_purchasePrice = sse_decode_opt_String(deserializer);
     var var_salePrice = sse_decode_opt_String(deserializer);
@@ -1853,6 +2435,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       barcode: var_barcode,
       code: var_code,
       minimumStock: var_minimumStock,
+      categoryIds: var_categoryIds,
       notes: var_notes,
       purchasePrice: var_purchasePrice,
       salePrice: var_salePrice,
@@ -1976,6 +2559,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_phone = sse_decode_opt_String(deserializer);
     var var_address = sse_decode_opt_String(deserializer);
     var var_notes = sse_decode_opt_String(deserializer);
+    var var_openingBalance = sse_decode_opt_String(deserializer);
+    var var_isActive = sse_decode_bool(deserializer);
     return SupplierUpdateInput(
       id: var_id,
       code: var_code,
@@ -1983,6 +2568,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       phone: var_phone,
       address: var_address,
       notes: var_notes,
+      openingBalance: var_openingBalance,
+      isActive: var_isActive,
     );
   }
 
@@ -2090,6 +2677,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_category_create_input(
+    CategoryCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_category_create_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_category_update_input(
+    CategoryUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_category_update_input(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_create_journal_entry_input(
     CreateJournalEntryInput self,
     SseSerializer serializer,
@@ -2126,6 +2731,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_material_unit_create_input(
+    MaterialUnitCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_material_unit_create_input(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_material_update_input(
     MaterialUpdateInput self,
     SseSerializer serializer,
@@ -2159,6 +2773,52 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_supplier_update_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_category_create_input(
+    CategoryCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.parentId, serializer);
+    sse_encode_opt_String(self.codePrefix, serializer);
+  }
+
+  @protected
+  void sse_encode_category_delete_result(
+    CategoryDeleteResult self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.materialsReassigned, serializer);
+    sse_encode_i_32(self.subsDeleted, serializer);
+  }
+
+  @protected
+  void sse_encode_category_item(CategoryItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.parentId, serializer);
+    sse_encode_opt_String(self.codePrefix, serializer);
+    sse_encode_bool(self.isActive, serializer);
+    sse_encode_i_32(self.materialCount, serializer);
+    sse_encode_opt_String(self.systemKey, serializer);
+  }
+
+  @protected
+  void sse_encode_category_update_input(
+    CategoryUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.parentId, serializer);
+    sse_encode_bool(self.isActive, serializer);
+    sse_encode_opt_String(self.codePrefix, serializer);
   }
 
   @protected
@@ -2233,6 +2893,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.phone, serializer);
     sse_encode_opt_String(self.address, serializer);
     sse_encode_opt_String(self.notes, serializer);
+    sse_encode_opt_String(self.openingBalance, serializer);
     sse_encode_bool(self.isActive, serializer);
   }
 
@@ -2295,6 +2956,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_category_item(
+    List<CategoryItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_category_item(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_customer_item(
     List<CustomerItem> self,
     SseSerializer serializer,
@@ -2327,6 +3000,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_material_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_material_unit_input(
+    List<MaterialUnitInput> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_material_unit_input(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_material_unit_item(
+    List<MaterialUnitItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_material_unit_item(item, serializer);
     }
   }
 
@@ -2389,6 +3086,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.minimumStock, serializer);
     sse_encode_String(self.unitName, serializer);
     sse_encode_String(self.conversionFactor, serializer);
+    sse_encode_list_material_unit_input(self.extraUnits, serializer);
+    sse_encode_list_String(self.categoryIds, serializer);
     sse_encode_opt_String(self.purchasePrice, serializer);
     sse_encode_opt_String(self.salePrice, serializer);
     sse_encode_String(self.currency, serializer);
@@ -2416,6 +3115,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.averageCost, serializer);
     sse_encode_String(self.averageCostBase, serializer);
     sse_encode_i_32(self.unitsCount, serializer);
+    sse_encode_list_material_unit_item(self.units, serializer);
     sse_encode_bool(self.hasExpiry, serializer);
     sse_encode_i_32(self.expiryAlertBeforeDays, serializer);
     sse_encode_String(self.costingMethod, serializer);
@@ -2425,6 +3125,42 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.notes, serializer);
     sse_encode_String(self.unitName, serializer);
     sse_encode_String(self.conversionFactor, serializer);
+  }
+
+  @protected
+  void sse_encode_material_unit_create_input(
+    MaterialUnitCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.materialId, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.conversionFactor, serializer);
+    sse_encode_opt_String(self.barcode, serializer);
+  }
+
+  @protected
+  void sse_encode_material_unit_input(
+    MaterialUnitInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.conversionFactor, serializer);
+    sse_encode_opt_String(self.barcode, serializer);
+  }
+
+  @protected
+  void sse_encode_material_unit_item(
+    MaterialUnitItem self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.conversionFactor, serializer);
+    sse_encode_opt_String(self.barcode, serializer);
+    sse_encode_bool(self.isBase, serializer);
   }
 
   @protected
@@ -2439,6 +3175,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.barcode, serializer);
     sse_encode_String(self.code, serializer);
     sse_encode_String(self.minimumStock, serializer);
+    sse_encode_list_String(self.categoryIds, serializer);
     sse_encode_opt_String(self.notes, serializer);
     sse_encode_opt_String(self.purchasePrice, serializer);
     sse_encode_opt_String(self.salePrice, serializer);
@@ -2528,6 +3265,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.phone, serializer);
     sse_encode_opt_String(self.address, serializer);
     sse_encode_opt_String(self.notes, serializer);
+    sse_encode_opt_String(self.openingBalance, serializer);
+    sse_encode_bool(self.isActive, serializer);
   }
 
   @protected

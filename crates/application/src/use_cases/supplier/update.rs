@@ -1,5 +1,7 @@
 use chrono::Utc;
 use domain::shared::ids::{AccountId, SupplierId};
+use domain::suppliers::Supplier;
+use rust_decimal::Decimal;
 use std::sync::Arc;
 
 use crate::dto::supplier_dto::{SupplierDto, UpdateSupplierRequest};
@@ -50,6 +52,7 @@ impl UpdateSupplierUseCase {
 
         let old_debit = supplier.debit;
         let old_credit = supplier.credit;
+        let direct_balance_update = req.debit.is_some() || req.credit.is_some();
 
         supplier
             .update_info(
@@ -61,6 +64,12 @@ impl UpdateSupplierUseCase {
             .map_err(|e| AppError::Invalid(e.to_string()))?;
 
         supplier.code = crate::utils::ensure_code(Some(req.code), supplier.code);
+
+        if req.is_active {
+            supplier.activate();
+        } else {
+            supplier.deactivate();
+        }
 
         if let Some(ref acc_id_str) = req.account_id {
             let account_id = acc_id_str
@@ -79,7 +88,12 @@ impl UpdateSupplierUseCase {
         }
 
         if let Some(ref ob) = req.opening_balance {
-            supplier.opening_balance = crate::utils::parse_decimal(Some(ob), "رصيد الافتتاح")?;
+            let new_opening = crate::utils::parse_decimal(Some(ob), "رصيد الافتتاح")?;
+            if direct_balance_update {
+                supplier.opening_balance = new_opening;
+            } else {
+                apply_opening_balance_delta(&mut supplier, new_opening);
+            }
         }
 
         if let Some(ref cur) = req.currency {
@@ -152,5 +166,73 @@ impl UpdateSupplierUseCase {
             .await?;
 
         Ok(SupplierDto::from(supplier))
+    }
+}
+
+/// Applies an opening-balance change as a delta so later activity is kept.
+/// Supplier balances are credit − debit, so a positive opening delta increases
+/// credit first and a negative delta reduces it (or increases debit).
+fn apply_opening_balance_delta(supplier: &mut Supplier, new_opening: Decimal) {
+    let delta = new_opening - supplier.opening_balance;
+    supplier.opening_balance = new_opening;
+
+    if delta > Decimal::ZERO {
+        supplier.credit += delta;
+    } else if delta < Decimal::ZERO {
+        let decrease = -delta;
+        if supplier.credit >= decrease {
+            supplier.credit -= decrease;
+        } else {
+            let remainder = decrease - supplier.credit;
+            supplier.credit = Decimal::ZERO;
+            supplier.debit += remainder;
+        }
+    }
+
+    supplier.balance = supplier.credit - supplier.debit;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use domain::shared::currency::Currency;
+    use rust_decimal_macros::dec;
+
+    fn sample_supplier(debit: Decimal, credit: Decimal, opening: Decimal) -> Supplier {
+        let mut supplier = Supplier::new(
+            "S1".into(),
+            "Test supplier".into(),
+            None,
+            None,
+            None,
+            debit,
+            credit,
+            opening,
+            Currency::new("SYP", "ليرة سورية", "Syrian Pound", "ل.س", 2, true),
+            None,
+        )
+        .expect("valid supplier");
+        supplier.balance = credit - debit;
+        supplier
+    }
+
+    #[test]
+    fn increasing_opening_balance_adds_to_credit_and_preserves_activity() {
+        let mut supplier = sample_supplier(dec!(20), dec!(80), dec!(50));
+        apply_opening_balance_delta(&mut supplier, dec!(70));
+        assert_eq!(supplier.opening_balance, dec!(70));
+        assert_eq!(supplier.credit, dec!(100));
+        assert_eq!(supplier.debit, dec!(20));
+        assert_eq!(supplier.balance, dec!(80));
+    }
+
+    #[test]
+    fn decreasing_opening_balance_moves_excess_to_debit() {
+        let mut supplier = sample_supplier(dec!(20), dec!(10), dec!(50));
+        apply_opening_balance_delta(&mut supplier, dec!(20));
+        assert_eq!(supplier.opening_balance, dec!(20));
+        assert_eq!(supplier.credit, Decimal::ZERO);
+        assert_eq!(supplier.debit, dec!(40));
+        assert_eq!(supplier.balance, dec!(-40));
     }
 }

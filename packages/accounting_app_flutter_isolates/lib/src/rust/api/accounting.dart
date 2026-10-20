@@ -7,8 +7,8 @@ import '../frb_generated.dart';
 import 'error.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `customer_item`, `entry_view`, `material_item`, `normalize_price`, `parse_non_negative`, `resolve_currency`, `state`, `supplier_item`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `category_item`, `customer_item`, `entry_view`, `material_item`, `material_queries`, `material_unit_item`, `material_units_for`, `normalize_price`, `parse_non_negative`, `parse_positive`, `resolve_currency`, `state`, `supplier_item`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Open (or create) the SQLite ledger, run all migrations and wire the core.
 ///
@@ -37,6 +37,20 @@ Future<CompanySetupView> setupCompany({required SetupCompanyInput input}) =>
 /// screen does not need a second, drifting copy.
 Future<List<WorldCurrencyView>> worldCurrencies() =>
     RustLib.instance.api.crateApiAccountingWorldCurrencies();
+
+Future<List<CategoryItem>> listCategories() =>
+    RustLib.instance.api.crateApiAccountingListCategories();
+
+Future<CategoryItem> createCategory({required CategoryCreateInput input}) =>
+    RustLib.instance.api.crateApiAccountingCreateCategory(input: input);
+
+Future<CategoryItem> updateCategory({required CategoryUpdateInput input}) =>
+    RustLib.instance.api.crateApiAccountingUpdateCategory(input: input);
+
+/// Deletes a category and moves its materials to the built-in uncategorized
+/// category. Root categories also remove their sub-categories.
+Future<CategoryDeleteResult> deleteCategory({required String id}) =>
+    RustLib.instance.api.crateApiAccountingDeleteCategory(id: id);
 
 Future<List<AccountItem>> listAccounts() =>
     RustLib.instance.api.crateApiAccountingListAccounts();
@@ -89,6 +103,24 @@ Future<MaterialItem> updateMaterial({required MaterialUpdateInput input}) =>
 
 Future<void> deleteMaterial({required String id}) =>
     RustLib.instance.api.crateApiAccountingDeleteMaterial(id: id);
+
+Future<List<MaterialUnitItem>> listMaterialUnits({
+  required String materialId,
+}) => RustLib.instance.api.crateApiAccountingListMaterialUnits(
+  materialId: materialId,
+);
+
+Future<List<MaterialUnitItem>> addMaterialUnit({
+  required MaterialUnitCreateInput input,
+}) => RustLib.instance.api.crateApiAccountingAddMaterialUnit(input: input);
+
+Future<List<MaterialUnitItem>> deleteMaterialUnit({
+  required String materialId,
+  required String unitId,
+}) => RustLib.instance.api.crateApiAccountingDeleteMaterialUnit(
+  materialId: materialId,
+  unitId: unitId,
+);
 
 class AccountItem {
   final String id;
@@ -143,6 +175,129 @@ class AccountItem {
           balance == other.balance &&
           isActive == other.isActive &&
           isFinal == other.isFinal;
+}
+
+class CategoryCreateInput {
+  final String name;
+  final String? parentId;
+  final String? codePrefix;
+
+  const CategoryCreateInput({
+    required this.name,
+    this.parentId,
+    this.codePrefix,
+  });
+
+  @override
+  int get hashCode => name.hashCode ^ parentId.hashCode ^ codePrefix.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CategoryCreateInput &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          parentId == other.parentId &&
+          codePrefix == other.codePrefix;
+}
+
+class CategoryDeleteResult {
+  final int materialsReassigned;
+  final int subsDeleted;
+
+  const CategoryDeleteResult({
+    required this.materialsReassigned,
+    required this.subsDeleted,
+  });
+
+  @override
+  int get hashCode => materialsReassigned.hashCode ^ subsDeleted.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CategoryDeleteResult &&
+          runtimeType == other.runtimeType &&
+          materialsReassigned == other.materialsReassigned &&
+          subsDeleted == other.subsDeleted;
+}
+
+class CategoryItem {
+  final String id;
+  final String name;
+  final String? parentId;
+  final String? codePrefix;
+  final bool isActive;
+  final int materialCount;
+  final String? systemKey;
+
+  const CategoryItem({
+    required this.id,
+    required this.name,
+    this.parentId,
+    this.codePrefix,
+    required this.isActive,
+    required this.materialCount,
+    this.systemKey,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      name.hashCode ^
+      parentId.hashCode ^
+      codePrefix.hashCode ^
+      isActive.hashCode ^
+      materialCount.hashCode ^
+      systemKey.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CategoryItem &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          parentId == other.parentId &&
+          codePrefix == other.codePrefix &&
+          isActive == other.isActive &&
+          materialCount == other.materialCount &&
+          systemKey == other.systemKey;
+}
+
+class CategoryUpdateInput {
+  final String id;
+  final String name;
+  final String? parentId;
+  final bool isActive;
+  final String? codePrefix;
+
+  const CategoryUpdateInput({
+    required this.id,
+    required this.name,
+    this.parentId,
+    required this.isActive,
+    this.codePrefix,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      name.hashCode ^
+      parentId.hashCode ^
+      isActive.hashCode ^
+      codePrefix.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CategoryUpdateInput &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          parentId == other.parentId &&
+          isActive == other.isActive &&
+          codePrefix == other.codePrefix;
 }
 
 class CompanySetupView {
@@ -336,6 +491,7 @@ class CustomerUpdateInput {
   final String? phone;
   final String? address;
   final String? notes;
+  final String? openingBalance;
   final bool isActive;
 
   const CustomerUpdateInput({
@@ -345,6 +501,7 @@ class CustomerUpdateInput {
     this.phone,
     this.address,
     this.notes,
+    this.openingBalance,
     required this.isActive,
   });
 
@@ -356,6 +513,7 @@ class CustomerUpdateInput {
       phone.hashCode ^
       address.hashCode ^
       notes.hashCode ^
+      openingBalance.hashCode ^
       isActive.hashCode;
 
   @override
@@ -369,6 +527,7 @@ class CustomerUpdateInput {
           phone == other.phone &&
           address == other.address &&
           notes == other.notes &&
+          openingBalance == other.openingBalance &&
           isActive == other.isActive;
 }
 
@@ -470,6 +629,8 @@ class MaterialCreateInput {
   final String minimumStock;
   final String unitName;
   final String conversionFactor;
+  final List<MaterialUnitInput> extraUnits;
+  final List<String> categoryIds;
   final String? purchasePrice;
   final String? salePrice;
   final String currency;
@@ -485,6 +646,8 @@ class MaterialCreateInput {
     required this.minimumStock,
     required this.unitName,
     required this.conversionFactor,
+    required this.extraUnits,
+    required this.categoryIds,
     this.purchasePrice,
     this.salePrice,
     required this.currency,
@@ -502,6 +665,8 @@ class MaterialCreateInput {
       minimumStock.hashCode ^
       unitName.hashCode ^
       conversionFactor.hashCode ^
+      extraUnits.hashCode ^
+      categoryIds.hashCode ^
       purchasePrice.hashCode ^
       salePrice.hashCode ^
       currency.hashCode ^
@@ -521,6 +686,8 @@ class MaterialCreateInput {
           minimumStock == other.minimumStock &&
           unitName == other.unitName &&
           conversionFactor == other.conversionFactor &&
+          extraUnits == other.extraUnits &&
+          categoryIds == other.categoryIds &&
           purchasePrice == other.purchasePrice &&
           salePrice == other.salePrice &&
           currency == other.currency &&
@@ -546,6 +713,7 @@ class MaterialItem {
   final String averageCost;
   final String averageCostBase;
   final int unitsCount;
+  final List<MaterialUnitItem> units;
   final bool hasExpiry;
   final int expiryAlertBeforeDays;
   final String costingMethod;
@@ -573,6 +741,7 @@ class MaterialItem {
     required this.averageCost,
     required this.averageCostBase,
     required this.unitsCount,
+    required this.units,
     required this.hasExpiry,
     required this.expiryAlertBeforeDays,
     required this.costingMethod,
@@ -602,6 +771,7 @@ class MaterialItem {
       averageCost.hashCode ^
       averageCostBase.hashCode ^
       unitsCount.hashCode ^
+      units.hashCode ^
       hasExpiry.hashCode ^
       expiryAlertBeforeDays.hashCode ^
       costingMethod.hashCode ^
@@ -633,6 +803,7 @@ class MaterialItem {
           averageCost == other.averageCost &&
           averageCostBase == other.averageCostBase &&
           unitsCount == other.unitsCount &&
+          units == other.units &&
           hasExpiry == other.hasExpiry &&
           expiryAlertBeforeDays == other.expiryAlertBeforeDays &&
           costingMethod == other.costingMethod &&
@@ -644,6 +815,97 @@ class MaterialItem {
           conversionFactor == other.conversionFactor;
 }
 
+class MaterialUnitCreateInput {
+  final String materialId;
+  final String name;
+  final String conversionFactor;
+  final String? barcode;
+
+  const MaterialUnitCreateInput({
+    required this.materialId,
+    required this.name,
+    required this.conversionFactor,
+    this.barcode,
+  });
+
+  @override
+  int get hashCode =>
+      materialId.hashCode ^
+      name.hashCode ^
+      conversionFactor.hashCode ^
+      barcode.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MaterialUnitCreateInput &&
+          runtimeType == other.runtimeType &&
+          materialId == other.materialId &&
+          name == other.name &&
+          conversionFactor == other.conversionFactor &&
+          barcode == other.barcode;
+}
+
+class MaterialUnitInput {
+  final String name;
+  final String conversionFactor;
+  final String? barcode;
+
+  const MaterialUnitInput({
+    required this.name,
+    required this.conversionFactor,
+    this.barcode,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^ conversionFactor.hashCode ^ barcode.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MaterialUnitInput &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          conversionFactor == other.conversionFactor &&
+          barcode == other.barcode;
+}
+
+class MaterialUnitItem {
+  final String id;
+  final String name;
+  final String conversionFactor;
+  final String? barcode;
+  final bool isBase;
+
+  const MaterialUnitItem({
+    required this.id,
+    required this.name,
+    required this.conversionFactor,
+    this.barcode,
+    required this.isBase,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      name.hashCode ^
+      conversionFactor.hashCode ^
+      barcode.hashCode ^
+      isBase.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MaterialUnitItem &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          conversionFactor == other.conversionFactor &&
+          barcode == other.barcode &&
+          isBase == other.isBase;
+}
+
 class MaterialUpdateInput {
   final String id;
   final String name;
@@ -651,6 +913,7 @@ class MaterialUpdateInput {
   final String barcode;
   final String code;
   final String minimumStock;
+  final List<String> categoryIds;
   final String? notes;
   final String? purchasePrice;
   final String? salePrice;
@@ -665,6 +928,7 @@ class MaterialUpdateInput {
     required this.barcode,
     required this.code,
     required this.minimumStock,
+    required this.categoryIds,
     this.notes,
     this.purchasePrice,
     this.salePrice,
@@ -681,6 +945,7 @@ class MaterialUpdateInput {
       barcode.hashCode ^
       code.hashCode ^
       minimumStock.hashCode ^
+      categoryIds.hashCode ^
       notes.hashCode ^
       purchasePrice.hashCode ^
       salePrice.hashCode ^
@@ -699,6 +964,7 @@ class MaterialUpdateInput {
           barcode == other.barcode &&
           code == other.code &&
           minimumStock == other.minimumStock &&
+          categoryIds == other.categoryIds &&
           notes == other.notes &&
           purchasePrice == other.purchasePrice &&
           salePrice == other.salePrice &&
@@ -894,6 +1160,8 @@ class SupplierUpdateInput {
   final String? phone;
   final String? address;
   final String? notes;
+  final String? openingBalance;
+  final bool isActive;
 
   const SupplierUpdateInput({
     required this.id,
@@ -902,6 +1170,8 @@ class SupplierUpdateInput {
     this.phone,
     this.address,
     this.notes,
+    this.openingBalance,
+    required this.isActive,
   });
 
   @override
@@ -911,7 +1181,9 @@ class SupplierUpdateInput {
       name.hashCode ^
       phone.hashCode ^
       address.hashCode ^
-      notes.hashCode;
+      notes.hashCode ^
+      openingBalance.hashCode ^
+      isActive.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -923,7 +1195,9 @@ class SupplierUpdateInput {
           name == other.name &&
           phone == other.phone &&
           address == other.address &&
-          notes == other.notes;
+          notes == other.notes &&
+          openingBalance == other.openingBalance &&
+          isActive == other.isActive;
 }
 
 class TrialBalanceLineView {

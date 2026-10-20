@@ -99,6 +99,22 @@ class LedgerSupplier {
   final bool isActive;
 }
 
+class LedgerMaterialUnit {
+  const LedgerMaterialUnit({
+    required this.id,
+    required this.name,
+    required this.conversionFactor,
+    required this.barcode,
+    required this.isBase,
+  });
+
+  final String id;
+  final String name;
+  final String conversionFactor;
+  final String? barcode;
+  final bool isBase;
+}
+
 class LedgerMaterial {
   const LedgerMaterial({
     required this.id,
@@ -118,6 +134,8 @@ class LedgerMaterial {
     required this.expiryAlertBeforeDays,
     required this.unitsCount,
     required this.hasExpiry,
+    this.categoryIds = const [],
+    this.units = const [],
   });
 
   final String id;
@@ -137,6 +155,52 @@ class LedgerMaterial {
   final int expiryAlertBeforeDays;
   final int unitsCount;
   final bool hasExpiry;
+  final List<String> categoryIds;
+  final List<LedgerMaterialUnit> units;
+}
+
+class LedgerCategory {
+  const LedgerCategory({
+    required this.id,
+    required this.name,
+    required this.parentId,
+    required this.codePrefix,
+    required this.isActive,
+    required this.materialCount,
+    required this.systemKey,
+  });
+
+  final String id;
+  final String name;
+  final String? parentId;
+  final String? codePrefix;
+  final bool isActive;
+  final int materialCount;
+  final String? systemKey;
+
+  bool get isSystem => systemKey == 'inventory.category.uncategorized';
+}
+
+class CategoryDeleteSummary {
+  const CategoryDeleteSummary({
+    required this.materialsReassigned,
+    required this.subsDeleted,
+  });
+
+  final int materialsReassigned;
+  final int subsDeleted;
+}
+
+class MaterialUnitDraft {
+  const MaterialUnitDraft({
+    required this.name,
+    required this.conversionFactor,
+    this.barcode,
+  });
+
+  final String name;
+  final String conversionFactor;
+  final String? barcode;
 }
 
 /// Company identity and setup state returned by the Rust core.
@@ -218,6 +282,38 @@ abstract class LedgerGateway {
 
   Future<List<LedgerMaterial>> loadMaterials();
 
+  Future<List<LedgerCategory>> loadCategories();
+
+  Future<void> createCategory({
+    required String name,
+    String? parentId,
+    String? codePrefix,
+  });
+
+  Future<void> updateCategory({
+    required String id,
+    required String name,
+    String? parentId,
+    required bool isActive,
+    String? codePrefix,
+  });
+
+  Future<CategoryDeleteSummary> deleteCategory(String id);
+
+  Future<List<LedgerMaterialUnit>> loadMaterialUnits(String materialId);
+
+  Future<List<LedgerMaterialUnit>> addMaterialUnit({
+    required String materialId,
+    required String name,
+    required String conversionFactor,
+    String? barcode,
+  });
+
+  Future<List<LedgerMaterialUnit>> deleteMaterialUnit({
+    required String materialId,
+    required String unitId,
+  });
+
   Future<void> createCustomer({
     required String name,
     String? phone,
@@ -234,6 +330,7 @@ abstract class LedgerGateway {
     String? phone,
     String? address,
     String? notes,
+    String? openingBalance,
     required bool isActive,
   });
 
@@ -255,6 +352,8 @@ abstract class LedgerGateway {
     String? phone,
     String? address,
     String? notes,
+    String? openingBalance,
+    required bool isActive,
   });
 
   Future<void> deleteSupplier(String id);
@@ -267,6 +366,8 @@ abstract class LedgerGateway {
     required String minimumStock,
     required String unitName,
     required String conversionFactor,
+    List<MaterialUnitDraft> extraUnits = const [],
+    List<String> categoryIds = const [],
     String? purchasePrice,
     String? salePrice,
     required String currency,
@@ -282,6 +383,7 @@ abstract class LedgerGateway {
     required String barcode,
     required String code,
     required String minimumStock,
+    List<String> categoryIds = const [],
     String? notes,
     String? purchasePrice,
     String? salePrice,
@@ -487,9 +589,115 @@ class RustLedgerGateway implements LedgerGateway {
             expiryAlertBeforeDays: material.expiryAlertBeforeDays,
             unitsCount: material.unitsCount,
             hasExpiry: material.hasExpiry,
+            categoryIds: material.categoryIds,
+            units: material.units.map(_materialUnitFromBridge).toList(),
           ),
         )
         .toList();
+  }
+
+  @override
+  Future<List<LedgerCategory>> loadCategories() async {
+    await _ensureReady();
+    final categories = await rust.listCategories();
+    return categories
+        .map(
+          (category) => LedgerCategory(
+            id: category.id,
+            name: category.name,
+            parentId: category.parentId,
+            codePrefix: category.codePrefix,
+            isActive: category.isActive,
+            materialCount: category.materialCount,
+            systemKey: category.systemKey,
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  Future<void> createCategory({
+    required String name,
+    String? parentId,
+    String? codePrefix,
+  }) async {
+    await _ensureReady();
+    await rust.createCategory(
+      input: rust.CategoryCreateInput(
+        name: name,
+        parentId: parentId,
+        codePrefix: codePrefix,
+      ),
+    );
+  }
+
+  @override
+  Future<void> updateCategory({
+    required String id,
+    required String name,
+    String? parentId,
+    required bool isActive,
+    String? codePrefix,
+  }) async {
+    await _ensureReady();
+    await rust.updateCategory(
+      input: rust.CategoryUpdateInput(
+        id: id,
+        name: name,
+        parentId: parentId,
+        isActive: isActive,
+        codePrefix: codePrefix,
+      ),
+    );
+  }
+
+  @override
+  Future<CategoryDeleteSummary> deleteCategory(String id) async {
+    await _ensureReady();
+    final result = await rust.deleteCategory(id: id);
+    return CategoryDeleteSummary(
+      materialsReassigned: result.materialsReassigned,
+      subsDeleted: result.subsDeleted,
+    );
+  }
+
+  @override
+  Future<List<LedgerMaterialUnit>> loadMaterialUnits(String materialId) async {
+    await _ensureReady();
+    final units = await rust.listMaterialUnits(materialId: materialId);
+    return units.map(_materialUnitFromBridge).toList();
+  }
+
+  @override
+  Future<List<LedgerMaterialUnit>> addMaterialUnit({
+    required String materialId,
+    required String name,
+    required String conversionFactor,
+    String? barcode,
+  }) async {
+    await _ensureReady();
+    final units = await rust.addMaterialUnit(
+      input: rust.MaterialUnitCreateInput(
+        materialId: materialId,
+        name: name,
+        conversionFactor: conversionFactor,
+        barcode: barcode,
+      ),
+    );
+    return units.map(_materialUnitFromBridge).toList();
+  }
+
+  @override
+  Future<List<LedgerMaterialUnit>> deleteMaterialUnit({
+    required String materialId,
+    required String unitId,
+  }) async {
+    await _ensureReady();
+    final units = await rust.deleteMaterialUnit(
+      materialId: materialId,
+      unitId: unitId,
+    );
+    return units.map(_materialUnitFromBridge).toList();
   }
 
   @override
@@ -522,6 +730,7 @@ class RustLedgerGateway implements LedgerGateway {
     String? phone,
     String? address,
     String? notes,
+    String? openingBalance,
     required bool isActive,
   }) async {
     await _ensureReady();
@@ -533,6 +742,7 @@ class RustLedgerGateway implements LedgerGateway {
         phone: phone,
         address: address,
         notes: notes,
+        openingBalance: openingBalance,
         isActive: isActive,
       ),
     );
@@ -574,6 +784,8 @@ class RustLedgerGateway implements LedgerGateway {
     String? phone,
     String? address,
     String? notes,
+    String? openingBalance,
+    required bool isActive,
   }) async {
     await _ensureReady();
     await rust.updateSupplier(
@@ -584,6 +796,8 @@ class RustLedgerGateway implements LedgerGateway {
         phone: phone,
         address: address,
         notes: notes,
+        openingBalance: openingBalance,
+        isActive: isActive,
       ),
     );
   }
@@ -603,6 +817,8 @@ class RustLedgerGateway implements LedgerGateway {
     required String minimumStock,
     required String unitName,
     required String conversionFactor,
+    List<MaterialUnitDraft> extraUnits = const [],
+    List<String> categoryIds = const [],
     String? purchasePrice,
     String? salePrice,
     required String currency,
@@ -620,6 +836,16 @@ class RustLedgerGateway implements LedgerGateway {
         minimumStock: minimumStock,
         unitName: unitName,
         conversionFactor: conversionFactor,
+        extraUnits: extraUnits
+            .map(
+              (unit) => rust.MaterialUnitInput(
+                name: unit.name,
+                conversionFactor: unit.conversionFactor,
+                barcode: unit.barcode,
+              ),
+            )
+            .toList(),
+        categoryIds: categoryIds,
         purchasePrice: purchasePrice,
         salePrice: salePrice,
         currency: currency,
@@ -638,6 +864,7 @@ class RustLedgerGateway implements LedgerGateway {
     required String barcode,
     required String code,
     required String minimumStock,
+    List<String> categoryIds = const [],
     String? notes,
     String? purchasePrice,
     String? salePrice,
@@ -654,6 +881,7 @@ class RustLedgerGateway implements LedgerGateway {
         barcode: barcode,
         code: code,
         minimumStock: minimumStock,
+        categoryIds: categoryIds,
         notes: notes,
         purchasePrice: purchasePrice,
         salePrice: salePrice,
@@ -708,6 +936,16 @@ class RustLedgerGateway implements LedgerGateway {
 
     await rust.postJournalEntry(entryId: entry.id);
   }
+}
+
+LedgerMaterialUnit _materialUnitFromBridge(rust.MaterialUnitItem unit) {
+  return LedgerMaterialUnit(
+    id: unit.id,
+    name: unit.name,
+    conversionFactor: unit.conversionFactor,
+    barcode: unit.barcode,
+    isBase: unit.isBase,
+  );
 }
 
 LedgerStatus _statusFromBridge(rust.SetupStatusView status) {

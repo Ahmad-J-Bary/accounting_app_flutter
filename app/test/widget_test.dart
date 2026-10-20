@@ -22,21 +22,21 @@ class _FakeGateway implements LedgerGateway {
 
   @override
   Future<List<CurrencyOption>> availableCurrencies() async => const [
-        CurrencyOption(
-          code: 'SYP',
-          nameAr: 'ليرة سورية',
-          nameEn: 'Syrian Pound',
-          symbol: 'ل.س',
-          decimals: 2,
-        ),
-        CurrencyOption(
-          code: 'USD',
-          nameAr: 'دولار أمريكي',
-          nameEn: 'US Dollar',
-          symbol: r'$',
-          decimals: 2,
-        ),
-      ];
+    CurrencyOption(
+      code: 'SYP',
+      nameAr: 'ليرة سورية',
+      nameEn: 'Syrian Pound',
+      symbol: 'ل.س',
+      decimals: 2,
+    ),
+    CurrencyOption(
+      code: 'USD',
+      nameAr: 'دولار أمريكي',
+      nameEn: 'US Dollar',
+      symbol: r'$',
+      decimals: 2,
+    ),
+  ];
 
   @override
   Future<void> setupCompany({
@@ -49,58 +49,150 @@ class _FakeGateway implements LedgerGateway {
 
   @override
   Future<List<LedgerCustomer>> loadCustomers() async => const [
-        LedgerCustomer(
-          id: 'c1',
-          code: 'C001',
-          name: 'أحمد محمد',
-          phone: '0999999999',
-          address: 'دمشق',
-          notes: null,
-          openingBalance: '150.00',
-          balance: '150.00',
-          currency: 'SYP',
-          isActive: true,
-        ),
-      ];
+    LedgerCustomer(
+      id: 'c1',
+      code: 'C001',
+      name: 'أحمد محمد',
+      phone: '0999999999',
+      address: 'دمشق',
+      notes: null,
+      openingBalance: '150.00',
+      balance: '150.00',
+      currency: 'SYP',
+      isActive: true,
+    ),
+  ];
 
   @override
   Future<List<LedgerSupplier>> loadSuppliers() async => const [
-        LedgerSupplier(
-          id: 's1',
-          code: 'S001',
-          name: 'مورد النور',
-          phone: '0888888888',
-          address: 'حلب',
-          notes: null,
-          openingBalance: '75.00',
-          balance: '75.00',
-          currency: 'SYP',
-          isActive: true,
+    LedgerSupplier(
+      id: 's1',
+      code: 'S001',
+      name: 'مورد النور',
+      phone: '0888888888',
+      address: 'حلب',
+      notes: null,
+      openingBalance: '75.00',
+      balance: '75.00',
+      currency: 'SYP',
+      isActive: true,
+    ),
+  ];
+
+  @override
+  Future<List<LedgerMaterial>> loadMaterials() async => const [
+    LedgerMaterial(
+      id: 'm1',
+      code: 'M001',
+      name: 'قمح',
+      nameEn: 'Wheat',
+      barcode: '123456',
+      totalAvailable: '50',
+      minimumStock: '10',
+      averageCost: '12.50',
+      purchasePrice: '12.50',
+      salePrice: '15.00',
+      currency: 'SYP',
+      notes: null,
+      unitName: 'كغ',
+      conversionFactor: '1',
+      expiryAlertBeforeDays: 30,
+      unitsCount: 2,
+      hasExpiry: false,
+      categoryIds: ['cat-default'],
+      units: [
+        LedgerMaterialUnit(
+          id: 'u1',
+          name: 'كغ',
+          conversionFactor: '1',
+          barcode: null,
+          isBase: true,
+        ),
+        LedgerMaterialUnit(
+          id: 'u2',
+          name: 'كرتونة',
+          conversionFactor: '12',
+          barcode: '789',
+          isBase: false,
+        ),
+      ],
+    ),
+  ];
+
+  @override
+  Future<List<LedgerCategory>> loadCategories() async => const [
+    LedgerCategory(
+      id: 'cat-default',
+      name: 'غير مصنف',
+      parentId: null,
+      codePrefix: null,
+      isActive: true,
+      materialCount: 1,
+      systemKey: 'inventory.category.uncategorized',
+    ),
+    LedgerCategory(
+      id: 'cat-food',
+      name: 'غذائية',
+      parentId: null,
+      codePrefix: null,
+      isActive: true,
+      materialCount: 0,
+      systemKey: null,
+    ),
+  ];
+
+  @override
+  Future<void> createCategory({
+    required String name,
+    String? parentId,
+    String? codePrefix,
+  }) async {}
+
+  @override
+  Future<void> updateCategory({
+    required String id,
+    required String name,
+    String? parentId,
+    required bool isActive,
+    String? codePrefix,
+  }) async {}
+
+  @override
+  Future<CategoryDeleteSummary> deleteCategory(String id) async =>
+      const CategoryDeleteSummary(materialsReassigned: 0, subsDeleted: 0);
+
+  @override
+  Future<List<LedgerMaterialUnit>> loadMaterialUnits(String materialId) async =>
+      const [
+        LedgerMaterialUnit(
+          id: 'u1',
+          name: 'كغ',
+          conversionFactor: '1',
+          barcode: null,
+          isBase: true,
+        ),
+        LedgerMaterialUnit(
+          id: 'u2',
+          name: 'كرتونة',
+          conversionFactor: '12',
+          barcode: '789',
+          isBase: false,
         ),
       ];
 
   @override
-  Future<List<LedgerMaterial>> loadMaterials() async => const [
-        LedgerMaterial(
-          id: 'm1',
-          code: 'M001',
-          name: 'قمح',
-          nameEn: 'Wheat',
-          barcode: '123456',
-          totalAvailable: '50',
-          minimumStock: '10',
-          averageCost: '12.50',
-          purchasePrice: '12.50',
-          salePrice: '15.00',
-          currency: 'SYP',
-          notes: null,
-          unitName: 'كغ',
-          conversionFactor: '1',
-          expiryAlertBeforeDays: 30,
-          unitsCount: 1,
-          hasExpiry: false,
-        ),
-      ];
+  Future<List<LedgerMaterialUnit>> addMaterialUnit({
+    required String materialId,
+    required String name,
+    required String conversionFactor,
+    String? barcode,
+  }) async => loadMaterialUnits(materialId);
+
+  @override
+  Future<List<LedgerMaterialUnit>> deleteMaterialUnit({
+    required String materialId,
+    required String unitId,
+  }) async => loadMaterialUnits(materialId);
 
   @override
   Future<LedgerSnapshot> load() async {
@@ -162,6 +254,7 @@ class _FakeGateway implements LedgerGateway {
     String? phone,
     String? address,
     String? notes,
+    String? openingBalance,
     required bool isActive,
   }) async {}
 
@@ -186,6 +279,8 @@ class _FakeGateway implements LedgerGateway {
     String? phone,
     String? address,
     String? notes,
+    String? openingBalance,
+    required bool isActive,
   }) async {}
 
   @override
@@ -200,6 +295,8 @@ class _FakeGateway implements LedgerGateway {
     required String minimumStock,
     required String unitName,
     required String conversionFactor,
+    List<MaterialUnitDraft> extraUnits = const [],
+    List<String> categoryIds = const [],
     String? purchasePrice,
     String? salePrice,
     required String currency,
@@ -216,6 +313,7 @@ class _FakeGateway implements LedgerGateway {
     required String barcode,
     required String code,
     required String minimumStock,
+    List<String> categoryIds = const [],
     String? notes,
     String? purchasePrice,
     String? salePrice,
@@ -310,6 +408,100 @@ void main() {
     expect(find.textContaining('متاح: 50'), findsOneWidget);
   });
 
+  testWidgets('opens category management from master data', (tester) async {
+    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('البيانات الأساسية'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('تصنيفات المواد'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('تصنيفات المواد'), findsOneWidget);
+    expect(find.text('غير مصنف'), findsOneWidget);
+    expect(find.text('غذائية'), findsOneWidget);
+    expect(find.textContaining('تصنيف نظامي'), findsOneWidget);
+
+    await tester.tap(find.text('تصنيف جديد'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('اسم التصنيف'), findsOneWidget);
+    expect(find.text('التصنيف الأب'), findsOneWidget);
+  });
+
+  testWidgets('opens the opening-balance screen and edits a customer', (
+    tester,
+  ) async {
+    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('البيانات الأساسية'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('الأرصدة الافتتاحية'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('الأرصدة الافتتاحية'), findsOneWidget);
+    expect(find.text('العملاء'), findsOneWidget);
+    expect(find.text('الموردون'), findsOneWidget);
+    expect(find.textContaining('الافتتاحي: 150.00'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('تعديل الرصيد الافتتاحي').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('الرصيد الافتتاحي — أحمد محمد'), findsOneWidget);
+    expect(find.text('المبلغ (SYP)'), findsOneWidget);
+  });
+
+  testWidgets('opens material units from the material row actions', (
+    tester,
+  ) async {
+    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('البيانات الأساسية'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('المواد (1)'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('إجراءات').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('الوحدات'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('وحدات: قمح'), findsOneWidget);
+    expect(find.text('كغ'), findsOneWidget);
+    expect(find.text('كرتونة'), findsOneWidget);
+    expect(find.text('أساسية'), findsOneWidget);
+  });
+
+  testWidgets('shows categories and extra units in the material form', (
+    tester,
+  ) async {
+    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('البيانات الأساسية'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('المواد (1)'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FloatingActionButton, 'إضافة مادة'));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('التصنيفات'),
+      300,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(find.text('غذائية'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('وحدات إضافية'),
+      300,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(find.text('إضافة وحدة'), findsOneWidget);
+  });
+
   testWidgets('opens the customer form and validates the name', (tester) async {
     await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
     await tester.pumpAndSettle();
@@ -317,9 +509,7 @@ void main() {
     await tester.tap(find.byTooltip('البيانات الأساسية'));
     await tester.pumpAndSettle();
 
-    await tester.tap(
-      find.widgetWithText(FloatingActionButton, 'إضافة عميل'),
-    );
+    await tester.tap(find.widgetWithText(FloatingActionButton, 'إضافة عميل'));
     await tester.pumpAndSettle();
 
     expect(find.text('اسم العميل'), findsOneWidget);
@@ -345,9 +535,7 @@ void main() {
 
     expect(find.text('تعديل عميل'), findsOneWidget);
     expect(
-      find.text(
-        'لا يمكن تعديل الرصيد الافتتاحي من هنا؛ استخدم قيود التسوية.',
-      ),
+      find.text('لا يمكن تعديل الرصيد الافتتاحي من هنا؛ استخدم قيود التسوية.'),
       findsOneWidget,
     );
     expect(find.text('نشط'), findsOneWidget);

@@ -48,6 +48,7 @@ pub struct UpdateSupplierRequest {
     pub opening_balance: Option<String>,
     pub currency: Option<String>,
     pub notes: Option<String>,
+    pub is_active: bool,
 }
 
 impl From<Supplier> for SupplierDto {

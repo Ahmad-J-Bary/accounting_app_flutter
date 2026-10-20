@@ -364,6 +364,7 @@ async fn master_data_crud_round_trips_through_the_bridge_state() {
         opening_balance: None,
         currency: None,
         notes: None,
+        is_active: true,
     })
     .await
     .expect("update supplier");

@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
+import 'categories.dart';
 import 'ledger.dart';
 import 'master_data_forms.dart';
+import 'material_units.dart';
+import 'opening_balances.dart';
 
 class _DirectoryData {
   const _DirectoryData({
     required this.customers,
     required this.suppliers,
     required this.materials,
+    required this.categories,
     required this.currencies,
     required this.baseCurrency,
   });
@@ -15,11 +19,12 @@ class _DirectoryData {
   final List<LedgerCustomer> customers;
   final List<LedgerSupplier> suppliers;
   final List<LedgerMaterial> materials;
+  final List<LedgerCategory> categories;
   final List<CurrencyOption> currencies;
   final String baseCurrency;
 }
 
-enum _RowAction { edit, delete }
+enum _RowAction { edit, delete, units }
 
 /// Master-data browser with create, edit and delete for customers, suppliers
 /// and materials. Every write goes through the Rust core; the page only
@@ -68,10 +73,12 @@ class _DirectoryPageState extends State<DirectoryPage>
     final customers = await widget.gateway.loadCustomers();
     final suppliers = await widget.gateway.loadSuppliers();
     final materials = await widget.gateway.loadMaterials();
+    final categories = await widget.gateway.loadCategories();
     return _DirectoryData(
       customers: customers,
       suppliers: suppliers,
       materials: materials,
+      categories: categories,
       currencies: currencies,
       baseCurrency: status.baseCurrencyCode,
     );
@@ -187,6 +194,7 @@ class _DirectoryPageState extends State<DirectoryPage>
           gateway: widget.gateway,
           currencies: data.currencies,
           baseCurrency: data.baseCurrency,
+          categories: data.categories,
           material: material,
         ),
       ),
@@ -195,6 +203,34 @@ class _DirectoryPageState extends State<DirectoryPage>
       _showMessage(material == null ? 'تمت إضافة المادة.' : 'تم تحديث المادة.');
       _refresh();
     }
+  }
+
+  Future<void> _openCategories() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => CategoriesPage(gateway: widget.gateway),
+      ),
+    );
+    _refresh();
+  }
+
+  Future<void> _openOpeningBalances() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => OpeningBalancesPage(gateway: widget.gateway),
+      ),
+    );
+    _refresh();
+  }
+
+  Future<void> _openMaterialUnits(LedgerMaterial material) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) =>
+            MaterialUnitsPage(gateway: widget.gateway, material: material),
+      ),
+    );
+    _refresh();
   }
 
   Future<void> _deleteCustomer(LedgerCustomer customer) async {
@@ -264,6 +300,16 @@ class _DirectoryPageState extends State<DirectoryPage>
           appBar: AppBar(
             title: const Text('البيانات الأساسية'),
             actions: [
+              IconButton(
+                tooltip: 'تصنيفات المواد',
+                onPressed: _openCategories,
+                icon: const Icon(Icons.category_outlined),
+              ),
+              IconButton(
+                tooltip: 'الأرصدة الافتتاحية',
+                onPressed: _openOpeningBalances,
+                icon: const Icon(Icons.account_balance_wallet_outlined),
+              ),
               IconButton(
                 tooltip: 'تحديث',
                 onPressed: _refresh,
@@ -372,9 +418,14 @@ class _DirectoryPageState extends State<DirectoryPage>
               ),
               _MaterialList(
                 materials: materials,
+                categoryNames: {
+                  for (final category in data.categories)
+                    category.id: categoryLabel(category, data.categories),
+                },
                 onEdit: (material) =>
                     _openMaterialForm(data, material: material),
                 onDelete: _deleteMaterial,
+                onUnits: _openMaterialUnits,
                 onCreate: () => _openMaterialForm(data),
               ),
             ],
@@ -543,14 +594,18 @@ class _SupplierList extends StatelessWidget {
 class _MaterialList extends StatelessWidget {
   const _MaterialList({
     required this.materials,
+    required this.categoryNames,
     required this.onEdit,
     required this.onDelete,
+    required this.onUnits,
     required this.onCreate,
   });
 
   final List<LedgerMaterial> materials;
+  final Map<String, String> categoryNames;
   final ValueChanged<LedgerMaterial> onEdit;
   final ValueChanged<LedgerMaterial> onDelete;
+  final ValueChanged<LedgerMaterial> onUnits;
   final VoidCallback onCreate;
 
   @override
@@ -569,6 +624,10 @@ class _MaterialList extends StatelessWidget {
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final material = materials[index];
+        final labels = material.categoryIds
+            .map((id) => categoryNames[id])
+            .whereType<String>()
+            .toList();
         return ListTile(
           onTap: () => onEdit(material),
           leading: Icon(
@@ -581,7 +640,9 @@ class _MaterialList extends StatelessWidget {
             [
               material.code,
               if (material.barcode.isNotEmpty) 'باركود: ${material.barcode}',
+              if (labels.isNotEmpty) 'التصنيف: ${labels.join('، ')}',
               if (material.unitName.isNotEmpty) 'الوحدة: ${material.unitName}',
+              if (material.unitsCount > 1) 'الوحدات: ${material.unitsCount}',
               'متاح: ${material.totalAvailable}',
               'حد أدنى: ${material.minimumStock}',
             ].join(' • '),
@@ -606,6 +667,7 @@ class _MaterialList extends StatelessWidget {
               _RowActions(
                 onEdit: () => onEdit(material),
                 onDelete: () => onDelete(material),
+                onUnits: () => onUnits(material),
               ),
             ],
           ),
@@ -616,10 +678,15 @@ class _MaterialList extends StatelessWidget {
 }
 
 class _RowActions extends StatelessWidget {
-  const _RowActions({required this.onEdit, required this.onDelete});
+  const _RowActions({
+    required this.onEdit,
+    required this.onDelete,
+    this.onUnits,
+  });
 
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback? onUnits;
 
   @override
   Widget build(BuildContext context) {
@@ -631,10 +698,12 @@ class _RowActions extends StatelessWidget {
             onEdit();
           case _RowAction.delete:
             onDelete();
+          case _RowAction.units:
+            onUnits?.call();
         }
       },
-      itemBuilder: (context) => const [
-        PopupMenuItem(
+      itemBuilder: (context) => [
+        const PopupMenuItem(
           value: _RowAction.edit,
           child: Row(
             children: [
@@ -644,7 +713,18 @@ class _RowActions extends StatelessWidget {
             ],
           ),
         ),
-        PopupMenuItem(
+        if (onUnits != null)
+          const PopupMenuItem(
+            value: _RowAction.units,
+            child: Row(
+              children: [
+                Icon(Icons.straighten),
+                SizedBox(width: 8),
+                Text('الوحدات'),
+              ],
+            ),
+          ),
+        const PopupMenuItem(
           value: _RowAction.delete,
           child: Row(
             children: [

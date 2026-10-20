@@ -1,13 +1,17 @@
+use application::dto::category_dto::{CategoryDto, CreateCategoryRequest, UpdateCategoryRequest};
 use application::dto::customer_dto::{CreateCustomerRequest, CustomerDto, UpdateCustomerRequest};
 use application::dto::journal_entry_dto::{
     CreateJournalEntryRequest, JournalEntryDto, JournalLineDto,
 };
 use application::dto::material_dto::{
     CreateMaterialPriceRequest, CreateMaterialRequest, CreateMaterialSalePriceRequest,
-    CreateMaterialUnitRequest, MaterialDto, UpdateMaterialRequest,
+    CreateMaterialUnitRequest, MaterialDto, MaterialUnitDto, UpdateMaterialRequest,
 };
 use application::dto::setup_dto::SetupCompanyRequest;
 use application::dto::supplier_dto::{CreateSupplierRequest, SupplierDto, UpdateSupplierRequest};
+use application::use_cases::category::{
+    CategoryQueries, CreateCategoryUseCase, DeleteCategoryCascadeUseCase, UpdateCategoryUseCase,
+};
 use application::use_cases::customer::{
     CreateCustomerUseCase, CustomerQueries, DeleteCustomerUseCase, UpdateCustomerUseCase,
 };
@@ -21,6 +25,8 @@ use application::use_cases::supplier::{
 };
 use application::world_currencies as world_currency_catalog;
 use domain::accounting::journal_entry::JournalType;
+use domain::inventory::category::DEFAULT_CATEGORY_ID;
+use domain::shared::ids::MaterialId;
 use rust_decimal::Decimal;
 use tokio::sync::OnceCell;
 
@@ -174,6 +180,99 @@ pub fn world_currencies() -> Vec<WorldCurrencyView> {
             decimals: currency.decimals,
         })
         .collect()
+}
+
+#[derive(Debug, Clone)]
+pub struct CategoryItem {
+    pub id: String,
+    pub name: String,
+    pub parent_id: Option<String>,
+    pub code_prefix: Option<String>,
+    pub is_active: bool,
+    pub material_count: i32,
+    pub system_key: Option<String>,
+}
+
+fn category_item(category: CategoryDto) -> CategoryItem {
+    CategoryItem {
+        id: category.id,
+        name: category.name,
+        parent_id: category.parent_id,
+        code_prefix: category.code_prefix,
+        is_active: category.is_active,
+        material_count: category.material_count as i32,
+        system_key: category.system_key,
+    }
+}
+
+pub async fn list_categories() -> Result<Vec<CategoryItem>, ApiError> {
+    let app = state()?;
+    let categories = CategoryQueries::new(app.category_repo.clone())
+        .list_all()
+        .await?;
+    Ok(categories.into_iter().map(category_item).collect())
+}
+
+#[derive(Debug, Clone)]
+pub struct CategoryCreateInput {
+    pub name: String,
+    pub parent_id: Option<String>,
+    pub code_prefix: Option<String>,
+}
+
+pub async fn create_category(input: CategoryCreateInput) -> Result<CategoryItem, ApiError> {
+    let app = state()?;
+    let category = CreateCategoryUseCase::new(app.category_repo.clone())
+        .execute(CreateCategoryRequest {
+            name: input.name,
+            parent_id: input.parent_id,
+            is_hybrid: None,
+            code_prefix: input.code_prefix,
+        })
+        .await?;
+    Ok(category_item(category))
+}
+
+#[derive(Debug, Clone)]
+pub struct CategoryUpdateInput {
+    pub id: String,
+    pub name: String,
+    pub parent_id: Option<String>,
+    pub is_active: bool,
+    pub code_prefix: Option<String>,
+}
+
+pub async fn update_category(input: CategoryUpdateInput) -> Result<CategoryItem, ApiError> {
+    let app = state()?;
+    let category = UpdateCategoryUseCase::new(app.category_repo.clone())
+        .execute(UpdateCategoryRequest {
+            id: input.id,
+            name: input.name,
+            parent_id: input.parent_id,
+            is_active: input.is_active,
+            code_prefix: input.code_prefix,
+        })
+        .await?;
+    Ok(category_item(category))
+}
+
+#[derive(Debug, Clone)]
+pub struct CategoryDeleteResult {
+    pub materials_reassigned: i32,
+    pub subs_deleted: i32,
+}
+
+/// Deletes a category and moves its materials to the built-in uncategorized
+/// category. Root categories also remove their sub-categories.
+pub async fn delete_category(id: String) -> Result<CategoryDeleteResult, ApiError> {
+    let app = state()?;
+    let result = DeleteCategoryCascadeUseCase::new(app.category_repo.clone())
+        .execute(id, DEFAULT_CATEGORY_ID.to_string())
+        .await?;
+    Ok(CategoryDeleteResult {
+        materials_reassigned: result.materials_reassigned as i32,
+        subs_deleted: result.subs_deleted as i32,
+    })
 }
 
 #[derive(Debug, Clone)]
@@ -425,6 +524,7 @@ pub struct CustomerUpdateInput {
     pub phone: Option<String>,
     pub address: Option<String>,
     pub notes: Option<String>,
+    pub opening_balance: Option<String>,
     pub is_active: bool,
 }
 
@@ -459,6 +559,11 @@ pub async fn create_customer(input: CustomerCreateInput) -> Result<CustomerItem,
 
 pub async fn update_customer(input: CustomerUpdateInput) -> Result<CustomerItem, ApiError> {
     let app = state()?;
+    let opening = match input.opening_balance.as_deref() {
+        Some(value) => Some(parse_non_negative(value, "الرصيد الافتتاحي")?),
+        None => None,
+    };
+
     let customer = UpdateCustomerUseCase::new(
         app.customer_repo.clone(),
         app.account_repo.clone(),
@@ -475,7 +580,7 @@ pub async fn update_customer(input: CustomerUpdateInput) -> Result<CustomerItem,
         account_id: None,
         debit: None,
         credit: None,
-        opening_balance: None,
+        opening_balance: opening.map(|amount| amount.to_string()),
         currency: None,
         notes: input.notes,
         is_active: input.is_active,
@@ -555,6 +660,8 @@ pub struct SupplierUpdateInput {
     pub phone: Option<String>,
     pub address: Option<String>,
     pub notes: Option<String>,
+    pub opening_balance: Option<String>,
+    pub is_active: bool,
 }
 
 pub async fn create_supplier(input: SupplierCreateInput) -> Result<SupplierItem, ApiError> {
@@ -588,6 +695,11 @@ pub async fn create_supplier(input: SupplierCreateInput) -> Result<SupplierItem,
 
 pub async fn update_supplier(input: SupplierUpdateInput) -> Result<SupplierItem, ApiError> {
     let app = state()?;
+    let opening = match input.opening_balance.as_deref() {
+        Some(value) => Some(parse_non_negative(value, "الرصيد الافتتاحي")?),
+        None => None,
+    };
+
     let supplier = UpdateSupplierUseCase::new(
         app.supplier_repo.clone(),
         app.account_repo.clone(),
@@ -604,9 +716,10 @@ pub async fn update_supplier(input: SupplierUpdateInput) -> Result<SupplierItem,
         account_id: None,
         debit: None,
         credit: None,
-        opening_balance: None,
+        opening_balance: opening.map(|amount| amount.to_string()),
         currency: None,
         notes: input.notes,
+        is_active: input.is_active,
     })
     .await?;
 
@@ -619,6 +732,25 @@ pub async fn delete_supplier(id: String) -> Result<(), ApiError> {
         .execute(id)
         .await?;
     Ok(())
+}
+
+#[derive(Debug, Clone)]
+pub struct MaterialUnitItem {
+    pub id: String,
+    pub name: String,
+    pub conversion_factor: String,
+    pub barcode: Option<String>,
+    pub is_base: bool,
+}
+
+fn material_unit_item(unit: MaterialUnitDto) -> MaterialUnitItem {
+    MaterialUnitItem {
+        id: unit.id,
+        name: unit.name,
+        conversion_factor: unit.conversion_factor,
+        barcode: unit.barcode,
+        is_base: unit.is_base,
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -639,6 +771,7 @@ pub struct MaterialItem {
     pub average_cost: String,
     pub average_cost_base: String,
     pub units_count: i32,
+    pub units: Vec<MaterialUnitItem>,
     pub has_expiry: bool,
     pub expiry_alert_before_days: i32,
     pub costing_method: String,
@@ -660,6 +793,11 @@ fn material_item(material: MaterialDto) -> MaterialItem {
     let conversion_factor = base_unit
         .map(|unit| unit.conversion_factor.to_string())
         .unwrap_or_else(|| "1".to_string());
+    let units: Vec<MaterialUnitItem> = material
+        .units
+        .iter()
+        .map(|unit| material_unit_item(unit.clone()))
+        .collect();
     let purchase_price = material
         .purchase_prices
         .first()
@@ -693,7 +831,8 @@ fn material_item(material: MaterialDto) -> MaterialItem {
         last_sale_price: material.last_sale_price,
         average_cost: material.average_cost,
         average_cost_base: material.average_cost_base,
-        units_count: material.units.len() as i32,
+        units_count: units.len() as i32,
+        units,
         has_expiry: material.has_expiry,
         expiry_alert_before_days: material.expiry_alert_before_days,
         costing_method: material.costing_method,
@@ -721,6 +860,13 @@ pub async fn list_materials() -> Result<Vec<MaterialItem>, ApiError> {
 }
 
 #[derive(Debug, Clone)]
+pub struct MaterialUnitInput {
+    pub name: String,
+    pub conversion_factor: String,
+    pub barcode: Option<String>,
+}
+
+#[derive(Debug, Clone)]
 pub struct MaterialCreateInput {
     pub name: String,
     pub name_en: Option<String>,
@@ -729,6 +875,8 @@ pub struct MaterialCreateInput {
     pub minimum_stock: String,
     pub unit_name: String,
     pub conversion_factor: String,
+    pub extra_units: Vec<MaterialUnitInput>,
+    pub category_ids: Vec<String>,
     pub purchase_price: Option<String>,
     pub sale_price: Option<String>,
     pub currency: String,
@@ -745,6 +893,7 @@ pub struct MaterialUpdateInput {
     pub barcode: String,
     pub code: String,
     pub minimum_stock: String,
+    pub category_ids: Vec<String>,
     pub notes: Option<String>,
     pub purchase_price: Option<String>,
     pub sale_price: Option<String>,
@@ -767,6 +916,35 @@ pub async fn create_material(input: MaterialCreateInput) -> Result<MaterialItem,
     } else {
         parse_positive(&input.conversion_factor, "معامل التحويل")?
     };
+    let mut unit_defs = vec![CreateMaterialUnitRequest {
+        name: unit_name.clone(),
+        conversion_factor: conversion_factor.to_string(),
+        barcode: None,
+    }];
+    for extra in input.extra_units {
+        let name = extra.name.trim().to_string();
+        if name.is_empty() {
+            return Err(ApiError::new("unit_required", "اسم الوحدة الإضافية مطلوب."));
+        }
+        if unit_defs
+            .iter()
+            .any(|unit| unit.name.eq_ignore_ascii_case(&name))
+        {
+            return Err(ApiError::new(
+                "duplicate_unit",
+                format!("الوحدة «{name}» مضافة مسبقًا لهذه المادة."),
+            ));
+        }
+        let factor = parse_positive(&extra.conversion_factor, "معامل تحويل الوحدة الإضافية")?;
+        unit_defs.push(CreateMaterialUnitRequest {
+            name,
+            conversion_factor: factor.to_string(),
+            barcode: extra
+                .barcode
+                .map(|value| value.trim().to_string())
+                .filter(|value| !value.is_empty()),
+        });
+    }
     if input.expiry_alert_before_days < 0 {
         return Err(ApiError::new(
             "invalid_expiry_days",
@@ -823,12 +1001,12 @@ pub async fn create_material(input: MaterialCreateInput) -> Result<MaterialItem,
             barcode: input.barcode,
             code,
             minimum_stock: minimum_stock.to_string(),
-            units: vec![CreateMaterialUnitRequest {
-                name: unit_name.clone(),
-                conversion_factor: conversion_factor.to_string(),
-                barcode: None,
-            }],
-            category_ids: vec![],
+            units: unit_defs,
+            category_ids: if input.category_ids.is_empty() {
+                vec![DEFAULT_CATEGORY_ID.to_string()]
+            } else {
+                input.category_ids
+            },
             notes: input.notes,
             image_path: None,
             default_purchase_unit_id: Some(unit_name.clone()),
@@ -967,7 +1145,11 @@ pub async fn update_material(input: MaterialUpdateInput) -> Result<MaterialItem,
                 barcode: input.barcode,
                 code: input.code,
                 minimum_stock: minimum_stock.to_string(),
-                category_ids: current.category_ids,
+                category_ids: if input.category_ids.is_empty() {
+                    vec![DEFAULT_CATEGORY_ID.to_string()]
+                } else {
+                    input.category_ids
+                },
                 notes: input.notes,
                 image_path: current.image_path,
                 default_purchase_unit_id: current.default_purchase_unit_id,
@@ -991,6 +1173,104 @@ pub async fn delete_material(id: String) -> Result<(), ApiError> {
         .execute(id)
         .await?;
     Ok(())
+}
+
+#[derive(Debug, Clone)]
+pub struct MaterialUnitCreateInput {
+    pub material_id: String,
+    pub name: String,
+    pub conversion_factor: String,
+    pub barcode: Option<String>,
+}
+
+fn material_queries(app: &AppState) -> MaterialQueries {
+    MaterialQueries::new(
+        app.material_repo.clone(),
+        app.stock_movement_repo.clone(),
+        app.unified_invoice_repo.clone(),
+    )
+    .with_lot_repo(app.inventory_lot_repo.clone())
+}
+
+async fn material_units_for(
+    app: &AppState,
+    material_id: &str,
+) -> Result<Vec<MaterialUnitItem>, ApiError> {
+    let material = material_queries(app)
+        .get_by_id(material_id.to_string())
+        .await?;
+    Ok(material.units.into_iter().map(material_unit_item).collect())
+}
+
+pub async fn list_material_units(material_id: String) -> Result<Vec<MaterialUnitItem>, ApiError> {
+    let app = state()?;
+    material_units_for(app, &material_id).await
+}
+
+pub async fn add_material_unit(
+    input: MaterialUnitCreateInput,
+) -> Result<Vec<MaterialUnitItem>, ApiError> {
+    let app = state()?;
+    let material_id: MaterialId = input
+        .material_id
+        .parse()
+        .map_err(|_| ApiError::new("invalid_material_id", "معرف المادة غير صالح."))?;
+    let current = material_queries(app)
+        .get_by_id(material_id.to_string())
+        .await?;
+
+    let name = input.name.trim().to_string();
+    if name.is_empty() {
+        return Err(ApiError::new("unit_required", "اسم الوحدة مطلوب."));
+    }
+    if current
+        .units
+        .iter()
+        .any(|unit| unit.name.eq_ignore_ascii_case(&name))
+    {
+        return Err(ApiError::new(
+            "duplicate_unit",
+            format!("الوحدة «{name}» مضافة مسبقًا لهذه المادة."),
+        ));
+    }
+    let factor = parse_positive(&input.conversion_factor, "معامل التحويل")?;
+    let barcode = input
+        .barcode
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty());
+
+    app.material_repo
+        .add_unit(&material_id, name, factor, barcode)
+        .await?;
+
+    material_units_for(app, &material_id.to_string()).await
+}
+
+pub async fn delete_material_unit(
+    material_id: String,
+    unit_id: String,
+) -> Result<Vec<MaterialUnitItem>, ApiError> {
+    let app = state()?;
+    let material_id: MaterialId = material_id
+        .parse()
+        .map_err(|_| ApiError::new("invalid_material_id", "معرف المادة غير صالح."))?;
+    let current = material_queries(app)
+        .get_by_id(material_id.to_string())
+        .await?;
+    let unit = current
+        .units
+        .iter()
+        .find(|unit| unit.id == unit_id)
+        .ok_or_else(|| ApiError::new("unit_not_found", "الوحدة غير موجودة لهذه المادة."))?;
+    if unit.is_base {
+        return Err(ApiError::new(
+            "base_unit_locked",
+            "لا يمكن حذف الوحدة الأساسية للمادة.",
+        ));
+    }
+
+    app.material_repo.delete_unit(&unit_id).await?;
+    material_units_for(app, &material_id.to_string()).await
 }
 
 fn parse_non_negative(value: &str, field: &str) -> Result<Decimal, ApiError> {
