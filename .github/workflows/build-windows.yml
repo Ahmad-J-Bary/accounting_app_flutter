@@ -1,0 +1,68 @@
+name: Build Windows
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.41.9"
+
+jobs:
+  build-windows:
+    name: Windows x64 release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      - name: Install pinned Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1.16.1
+      - name: Read application version
+        id: version
+        shell: pwsh
+        run: |
+          $match = Select-String -Path app/pubspec.yaml -Pattern '^version:\s*([0-9]+\.[0-9]+\.[0-9]+)' | Select-Object -First 1
+          if ($null -eq $match) { throw 'Could not read the version from app/pubspec.yaml' }
+          $version = $match.Matches[0].Groups[1].Value
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+      - name: Install Flutter ${{ env.FLUTTER_VERSION }}
+        uses: subosito/flutter-action@v2.23.0
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Resolve Dart workspace dependencies
+        run: flutter pub get
+      - name: Build Windows release
+        working-directory: app
+        run: flutter build windows --release
+      - name: Verify the Rust bridge DLL is packaged
+        working-directory: app
+        shell: pwsh
+        run: |
+          $dll = 'build/windows/x64/runner/Release/accounting_app_flutter_isolates.dll'
+          if (-not (Test-Path $dll)) { throw "Missing Rust bridge DLL: $dll" }
+          Get-Item $dll | Select-Object FullName, Length
+      - name: Package the portable ZIP archive
+        id: package
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          $release = 'app/build/windows/x64/runner/Release'
+          $artifact = "accounting-app-$version-windows-x64.zip"
+          if (Test-Path $artifact) { Remove-Item $artifact -Force }
+          Compress-Archive -Path "$release/*" -DestinationPath $artifact -CompressionLevel Optimal
+          $hash = (Get-FileHash $artifact -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $artifact" | Out-File -FilePath "$artifact.sha256" -Encoding ascii
+          "artifact=$artifact" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: windows-x64-${{ steps.version.outputs.version }}
+          path: |
+            ${{ steps.package.outputs.artifact }}
+            ${{ steps.package.outputs.artifact }}.sha256
+          if-no-files-found: error
+          retention-days: 14

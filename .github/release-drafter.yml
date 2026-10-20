@@ -1,0 +1,48 @@
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+categories:
+  - title: "الميزات"
+    labels:
+      - feature
+      - enhancement
+  - title: "الإصلاحات"
+    labels:
+      - fix
+      - bug
+  - title: "الصيانة والاعتماديات"
+    labels:
+      - chore
+      - dependencies
+      - refactor
+  - title: "التوثيق"
+    labels:
+      - docs
+change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
+change-title-escapes: '\<*_&'
+no-changes-template: "- لا توجد تغييرات مسجلة."
+version-resolver:
+  major:
+    labels:
+      - breaking
+  minor:
+    labels:
+      - feature
+      - enhancement
+  patch:
+    labels:
+      - fix
+      - bug
+      - chore
+      - dependencies
+      - docs
+      - refactor
+  default: patch
+template: |
+  ## التغييرات
+
+  $CHANGES
+
+  ## التحقق
+
+  - تم بناء ملفات Windows و Android من نفس المصدر ورفع بصمات SHA-256 بجانب كل ملف.
+  - يشغّل هذا الإصدار نواة Rust المحلية مع تخزين SQLite على الجهاز.
