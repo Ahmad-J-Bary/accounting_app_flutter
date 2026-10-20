@@ -3,6 +3,8 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
+import 'api/accounting.dart';
+import 'api/error.dart';
 import 'api/simple.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -55,7 +57,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 
   @override
   Future<void> executeRustInitializers() async {
-    await api.crateApiSimpleInitApp();
+    await api.crateApiSimpleSetupBridge();
   }
 
   @override
@@ -66,7 +68,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -1918914929;
+  int get rustContentHash => 876332350;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -78,9 +80,99 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<List<MaterialUnitItem>> crateApiAccountingAddMaterialUnit({
+    required MaterialUnitCreateInput input,
+  });
+
+  Future<CategoryItem> crateApiAccountingCreateCategory({
+    required CategoryCreateInput input,
+  });
+
+  Future<CustomerItem> crateApiAccountingCreateCustomer({
+    required CustomerCreateInput input,
+  });
+
+  Future<JournalEntryView> crateApiAccountingCreateJournalEntry({
+    required CreateJournalEntryInput input,
+  });
+
+  Future<MaterialItem> crateApiAccountingCreateMaterial({
+    required MaterialCreateInput input,
+  });
+
+  Future<SupplierItem> crateApiAccountingCreateSupplier({
+    required SupplierCreateInput input,
+  });
+
+  Future<CategoryDeleteResult> crateApiAccountingDeleteCategory({
+    required String id,
+  });
+
+  Future<void> crateApiAccountingDeleteCustomer({required String id});
+
+  Future<void> crateApiAccountingDeleteMaterial({required String id});
+
+  Future<List<MaterialUnitItem>> crateApiAccountingDeleteMaterialUnit({
+    required String materialId,
+    required String unitId,
+  });
+
+  Future<void> crateApiAccountingDeleteSupplier({required String id});
+
+  Future<SetupStatusView> crateApiAccountingGetSetupStatus();
+
   String crateApiSimpleGreet({required String name});
 
-  Future<void> crateApiSimpleInitApp();
+  Future<void> crateApiAccountingInitApp({required String dbPath});
+
+  Future<bool> crateApiAccountingIsSetupComplete();
+
+  Future<List<AccountItem>> crateApiAccountingListAccounts();
+
+  Future<List<CategoryItem>> crateApiAccountingListCategories();
+
+  Future<List<CustomerItem>> crateApiAccountingListCustomers();
+
+  Future<List<MaterialUnitItem>> crateApiAccountingListMaterialUnits({
+    required String materialId,
+  });
+
+  Future<List<MaterialItem>> crateApiAccountingListMaterials();
+
+  Future<List<SupplierItem>> crateApiAccountingListSuppliers();
+
+  Future<JournalEntryView> crateApiAccountingPostJournalEntry({
+    required String entryId,
+  });
+
+  Future<void> crateApiSimpleSetupBridge();
+
+  Future<CompanySetupView> crateApiAccountingSetupCompany({
+    required SetupCompanyInput input,
+  });
+
+  Future<TrialBalanceView> crateApiAccountingTrialBalance({
+    String? fromDate,
+    String? toDate,
+  });
+
+  Future<CategoryItem> crateApiAccountingUpdateCategory({
+    required CategoryUpdateInput input,
+  });
+
+  Future<CustomerItem> crateApiAccountingUpdateCustomer({
+    required CustomerUpdateInput input,
+  });
+
+  Future<MaterialItem> crateApiAccountingUpdateMaterial({
+    required MaterialUpdateInput input,
+  });
+
+  Future<SupplierItem> crateApiAccountingUpdateSupplier({
+    required SupplierUpdateInput input,
+  });
+
+  Future<List<WorldCurrencyView>> crateApiAccountingWorldCurrencies();
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -92,13 +184,372 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<List<MaterialUnitItem>> crateApiAccountingAddMaterialUnit({
+    required MaterialUnitCreateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_material_unit_create_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_material_unit_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingAddMaterialUnitConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingAddMaterialUnitConstMeta =>
+      const TaskConstMeta(debugName: "add_material_unit", argNames: ["input"]);
+
+  @override
+  Future<CategoryItem> crateApiAccountingCreateCategory({
+    required CategoryCreateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_category_create_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 2,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_category_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingCreateCategoryConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingCreateCategoryConstMeta =>
+      const TaskConstMeta(debugName: "create_category", argNames: ["input"]);
+
+  @override
+  Future<CustomerItem> crateApiAccountingCreateCustomer({
+    required CustomerCreateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_customer_create_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 3,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_customer_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingCreateCustomerConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingCreateCustomerConstMeta =>
+      const TaskConstMeta(debugName: "create_customer", argNames: ["input"]);
+
+  @override
+  Future<JournalEntryView> crateApiAccountingCreateJournalEntry({
+    required CreateJournalEntryInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_create_journal_entry_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 4,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_journal_entry_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingCreateJournalEntryConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingCreateJournalEntryConstMeta =>
+      const TaskConstMeta(
+        debugName: "create_journal_entry",
+        argNames: ["input"],
+      );
+
+  @override
+  Future<MaterialItem> crateApiAccountingCreateMaterial({
+    required MaterialCreateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_material_create_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 5,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_material_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingCreateMaterialConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingCreateMaterialConstMeta =>
+      const TaskConstMeta(debugName: "create_material", argNames: ["input"]);
+
+  @override
+  Future<SupplierItem> crateApiAccountingCreateSupplier({
+    required SupplierCreateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_supplier_create_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 6,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_supplier_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingCreateSupplierConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingCreateSupplierConstMeta =>
+      const TaskConstMeta(debugName: "create_supplier", argNames: ["input"]);
+
+  @override
+  Future<CategoryDeleteResult> crateApiAccountingDeleteCategory({
+    required String id,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 7,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_category_delete_result,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingDeleteCategoryConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingDeleteCategoryConstMeta =>
+      const TaskConstMeta(debugName: "delete_category", argNames: ["id"]);
+
+  @override
+  Future<void> crateApiAccountingDeleteCustomer({required String id}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 8,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingDeleteCustomerConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingDeleteCustomerConstMeta =>
+      const TaskConstMeta(debugName: "delete_customer", argNames: ["id"]);
+
+  @override
+  Future<void> crateApiAccountingDeleteMaterial({required String id}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 9,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingDeleteMaterialConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingDeleteMaterialConstMeta =>
+      const TaskConstMeta(debugName: "delete_material", argNames: ["id"]);
+
+  @override
+  Future<List<MaterialUnitItem>> crateApiAccountingDeleteMaterialUnit({
+    required String materialId,
+    required String unitId,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(materialId, serializer);
+          sse_encode_String(unitId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 10,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_material_unit_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingDeleteMaterialUnitConstMeta,
+        argValues: [materialId, unitId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingDeleteMaterialUnitConstMeta =>
+      const TaskConstMeta(
+        debugName: "delete_material_unit",
+        argNames: ["materialId", "unitId"],
+      );
+
+  @override
+  Future<void> crateApiAccountingDeleteSupplier({required String id}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 11,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingDeleteSupplierConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingDeleteSupplierConstMeta =>
+      const TaskConstMeta(debugName: "delete_supplier", argNames: ["id"]);
+
+  @override
+  Future<SetupStatusView> crateApiAccountingGetSetupStatus() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 12,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_setup_status_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingGetSetupStatusConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingGetSetupStatusConstMeta =>
+      const TaskConstMeta(debugName: "get_setup_status", argNames: []);
+
+  @override
   String crateApiSimpleGreet({required String name}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(name, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -115,7 +566,35 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "greet", argNames: ["name"]);
 
   @override
-  Future<void> crateApiSimpleInitApp() {
+  Future<void> crateApiAccountingInitApp({required String dbPath}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(dbPath, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 14,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingInitAppConstMeta,
+        argValues: [dbPath],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingInitAppConstMeta =>
+      const TaskConstMeta(debugName: "init_app", argNames: ["dbPath"]);
+
+  @override
+  Future<bool> crateApiAccountingIsSetupComplete() {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
@@ -123,7 +602,235 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 2,
+            funcId: 15,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingIsSetupCompleteConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingIsSetupCompleteConstMeta =>
+      const TaskConstMeta(debugName: "is_setup_complete", argNames: []);
+
+  @override
+  Future<List<AccountItem>> crateApiAccountingListAccounts() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 16,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_account_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingListAccountsConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingListAccountsConstMeta =>
+      const TaskConstMeta(debugName: "list_accounts", argNames: []);
+
+  @override
+  Future<List<CategoryItem>> crateApiAccountingListCategories() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 17,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_category_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingListCategoriesConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingListCategoriesConstMeta =>
+      const TaskConstMeta(debugName: "list_categories", argNames: []);
+
+  @override
+  Future<List<CustomerItem>> crateApiAccountingListCustomers() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 18,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_customer_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingListCustomersConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingListCustomersConstMeta =>
+      const TaskConstMeta(debugName: "list_customers", argNames: []);
+
+  @override
+  Future<List<MaterialUnitItem>> crateApiAccountingListMaterialUnits({
+    required String materialId,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(materialId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 19,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_material_unit_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingListMaterialUnitsConstMeta,
+        argValues: [materialId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingListMaterialUnitsConstMeta =>
+      const TaskConstMeta(
+        debugName: "list_material_units",
+        argNames: ["materialId"],
+      );
+
+  @override
+  Future<List<MaterialItem>> crateApiAccountingListMaterials() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 20,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_material_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingListMaterialsConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingListMaterialsConstMeta =>
+      const TaskConstMeta(debugName: "list_materials", argNames: []);
+
+  @override
+  Future<List<SupplierItem>> crateApiAccountingListSuppliers() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 21,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_supplier_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingListSuppliersConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingListSuppliersConstMeta =>
+      const TaskConstMeta(debugName: "list_suppliers", argNames: []);
+
+  @override
+  Future<JournalEntryView> crateApiAccountingPostJournalEntry({
+    required String entryId,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(entryId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 22,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_journal_entry_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingPostJournalEntryConstMeta,
+        argValues: [entryId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingPostJournalEntryConstMeta =>
+      const TaskConstMeta(
+        debugName: "post_journal_entry",
+        argNames: ["entryId"],
+      );
+
+  @override
+  Future<void> crateApiSimpleSetupBridge() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 23,
             port: port_,
           );
         },
@@ -131,15 +838,227 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApiSimpleInitAppConstMeta,
+        constMeta: kCrateApiSimpleSetupBridgeConstMeta,
         argValues: [],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiSimpleInitAppConstMeta =>
-      const TaskConstMeta(debugName: "init_app", argNames: []);
+  TaskConstMeta get kCrateApiSimpleSetupBridgeConstMeta =>
+      const TaskConstMeta(debugName: "setup_bridge", argNames: []);
+
+  @override
+  Future<CompanySetupView> crateApiAccountingSetupCompany({
+    required SetupCompanyInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_setup_company_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 24,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_company_setup_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingSetupCompanyConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingSetupCompanyConstMeta =>
+      const TaskConstMeta(debugName: "setup_company", argNames: ["input"]);
+
+  @override
+  Future<TrialBalanceView> crateApiAccountingTrialBalance({
+    String? fromDate,
+    String? toDate,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_opt_String(fromDate, serializer);
+          sse_encode_opt_String(toDate, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 25,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_trial_balance_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingTrialBalanceConstMeta,
+        argValues: [fromDate, toDate],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingTrialBalanceConstMeta =>
+      const TaskConstMeta(
+        debugName: "trial_balance",
+        argNames: ["fromDate", "toDate"],
+      );
+
+  @override
+  Future<CategoryItem> crateApiAccountingUpdateCategory({
+    required CategoryUpdateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_category_update_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 26,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_category_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingUpdateCategoryConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingUpdateCategoryConstMeta =>
+      const TaskConstMeta(debugName: "update_category", argNames: ["input"]);
+
+  @override
+  Future<CustomerItem> crateApiAccountingUpdateCustomer({
+    required CustomerUpdateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_customer_update_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 27,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_customer_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingUpdateCustomerConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingUpdateCustomerConstMeta =>
+      const TaskConstMeta(debugName: "update_customer", argNames: ["input"]);
+
+  @override
+  Future<MaterialItem> crateApiAccountingUpdateMaterial({
+    required MaterialUpdateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_material_update_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 28,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_material_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingUpdateMaterialConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingUpdateMaterialConstMeta =>
+      const TaskConstMeta(debugName: "update_material", argNames: ["input"]);
+
+  @override
+  Future<SupplierItem> crateApiAccountingUpdateSupplier({
+    required SupplierUpdateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_supplier_update_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 29,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_supplier_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingUpdateSupplierConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingUpdateSupplierConstMeta =>
+      const TaskConstMeta(debugName: "update_supplier", argNames: ["input"]);
+
+  @override
+  Future<List<WorldCurrencyView>> crateApiAccountingWorldCurrencies() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 30,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_world_currency_view,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiAccountingWorldCurrenciesConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingWorldCurrenciesConstMeta =>
+      const TaskConstMeta(debugName: "world_currencies", argNames: []);
 
   @protected
   String dco_decode_String(dynamic raw) {
@@ -148,9 +1067,642 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  AccountItem dco_decode_account_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    return AccountItem(
+      id: dco_decode_String(arr[0]),
+      code: dco_decode_String(arr[1]),
+      nameAr: dco_decode_String(arr[2]),
+      nameEn: dco_decode_String(arr[3]),
+      accountType: dco_decode_String(arr[4]),
+      purpose: dco_decode_String(arr[5]),
+      currency: dco_decode_String(arr[6]),
+      balance: dco_decode_String(arr[7]),
+      isActive: dco_decode_bool(arr[8]),
+      isFinal: dco_decode_bool(arr[9]),
+    );
+  }
+
+  @protected
+  ApiError dco_decode_api_error(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return ApiError(
+      code: dco_decode_String(arr[0]),
+      message: dco_decode_String(arr[1]),
+      details: dco_decode_opt_String(arr[2]),
+    );
+  }
+
+  @protected
+  bool dco_decode_bool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as bool;
+  }
+
+  @protected
+  CategoryCreateInput dco_decode_box_autoadd_category_create_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_category_create_input(raw);
+  }
+
+  @protected
+  CategoryUpdateInput dco_decode_box_autoadd_category_update_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_category_update_input(raw);
+  }
+
+  @protected
+  CreateJournalEntryInput dco_decode_box_autoadd_create_journal_entry_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_create_journal_entry_input(raw);
+  }
+
+  @protected
+  CustomerCreateInput dco_decode_box_autoadd_customer_create_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_customer_create_input(raw);
+  }
+
+  @protected
+  CustomerUpdateInput dco_decode_box_autoadd_customer_update_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_customer_update_input(raw);
+  }
+
+  @protected
+  MaterialCreateInput dco_decode_box_autoadd_material_create_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_material_create_input(raw);
+  }
+
+  @protected
+  MaterialUnitCreateInput dco_decode_box_autoadd_material_unit_create_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_material_unit_create_input(raw);
+  }
+
+  @protected
+  MaterialUpdateInput dco_decode_box_autoadd_material_update_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_material_update_input(raw);
+  }
+
+  @protected
+  SetupCompanyInput dco_decode_box_autoadd_setup_company_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_setup_company_input(raw);
+  }
+
+  @protected
+  SupplierCreateInput dco_decode_box_autoadd_supplier_create_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_supplier_create_input(raw);
+  }
+
+  @protected
+  SupplierUpdateInput dco_decode_box_autoadd_supplier_update_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_supplier_update_input(raw);
+  }
+
+  @protected
+  CategoryCreateInput dco_decode_category_create_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return CategoryCreateInput(
+      name: dco_decode_String(arr[0]),
+      parentId: dco_decode_opt_String(arr[1]),
+      codePrefix: dco_decode_opt_String(arr[2]),
+    );
+  }
+
+  @protected
+  CategoryDeleteResult dco_decode_category_delete_result(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return CategoryDeleteResult(
+      materialsReassigned: dco_decode_i_32(arr[0]),
+      subsDeleted: dco_decode_i_32(arr[1]),
+    );
+  }
+
+  @protected
+  CategoryItem dco_decode_category_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return CategoryItem(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      parentId: dco_decode_opt_String(arr[2]),
+      codePrefix: dco_decode_opt_String(arr[3]),
+      isActive: dco_decode_bool(arr[4]),
+      materialCount: dco_decode_i_32(arr[5]),
+      systemKey: dco_decode_opt_String(arr[6]),
+    );
+  }
+
+  @protected
+  CategoryUpdateInput dco_decode_category_update_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return CategoryUpdateInput(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      parentId: dco_decode_opt_String(arr[2]),
+      isActive: dco_decode_bool(arr[3]),
+      codePrefix: dco_decode_opt_String(arr[4]),
+    );
+  }
+
+  @protected
+  CompanySetupView dco_decode_company_setup_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return CompanySetupView(
+      companyName: dco_decode_String(arr[0]),
+      baseCurrencyCode: dco_decode_String(arr[1]),
+      currencySymbol: dco_decode_String(arr[2]),
+      secondaryCurrencyCode: dco_decode_opt_String(arr[3]),
+      fiscalYearStartMonth: dco_decode_i_32(arr[4]),
+      accountingStartMode: dco_decode_String(arr[5]),
+      setupComplete: dco_decode_bool(arr[6]),
+    );
+  }
+
+  @protected
+  CreateJournalEntryInput dco_decode_create_journal_entry_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return CreateJournalEntryInput(
+      journalType: dco_decode_String(arr[0]),
+      sourceId: dco_decode_opt_String(arr[1]),
+      entryDate: dco_decode_String(arr[2]),
+      description: dco_decode_String(arr[3]),
+      lines: dco_decode_list_journal_line_input(arr[4]),
+    );
+  }
+
+  @protected
+  CustomerCreateInput dco_decode_customer_create_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return CustomerCreateInput(
+      name: dco_decode_String(arr[0]),
+      phone: dco_decode_opt_String(arr[1]),
+      address: dco_decode_opt_String(arr[2]),
+      notes: dco_decode_opt_String(arr[3]),
+      currency: dco_decode_String(arr[4]),
+      openingBalance: dco_decode_String(arr[5]),
+    );
+  }
+
+  @protected
+  CustomerItem dco_decode_customer_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 13)
+      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
+    return CustomerItem(
+      id: dco_decode_String(arr[0]),
+      code: dco_decode_String(arr[1]),
+      name: dco_decode_String(arr[2]),
+      phone: dco_decode_opt_String(arr[3]),
+      address: dco_decode_opt_String(arr[4]),
+      accountId: dco_decode_opt_String(arr[5]),
+      debit: dco_decode_String(arr[6]),
+      credit: dco_decode_String(arr[7]),
+      openingBalance: dco_decode_String(arr[8]),
+      balance: dco_decode_String(arr[9]),
+      currency: dco_decode_String(arr[10]),
+      notes: dco_decode_opt_String(arr[11]),
+      isActive: dco_decode_bool(arr[12]),
+    );
+  }
+
+  @protected
+  CustomerUpdateInput dco_decode_customer_update_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return CustomerUpdateInput(
+      id: dco_decode_String(arr[0]),
+      code: dco_decode_String(arr[1]),
+      name: dco_decode_String(arr[2]),
+      phone: dco_decode_opt_String(arr[3]),
+      address: dco_decode_opt_String(arr[4]),
+      notes: dco_decode_opt_String(arr[5]),
+      openingBalance: dco_decode_opt_String(arr[6]),
+      isActive: dco_decode_bool(arr[7]),
+    );
+  }
+
+  @protected
+  int dco_decode_i_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
+  JournalEntryView dco_decode_journal_entry_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return JournalEntryView(
+      id: dco_decode_String(arr[0]),
+      entryNumber: dco_decode_String(arr[1]),
+      journalType: dco_decode_String(arr[2]),
+      entryDate: dco_decode_String(arr[3]),
+      description: dco_decode_String(arr[4]),
+      status: dco_decode_String(arr[5]),
+      totalDebit: dco_decode_String(arr[6]),
+      totalCredit: dco_decode_String(arr[7]),
+    );
+  }
+
+  @protected
+  JournalLineInput dco_decode_journal_line_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return JournalLineInput(
+      accountId: dco_decode_String(arr[0]),
+      partnerId: dco_decode_opt_String(arr[1]),
+      currency: dco_decode_String(arr[2]),
+      fxRate: dco_decode_String(arr[3]),
+      debit: dco_decode_String(arr[4]),
+      credit: dco_decode_String(arr[5]),
+      description: dco_decode_String(arr[6]),
+    );
+  }
+
+  @protected
+  List<String> dco_decode_list_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_String).toList();
+  }
+
+  @protected
+  List<AccountItem> dco_decode_list_account_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_account_item).toList();
+  }
+
+  @protected
+  List<CategoryItem> dco_decode_list_category_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_category_item).toList();
+  }
+
+  @protected
+  List<CustomerItem> dco_decode_list_customer_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_customer_item).toList();
+  }
+
+  @protected
+  List<JournalLineInput> dco_decode_list_journal_line_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_journal_line_input).toList();
+  }
+
+  @protected
+  List<MaterialItem> dco_decode_list_material_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_material_item).toList();
+  }
+
+  @protected
+  List<MaterialUnitInput> dco_decode_list_material_unit_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_material_unit_input).toList();
+  }
+
+  @protected
+  List<MaterialUnitItem> dco_decode_list_material_unit_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_material_unit_item).toList();
+  }
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
+  }
+
+  @protected
+  List<SupplierItem> dco_decode_list_supplier_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_supplier_item).toList();
+  }
+
+  @protected
+  List<TrialBalanceLineView> dco_decode_list_trial_balance_line_view(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>)
+        .map(dco_decode_trial_balance_line_view)
+        .toList();
+  }
+
+  @protected
+  List<WorldCurrencyView> dco_decode_list_world_currency_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_world_currency_view).toList();
+  }
+
+  @protected
+  MaterialCreateInput dco_decode_material_create_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 15)
+      throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
+    return MaterialCreateInput(
+      name: dco_decode_String(arr[0]),
+      nameEn: dco_decode_opt_String(arr[1]),
+      barcode: dco_decode_opt_String(arr[2]),
+      code: dco_decode_opt_String(arr[3]),
+      minimumStock: dco_decode_String(arr[4]),
+      unitName: dco_decode_String(arr[5]),
+      conversionFactor: dco_decode_String(arr[6]),
+      extraUnits: dco_decode_list_material_unit_input(arr[7]),
+      categoryIds: dco_decode_list_String(arr[8]),
+      purchasePrice: dco_decode_opt_String(arr[9]),
+      salePrice: dco_decode_opt_String(arr[10]),
+      currency: dco_decode_String(arr[11]),
+      notes: dco_decode_opt_String(arr[12]),
+      hasExpiry: dco_decode_bool(arr[13]),
+      expiryAlertBeforeDays: dco_decode_i_32(arr[14]),
+    );
+  }
+
+  @protected
+  MaterialItem dco_decode_material_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 26)
+      throw Exception('unexpected arr length: expect 26 but see ${arr.length}');
+    return MaterialItem(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      nameEn: dco_decode_String(arr[2]),
+      barcode: dco_decode_String(arr[3]),
+      code: dco_decode_String(arr[4]),
+      categoryIds: dco_decode_list_String(arr[5]),
+      minimumStock: dco_decode_String(arr[6]),
+      totalReceived: dco_decode_String(arr[7]),
+      totalSold: dco_decode_String(arr[8]),
+      totalAvailable: dco_decode_String(arr[9]),
+      totalDamaged: dco_decode_String(arr[10]),
+      lastPurchasePrice: dco_decode_String(arr[11]),
+      lastSalePrice: dco_decode_String(arr[12]),
+      averageCost: dco_decode_String(arr[13]),
+      averageCostBase: dco_decode_String(arr[14]),
+      unitsCount: dco_decode_i_32(arr[15]),
+      units: dco_decode_list_material_unit_item(arr[16]),
+      hasExpiry: dco_decode_bool(arr[17]),
+      expiryAlertBeforeDays: dco_decode_i_32(arr[18]),
+      costingMethod: dco_decode_String(arr[19]),
+      purchasePrice: dco_decode_String(arr[20]),
+      salePrice: dco_decode_String(arr[21]),
+      currency: dco_decode_String(arr[22]),
+      notes: dco_decode_opt_String(arr[23]),
+      unitName: dco_decode_String(arr[24]),
+      conversionFactor: dco_decode_String(arr[25]),
+    );
+  }
+
+  @protected
+  MaterialUnitCreateInput dco_decode_material_unit_create_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return MaterialUnitCreateInput(
+      materialId: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      conversionFactor: dco_decode_String(arr[2]),
+      barcode: dco_decode_opt_String(arr[3]),
+    );
+  }
+
+  @protected
+  MaterialUnitInput dco_decode_material_unit_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return MaterialUnitInput(
+      name: dco_decode_String(arr[0]),
+      conversionFactor: dco_decode_String(arr[1]),
+      barcode: dco_decode_opt_String(arr[2]),
+    );
+  }
+
+  @protected
+  MaterialUnitItem dco_decode_material_unit_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return MaterialUnitItem(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      conversionFactor: dco_decode_String(arr[2]),
+      barcode: dco_decode_opt_String(arr[3]),
+      isBase: dco_decode_bool(arr[4]),
+    );
+  }
+
+  @protected
+  MaterialUpdateInput dco_decode_material_update_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 13)
+      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
+    return MaterialUpdateInput(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      nameEn: dco_decode_String(arr[2]),
+      barcode: dco_decode_String(arr[3]),
+      code: dco_decode_String(arr[4]),
+      minimumStock: dco_decode_String(arr[5]),
+      categoryIds: dco_decode_list_String(arr[6]),
+      notes: dco_decode_opt_String(arr[7]),
+      purchasePrice: dco_decode_opt_String(arr[8]),
+      salePrice: dco_decode_opt_String(arr[9]),
+      currency: dco_decode_opt_String(arr[10]),
+      hasExpiry: dco_decode_bool(arr[11]),
+      expiryAlertBeforeDays: dco_decode_i_32(arr[12]),
+    );
+  }
+
+  @protected
+  String? dco_decode_opt_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_String(raw);
+  }
+
+  @protected
+  SetupCompanyInput dco_decode_setup_company_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return SetupCompanyInput(
+      companyName: dco_decode_String(arr[0]),
+      baseCurrencyCode: dco_decode_String(arr[1]),
+      secondaryCurrencyCode: dco_decode_opt_String(arr[2]),
+      fiscalYearStartMonth: dco_decode_i_32(arr[3]),
+      accountingStartMode: dco_decode_opt_String(arr[4]),
+    );
+  }
+
+  @protected
+  SetupStatusView dco_decode_setup_status_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return SetupStatusView(
+      setupComplete: dco_decode_bool(arr[0]),
+      companyName: dco_decode_String(arr[1]),
+      baseCurrencyCode: dco_decode_String(arr[2]),
+      currencySymbol: dco_decode_String(arr[3]),
+      fiscalYearStartMonth: dco_decode_i_32(arr[4]),
+      accountingStartMode: dco_decode_String(arr[5]),
+    );
+  }
+
+  @protected
+  SupplierCreateInput dco_decode_supplier_create_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return SupplierCreateInput(
+      name: dco_decode_String(arr[0]),
+      phone: dco_decode_opt_String(arr[1]),
+      address: dco_decode_opt_String(arr[2]),
+      notes: dco_decode_opt_String(arr[3]),
+      currency: dco_decode_String(arr[4]),
+      openingBalance: dco_decode_String(arr[5]),
+    );
+  }
+
+  @protected
+  SupplierItem dco_decode_supplier_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 13)
+      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
+    return SupplierItem(
+      id: dco_decode_String(arr[0]),
+      code: dco_decode_String(arr[1]),
+      name: dco_decode_String(arr[2]),
+      phone: dco_decode_opt_String(arr[3]),
+      address: dco_decode_opt_String(arr[4]),
+      accountId: dco_decode_opt_String(arr[5]),
+      debit: dco_decode_String(arr[6]),
+      credit: dco_decode_String(arr[7]),
+      openingBalance: dco_decode_String(arr[8]),
+      balance: dco_decode_String(arr[9]),
+      currency: dco_decode_String(arr[10]),
+      notes: dco_decode_opt_String(arr[11]),
+      isActive: dco_decode_bool(arr[12]),
+    );
+  }
+
+  @protected
+  SupplierUpdateInput dco_decode_supplier_update_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return SupplierUpdateInput(
+      id: dco_decode_String(arr[0]),
+      code: dco_decode_String(arr[1]),
+      name: dco_decode_String(arr[2]),
+      phone: dco_decode_opt_String(arr[3]),
+      address: dco_decode_opt_String(arr[4]),
+      notes: dco_decode_opt_String(arr[5]),
+      openingBalance: dco_decode_opt_String(arr[6]),
+      isActive: dco_decode_bool(arr[7]),
+    );
+  }
+
+  @protected
+  TrialBalanceLineView dco_decode_trial_balance_line_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return TrialBalanceLineView(
+      accountId: dco_decode_String(arr[0]),
+      accountCode: dco_decode_String(arr[1]),
+      accountName: dco_decode_String(arr[2]),
+      accountType: dco_decode_String(arr[3]),
+      debitTotal: dco_decode_String(arr[4]),
+      creditTotal: dco_decode_String(arr[5]),
+      balance: dco_decode_String(arr[6]),
+    );
+  }
+
+  @protected
+  TrialBalanceView dco_decode_trial_balance_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return TrialBalanceView(
+      lines: dco_decode_list_trial_balance_line_view(arr[0]),
+      totalDebit: dco_decode_String(arr[1]),
+      totalCredit: dco_decode_String(arr[2]),
+      generatedAt: dco_decode_String(arr[3]),
+    );
   }
 
   @protected
@@ -166,6 +1718,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  WorldCurrencyView dco_decode_world_currency_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return WorldCurrencyView(
+      code: dco_decode_String(arr[0]),
+      nameAr: dco_decode_String(arr[1]),
+      nameEn: dco_decode_String(arr[2]),
+      symbol: dco_decode_String(arr[3]),
+      decimals: dco_decode_i_32(arr[4]),
+    );
+  }
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_list_prim_u_8_strict(deserializer);
@@ -173,10 +1740,875 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  AccountItem sse_decode_account_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_code = sse_decode_String(deserializer);
+    var var_nameAr = sse_decode_String(deserializer);
+    var var_nameEn = sse_decode_String(deserializer);
+    var var_accountType = sse_decode_String(deserializer);
+    var var_purpose = sse_decode_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_balance = sse_decode_String(deserializer);
+    var var_isActive = sse_decode_bool(deserializer);
+    var var_isFinal = sse_decode_bool(deserializer);
+    return AccountItem(
+      id: var_id,
+      code: var_code,
+      nameAr: var_nameAr,
+      nameEn: var_nameEn,
+      accountType: var_accountType,
+      purpose: var_purpose,
+      currency: var_currency,
+      balance: var_balance,
+      isActive: var_isActive,
+      isFinal: var_isFinal,
+    );
+  }
+
+  @protected
+  ApiError sse_decode_api_error(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_code = sse_decode_String(deserializer);
+    var var_message = sse_decode_String(deserializer);
+    var var_details = sse_decode_opt_String(deserializer);
+    return ApiError(code: var_code, message: var_message, details: var_details);
+  }
+
+  @protected
+  bool sse_decode_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
+  CategoryCreateInput sse_decode_box_autoadd_category_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_category_create_input(deserializer));
+  }
+
+  @protected
+  CategoryUpdateInput sse_decode_box_autoadd_category_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_category_update_input(deserializer));
+  }
+
+  @protected
+  CreateJournalEntryInput sse_decode_box_autoadd_create_journal_entry_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_create_journal_entry_input(deserializer));
+  }
+
+  @protected
+  CustomerCreateInput sse_decode_box_autoadd_customer_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_customer_create_input(deserializer));
+  }
+
+  @protected
+  CustomerUpdateInput sse_decode_box_autoadd_customer_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_customer_update_input(deserializer));
+  }
+
+  @protected
+  MaterialCreateInput sse_decode_box_autoadd_material_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_material_create_input(deserializer));
+  }
+
+  @protected
+  MaterialUnitCreateInput sse_decode_box_autoadd_material_unit_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_material_unit_create_input(deserializer));
+  }
+
+  @protected
+  MaterialUpdateInput sse_decode_box_autoadd_material_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_material_update_input(deserializer));
+  }
+
+  @protected
+  SetupCompanyInput sse_decode_box_autoadd_setup_company_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_setup_company_input(deserializer));
+  }
+
+  @protected
+  SupplierCreateInput sse_decode_box_autoadd_supplier_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_supplier_create_input(deserializer));
+  }
+
+  @protected
+  SupplierUpdateInput sse_decode_box_autoadd_supplier_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_supplier_update_input(deserializer));
+  }
+
+  @protected
+  CategoryCreateInput sse_decode_category_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_name = sse_decode_String(deserializer);
+    var var_parentId = sse_decode_opt_String(deserializer);
+    var var_codePrefix = sse_decode_opt_String(deserializer);
+    return CategoryCreateInput(
+      name: var_name,
+      parentId: var_parentId,
+      codePrefix: var_codePrefix,
+    );
+  }
+
+  @protected
+  CategoryDeleteResult sse_decode_category_delete_result(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_materialsReassigned = sse_decode_i_32(deserializer);
+    var var_subsDeleted = sse_decode_i_32(deserializer);
+    return CategoryDeleteResult(
+      materialsReassigned: var_materialsReassigned,
+      subsDeleted: var_subsDeleted,
+    );
+  }
+
+  @protected
+  CategoryItem sse_decode_category_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_parentId = sse_decode_opt_String(deserializer);
+    var var_codePrefix = sse_decode_opt_String(deserializer);
+    var var_isActive = sse_decode_bool(deserializer);
+    var var_materialCount = sse_decode_i_32(deserializer);
+    var var_systemKey = sse_decode_opt_String(deserializer);
+    return CategoryItem(
+      id: var_id,
+      name: var_name,
+      parentId: var_parentId,
+      codePrefix: var_codePrefix,
+      isActive: var_isActive,
+      materialCount: var_materialCount,
+      systemKey: var_systemKey,
+    );
+  }
+
+  @protected
+  CategoryUpdateInput sse_decode_category_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_parentId = sse_decode_opt_String(deserializer);
+    var var_isActive = sse_decode_bool(deserializer);
+    var var_codePrefix = sse_decode_opt_String(deserializer);
+    return CategoryUpdateInput(
+      id: var_id,
+      name: var_name,
+      parentId: var_parentId,
+      isActive: var_isActive,
+      codePrefix: var_codePrefix,
+    );
+  }
+
+  @protected
+  CompanySetupView sse_decode_company_setup_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_companyName = sse_decode_String(deserializer);
+    var var_baseCurrencyCode = sse_decode_String(deserializer);
+    var var_currencySymbol = sse_decode_String(deserializer);
+    var var_secondaryCurrencyCode = sse_decode_opt_String(deserializer);
+    var var_fiscalYearStartMonth = sse_decode_i_32(deserializer);
+    var var_accountingStartMode = sse_decode_String(deserializer);
+    var var_setupComplete = sse_decode_bool(deserializer);
+    return CompanySetupView(
+      companyName: var_companyName,
+      baseCurrencyCode: var_baseCurrencyCode,
+      currencySymbol: var_currencySymbol,
+      secondaryCurrencyCode: var_secondaryCurrencyCode,
+      fiscalYearStartMonth: var_fiscalYearStartMonth,
+      accountingStartMode: var_accountingStartMode,
+      setupComplete: var_setupComplete,
+    );
+  }
+
+  @protected
+  CreateJournalEntryInput sse_decode_create_journal_entry_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_journalType = sse_decode_String(deserializer);
+    var var_sourceId = sse_decode_opt_String(deserializer);
+    var var_entryDate = sse_decode_String(deserializer);
+    var var_description = sse_decode_String(deserializer);
+    var var_lines = sse_decode_list_journal_line_input(deserializer);
+    return CreateJournalEntryInput(
+      journalType: var_journalType,
+      sourceId: var_sourceId,
+      entryDate: var_entryDate,
+      description: var_description,
+      lines: var_lines,
+    );
+  }
+
+  @protected
+  CustomerCreateInput sse_decode_customer_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_name = sse_decode_String(deserializer);
+    var var_phone = sse_decode_opt_String(deserializer);
+    var var_address = sse_decode_opt_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_openingBalance = sse_decode_String(deserializer);
+    return CustomerCreateInput(
+      name: var_name,
+      phone: var_phone,
+      address: var_address,
+      notes: var_notes,
+      currency: var_currency,
+      openingBalance: var_openingBalance,
+    );
+  }
+
+  @protected
+  CustomerItem sse_decode_customer_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_code = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_phone = sse_decode_opt_String(deserializer);
+    var var_address = sse_decode_opt_String(deserializer);
+    var var_accountId = sse_decode_opt_String(deserializer);
+    var var_debit = sse_decode_String(deserializer);
+    var var_credit = sse_decode_String(deserializer);
+    var var_openingBalance = sse_decode_String(deserializer);
+    var var_balance = sse_decode_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_isActive = sse_decode_bool(deserializer);
+    return CustomerItem(
+      id: var_id,
+      code: var_code,
+      name: var_name,
+      phone: var_phone,
+      address: var_address,
+      accountId: var_accountId,
+      debit: var_debit,
+      credit: var_credit,
+      openingBalance: var_openingBalance,
+      balance: var_balance,
+      currency: var_currency,
+      notes: var_notes,
+      isActive: var_isActive,
+    );
+  }
+
+  @protected
+  CustomerUpdateInput sse_decode_customer_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_code = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_phone = sse_decode_opt_String(deserializer);
+    var var_address = sse_decode_opt_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_openingBalance = sse_decode_opt_String(deserializer);
+    var var_isActive = sse_decode_bool(deserializer);
+    return CustomerUpdateInput(
+      id: var_id,
+      code: var_code,
+      name: var_name,
+      phone: var_phone,
+      address: var_address,
+      notes: var_notes,
+      openingBalance: var_openingBalance,
+      isActive: var_isActive,
+    );
+  }
+
+  @protected
+  int sse_decode_i_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getInt32();
+  }
+
+  @protected
+  JournalEntryView sse_decode_journal_entry_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_entryNumber = sse_decode_String(deserializer);
+    var var_journalType = sse_decode_String(deserializer);
+    var var_entryDate = sse_decode_String(deserializer);
+    var var_description = sse_decode_String(deserializer);
+    var var_status = sse_decode_String(deserializer);
+    var var_totalDebit = sse_decode_String(deserializer);
+    var var_totalCredit = sse_decode_String(deserializer);
+    return JournalEntryView(
+      id: var_id,
+      entryNumber: var_entryNumber,
+      journalType: var_journalType,
+      entryDate: var_entryDate,
+      description: var_description,
+      status: var_status,
+      totalDebit: var_totalDebit,
+      totalCredit: var_totalCredit,
+    );
+  }
+
+  @protected
+  JournalLineInput sse_decode_journal_line_input(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_accountId = sse_decode_String(deserializer);
+    var var_partnerId = sse_decode_opt_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_fxRate = sse_decode_String(deserializer);
+    var var_debit = sse_decode_String(deserializer);
+    var var_credit = sse_decode_String(deserializer);
+    var var_description = sse_decode_String(deserializer);
+    return JournalLineInput(
+      accountId: var_accountId,
+      partnerId: var_partnerId,
+      currency: var_currency,
+      fxRate: var_fxRate,
+      debit: var_debit,
+      credit: var_credit,
+      description: var_description,
+    );
+  }
+
+  @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <String>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_String(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<AccountItem> sse_decode_list_account_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <AccountItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_account_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<CategoryItem> sse_decode_list_category_item(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <CategoryItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_category_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<CustomerItem> sse_decode_list_customer_item(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <CustomerItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_customer_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<JournalLineInput> sse_decode_list_journal_line_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <JournalLineInput>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_journal_line_input(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<MaterialItem> sse_decode_list_material_item(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <MaterialItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_material_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<MaterialUnitInput> sse_decode_list_material_unit_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <MaterialUnitInput>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_material_unit_input(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<MaterialUnitItem> sse_decode_list_material_unit_item(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <MaterialUnitItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_material_unit_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint8List(len_);
+  }
+
+  @protected
+  List<SupplierItem> sse_decode_list_supplier_item(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <SupplierItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_supplier_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<TrialBalanceLineView> sse_decode_list_trial_balance_line_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <TrialBalanceLineView>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_trial_balance_line_view(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<WorldCurrencyView> sse_decode_list_world_currency_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <WorldCurrencyView>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_world_currency_view(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  MaterialCreateInput sse_decode_material_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_name = sse_decode_String(deserializer);
+    var var_nameEn = sse_decode_opt_String(deserializer);
+    var var_barcode = sse_decode_opt_String(deserializer);
+    var var_code = sse_decode_opt_String(deserializer);
+    var var_minimumStock = sse_decode_String(deserializer);
+    var var_unitName = sse_decode_String(deserializer);
+    var var_conversionFactor = sse_decode_String(deserializer);
+    var var_extraUnits = sse_decode_list_material_unit_input(deserializer);
+    var var_categoryIds = sse_decode_list_String(deserializer);
+    var var_purchasePrice = sse_decode_opt_String(deserializer);
+    var var_salePrice = sse_decode_opt_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_hasExpiry = sse_decode_bool(deserializer);
+    var var_expiryAlertBeforeDays = sse_decode_i_32(deserializer);
+    return MaterialCreateInput(
+      name: var_name,
+      nameEn: var_nameEn,
+      barcode: var_barcode,
+      code: var_code,
+      minimumStock: var_minimumStock,
+      unitName: var_unitName,
+      conversionFactor: var_conversionFactor,
+      extraUnits: var_extraUnits,
+      categoryIds: var_categoryIds,
+      purchasePrice: var_purchasePrice,
+      salePrice: var_salePrice,
+      currency: var_currency,
+      notes: var_notes,
+      hasExpiry: var_hasExpiry,
+      expiryAlertBeforeDays: var_expiryAlertBeforeDays,
+    );
+  }
+
+  @protected
+  MaterialItem sse_decode_material_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_nameEn = sse_decode_String(deserializer);
+    var var_barcode = sse_decode_String(deserializer);
+    var var_code = sse_decode_String(deserializer);
+    var var_categoryIds = sse_decode_list_String(deserializer);
+    var var_minimumStock = sse_decode_String(deserializer);
+    var var_totalReceived = sse_decode_String(deserializer);
+    var var_totalSold = sse_decode_String(deserializer);
+    var var_totalAvailable = sse_decode_String(deserializer);
+    var var_totalDamaged = sse_decode_String(deserializer);
+    var var_lastPurchasePrice = sse_decode_String(deserializer);
+    var var_lastSalePrice = sse_decode_String(deserializer);
+    var var_averageCost = sse_decode_String(deserializer);
+    var var_averageCostBase = sse_decode_String(deserializer);
+    var var_unitsCount = sse_decode_i_32(deserializer);
+    var var_units = sse_decode_list_material_unit_item(deserializer);
+    var var_hasExpiry = sse_decode_bool(deserializer);
+    var var_expiryAlertBeforeDays = sse_decode_i_32(deserializer);
+    var var_costingMethod = sse_decode_String(deserializer);
+    var var_purchasePrice = sse_decode_String(deserializer);
+    var var_salePrice = sse_decode_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_unitName = sse_decode_String(deserializer);
+    var var_conversionFactor = sse_decode_String(deserializer);
+    return MaterialItem(
+      id: var_id,
+      name: var_name,
+      nameEn: var_nameEn,
+      barcode: var_barcode,
+      code: var_code,
+      categoryIds: var_categoryIds,
+      minimumStock: var_minimumStock,
+      totalReceived: var_totalReceived,
+      totalSold: var_totalSold,
+      totalAvailable: var_totalAvailable,
+      totalDamaged: var_totalDamaged,
+      lastPurchasePrice: var_lastPurchasePrice,
+      lastSalePrice: var_lastSalePrice,
+      averageCost: var_averageCost,
+      averageCostBase: var_averageCostBase,
+      unitsCount: var_unitsCount,
+      units: var_units,
+      hasExpiry: var_hasExpiry,
+      expiryAlertBeforeDays: var_expiryAlertBeforeDays,
+      costingMethod: var_costingMethod,
+      purchasePrice: var_purchasePrice,
+      salePrice: var_salePrice,
+      currency: var_currency,
+      notes: var_notes,
+      unitName: var_unitName,
+      conversionFactor: var_conversionFactor,
+    );
+  }
+
+  @protected
+  MaterialUnitCreateInput sse_decode_material_unit_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_materialId = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_conversionFactor = sse_decode_String(deserializer);
+    var var_barcode = sse_decode_opt_String(deserializer);
+    return MaterialUnitCreateInput(
+      materialId: var_materialId,
+      name: var_name,
+      conversionFactor: var_conversionFactor,
+      barcode: var_barcode,
+    );
+  }
+
+  @protected
+  MaterialUnitInput sse_decode_material_unit_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_name = sse_decode_String(deserializer);
+    var var_conversionFactor = sse_decode_String(deserializer);
+    var var_barcode = sse_decode_opt_String(deserializer);
+    return MaterialUnitInput(
+      name: var_name,
+      conversionFactor: var_conversionFactor,
+      barcode: var_barcode,
+    );
+  }
+
+  @protected
+  MaterialUnitItem sse_decode_material_unit_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_conversionFactor = sse_decode_String(deserializer);
+    var var_barcode = sse_decode_opt_String(deserializer);
+    var var_isBase = sse_decode_bool(deserializer);
+    return MaterialUnitItem(
+      id: var_id,
+      name: var_name,
+      conversionFactor: var_conversionFactor,
+      barcode: var_barcode,
+      isBase: var_isBase,
+    );
+  }
+
+  @protected
+  MaterialUpdateInput sse_decode_material_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_nameEn = sse_decode_String(deserializer);
+    var var_barcode = sse_decode_String(deserializer);
+    var var_code = sse_decode_String(deserializer);
+    var var_minimumStock = sse_decode_String(deserializer);
+    var var_categoryIds = sse_decode_list_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_purchasePrice = sse_decode_opt_String(deserializer);
+    var var_salePrice = sse_decode_opt_String(deserializer);
+    var var_currency = sse_decode_opt_String(deserializer);
+    var var_hasExpiry = sse_decode_bool(deserializer);
+    var var_expiryAlertBeforeDays = sse_decode_i_32(deserializer);
+    return MaterialUpdateInput(
+      id: var_id,
+      name: var_name,
+      nameEn: var_nameEn,
+      barcode: var_barcode,
+      code: var_code,
+      minimumStock: var_minimumStock,
+      categoryIds: var_categoryIds,
+      notes: var_notes,
+      purchasePrice: var_purchasePrice,
+      salePrice: var_salePrice,
+      currency: var_currency,
+      hasExpiry: var_hasExpiry,
+      expiryAlertBeforeDays: var_expiryAlertBeforeDays,
+    );
+  }
+
+  @protected
+  String? sse_decode_opt_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_String(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  SetupCompanyInput sse_decode_setup_company_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_companyName = sse_decode_String(deserializer);
+    var var_baseCurrencyCode = sse_decode_String(deserializer);
+    var var_secondaryCurrencyCode = sse_decode_opt_String(deserializer);
+    var var_fiscalYearStartMonth = sse_decode_i_32(deserializer);
+    var var_accountingStartMode = sse_decode_opt_String(deserializer);
+    return SetupCompanyInput(
+      companyName: var_companyName,
+      baseCurrencyCode: var_baseCurrencyCode,
+      secondaryCurrencyCode: var_secondaryCurrencyCode,
+      fiscalYearStartMonth: var_fiscalYearStartMonth,
+      accountingStartMode: var_accountingStartMode,
+    );
+  }
+
+  @protected
+  SetupStatusView sse_decode_setup_status_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_setupComplete = sse_decode_bool(deserializer);
+    var var_companyName = sse_decode_String(deserializer);
+    var var_baseCurrencyCode = sse_decode_String(deserializer);
+    var var_currencySymbol = sse_decode_String(deserializer);
+    var var_fiscalYearStartMonth = sse_decode_i_32(deserializer);
+    var var_accountingStartMode = sse_decode_String(deserializer);
+    return SetupStatusView(
+      setupComplete: var_setupComplete,
+      companyName: var_companyName,
+      baseCurrencyCode: var_baseCurrencyCode,
+      currencySymbol: var_currencySymbol,
+      fiscalYearStartMonth: var_fiscalYearStartMonth,
+      accountingStartMode: var_accountingStartMode,
+    );
+  }
+
+  @protected
+  SupplierCreateInput sse_decode_supplier_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_name = sse_decode_String(deserializer);
+    var var_phone = sse_decode_opt_String(deserializer);
+    var var_address = sse_decode_opt_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_openingBalance = sse_decode_String(deserializer);
+    return SupplierCreateInput(
+      name: var_name,
+      phone: var_phone,
+      address: var_address,
+      notes: var_notes,
+      currency: var_currency,
+      openingBalance: var_openingBalance,
+    );
+  }
+
+  @protected
+  SupplierItem sse_decode_supplier_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_code = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_phone = sse_decode_opt_String(deserializer);
+    var var_address = sse_decode_opt_String(deserializer);
+    var var_accountId = sse_decode_opt_String(deserializer);
+    var var_debit = sse_decode_String(deserializer);
+    var var_credit = sse_decode_String(deserializer);
+    var var_openingBalance = sse_decode_String(deserializer);
+    var var_balance = sse_decode_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_isActive = sse_decode_bool(deserializer);
+    return SupplierItem(
+      id: var_id,
+      code: var_code,
+      name: var_name,
+      phone: var_phone,
+      address: var_address,
+      accountId: var_accountId,
+      debit: var_debit,
+      credit: var_credit,
+      openingBalance: var_openingBalance,
+      balance: var_balance,
+      currency: var_currency,
+      notes: var_notes,
+      isActive: var_isActive,
+    );
+  }
+
+  @protected
+  SupplierUpdateInput sse_decode_supplier_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_code = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_phone = sse_decode_opt_String(deserializer);
+    var var_address = sse_decode_opt_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_openingBalance = sse_decode_opt_String(deserializer);
+    var var_isActive = sse_decode_bool(deserializer);
+    return SupplierUpdateInput(
+      id: var_id,
+      code: var_code,
+      name: var_name,
+      phone: var_phone,
+      address: var_address,
+      notes: var_notes,
+      openingBalance: var_openingBalance,
+      isActive: var_isActive,
+    );
+  }
+
+  @protected
+  TrialBalanceLineView sse_decode_trial_balance_line_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_accountId = sse_decode_String(deserializer);
+    var var_accountCode = sse_decode_String(deserializer);
+    var var_accountName = sse_decode_String(deserializer);
+    var var_accountType = sse_decode_String(deserializer);
+    var var_debitTotal = sse_decode_String(deserializer);
+    var var_creditTotal = sse_decode_String(deserializer);
+    var var_balance = sse_decode_String(deserializer);
+    return TrialBalanceLineView(
+      accountId: var_accountId,
+      accountCode: var_accountCode,
+      accountName: var_accountName,
+      accountType: var_accountType,
+      debitTotal: var_debitTotal,
+      creditTotal: var_creditTotal,
+      balance: var_balance,
+    );
+  }
+
+  @protected
+  TrialBalanceView sse_decode_trial_balance_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_lines = sse_decode_list_trial_balance_line_view(deserializer);
+    var var_totalDebit = sse_decode_String(deserializer);
+    var var_totalCredit = sse_decode_String(deserializer);
+    var var_generatedAt = sse_decode_String(deserializer);
+    return TrialBalanceView(
+      lines: var_lines,
+      totalDebit: var_totalDebit,
+      totalCredit: var_totalCredit,
+      generatedAt: var_generatedAt,
+    );
   }
 
   @protected
@@ -191,21 +2623,408 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  int sse_decode_i_32(SseDeserializer deserializer) {
+  WorldCurrencyView sse_decode_world_currency_view(
+    SseDeserializer deserializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getInt32();
-  }
-
-  @protected
-  bool sse_decode_bool(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getUint8() != 0;
+    var var_code = sse_decode_String(deserializer);
+    var var_nameAr = sse_decode_String(deserializer);
+    var var_nameEn = sse_decode_String(deserializer);
+    var var_symbol = sse_decode_String(deserializer);
+    var var_decimals = sse_decode_i_32(deserializer);
+    return WorldCurrencyView(
+      code: var_code,
+      nameAr: var_nameAr,
+      nameEn: var_nameEn,
+      symbol: var_symbol,
+      decimals: var_decimals,
+    );
   }
 
   @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
+  }
+
+  @protected
+  void sse_encode_account_item(AccountItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.nameAr, serializer);
+    sse_encode_String(self.nameEn, serializer);
+    sse_encode_String(self.accountType, serializer);
+    sse_encode_String(self.purpose, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_String(self.balance, serializer);
+    sse_encode_bool(self.isActive, serializer);
+    sse_encode_bool(self.isFinal, serializer);
+  }
+
+  @protected
+  void sse_encode_api_error(ApiError self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.message, serializer);
+    sse_encode_opt_String(self.details, serializer);
+  }
+
+  @protected
+  void sse_encode_bool(bool self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint8(self ? 1 : 0);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_category_create_input(
+    CategoryCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_category_create_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_category_update_input(
+    CategoryUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_category_update_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_create_journal_entry_input(
+    CreateJournalEntryInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_create_journal_entry_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_customer_create_input(
+    CustomerCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_customer_create_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_customer_update_input(
+    CustomerUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_customer_update_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_material_create_input(
+    MaterialCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_material_create_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_material_unit_create_input(
+    MaterialUnitCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_material_unit_create_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_material_update_input(
+    MaterialUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_material_update_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_setup_company_input(
+    SetupCompanyInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_setup_company_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_supplier_create_input(
+    SupplierCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_supplier_create_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_supplier_update_input(
+    SupplierUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_supplier_update_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_category_create_input(
+    CategoryCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.parentId, serializer);
+    sse_encode_opt_String(self.codePrefix, serializer);
+  }
+
+  @protected
+  void sse_encode_category_delete_result(
+    CategoryDeleteResult self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.materialsReassigned, serializer);
+    sse_encode_i_32(self.subsDeleted, serializer);
+  }
+
+  @protected
+  void sse_encode_category_item(CategoryItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.parentId, serializer);
+    sse_encode_opt_String(self.codePrefix, serializer);
+    sse_encode_bool(self.isActive, serializer);
+    sse_encode_i_32(self.materialCount, serializer);
+    sse_encode_opt_String(self.systemKey, serializer);
+  }
+
+  @protected
+  void sse_encode_category_update_input(
+    CategoryUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.parentId, serializer);
+    sse_encode_bool(self.isActive, serializer);
+    sse_encode_opt_String(self.codePrefix, serializer);
+  }
+
+  @protected
+  void sse_encode_company_setup_view(
+    CompanySetupView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.companyName, serializer);
+    sse_encode_String(self.baseCurrencyCode, serializer);
+    sse_encode_String(self.currencySymbol, serializer);
+    sse_encode_opt_String(self.secondaryCurrencyCode, serializer);
+    sse_encode_i_32(self.fiscalYearStartMonth, serializer);
+    sse_encode_String(self.accountingStartMode, serializer);
+    sse_encode_bool(self.setupComplete, serializer);
+  }
+
+  @protected
+  void sse_encode_create_journal_entry_input(
+    CreateJournalEntryInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.journalType, serializer);
+    sse_encode_opt_String(self.sourceId, serializer);
+    sse_encode_String(self.entryDate, serializer);
+    sse_encode_String(self.description, serializer);
+    sse_encode_list_journal_line_input(self.lines, serializer);
+  }
+
+  @protected
+  void sse_encode_customer_create_input(
+    CustomerCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.phone, serializer);
+    sse_encode_opt_String(self.address, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_String(self.openingBalance, serializer);
+  }
+
+  @protected
+  void sse_encode_customer_item(CustomerItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.phone, serializer);
+    sse_encode_opt_String(self.address, serializer);
+    sse_encode_opt_String(self.accountId, serializer);
+    sse_encode_String(self.debit, serializer);
+    sse_encode_String(self.credit, serializer);
+    sse_encode_String(self.openingBalance, serializer);
+    sse_encode_String(self.balance, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_bool(self.isActive, serializer);
+  }
+
+  @protected
+  void sse_encode_customer_update_input(
+    CustomerUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.phone, serializer);
+    sse_encode_opt_String(self.address, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_opt_String(self.openingBalance, serializer);
+    sse_encode_bool(self.isActive, serializer);
+  }
+
+  @protected
+  void sse_encode_i_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putInt32(self);
+  }
+
+  @protected
+  void sse_encode_journal_entry_view(
+    JournalEntryView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.entryNumber, serializer);
+    sse_encode_String(self.journalType, serializer);
+    sse_encode_String(self.entryDate, serializer);
+    sse_encode_String(self.description, serializer);
+    sse_encode_String(self.status, serializer);
+    sse_encode_String(self.totalDebit, serializer);
+    sse_encode_String(self.totalCredit, serializer);
+  }
+
+  @protected
+  void sse_encode_journal_line_input(
+    JournalLineInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.accountId, serializer);
+    sse_encode_opt_String(self.partnerId, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_String(self.fxRate, serializer);
+    sse_encode_String(self.debit, serializer);
+    sse_encode_String(self.credit, serializer);
+    sse_encode_String(self.description, serializer);
+  }
+
+  @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_String(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_account_item(
+    List<AccountItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_account_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_category_item(
+    List<CategoryItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_category_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_customer_item(
+    List<CustomerItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_customer_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_journal_line_input(
+    List<JournalLineInput> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_journal_line_input(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_material_item(
+    List<MaterialItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_material_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_material_unit_input(
+    List<MaterialUnitInput> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_material_unit_input(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_material_unit_item(
+    List<MaterialUnitItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_material_unit_item(item, serializer);
+    }
   }
 
   @protected
@@ -216,6 +3035,265 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint8List(self);
+  }
+
+  @protected
+  void sse_encode_list_supplier_item(
+    List<SupplierItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_supplier_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_trial_balance_line_view(
+    List<TrialBalanceLineView> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_trial_balance_line_view(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_world_currency_view(
+    List<WorldCurrencyView> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_world_currency_view(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_material_create_input(
+    MaterialCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.nameEn, serializer);
+    sse_encode_opt_String(self.barcode, serializer);
+    sse_encode_opt_String(self.code, serializer);
+    sse_encode_String(self.minimumStock, serializer);
+    sse_encode_String(self.unitName, serializer);
+    sse_encode_String(self.conversionFactor, serializer);
+    sse_encode_list_material_unit_input(self.extraUnits, serializer);
+    sse_encode_list_String(self.categoryIds, serializer);
+    sse_encode_opt_String(self.purchasePrice, serializer);
+    sse_encode_opt_String(self.salePrice, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_bool(self.hasExpiry, serializer);
+    sse_encode_i_32(self.expiryAlertBeforeDays, serializer);
+  }
+
+  @protected
+  void sse_encode_material_item(MaterialItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.nameEn, serializer);
+    sse_encode_String(self.barcode, serializer);
+    sse_encode_String(self.code, serializer);
+    sse_encode_list_String(self.categoryIds, serializer);
+    sse_encode_String(self.minimumStock, serializer);
+    sse_encode_String(self.totalReceived, serializer);
+    sse_encode_String(self.totalSold, serializer);
+    sse_encode_String(self.totalAvailable, serializer);
+    sse_encode_String(self.totalDamaged, serializer);
+    sse_encode_String(self.lastPurchasePrice, serializer);
+    sse_encode_String(self.lastSalePrice, serializer);
+    sse_encode_String(self.averageCost, serializer);
+    sse_encode_String(self.averageCostBase, serializer);
+    sse_encode_i_32(self.unitsCount, serializer);
+    sse_encode_list_material_unit_item(self.units, serializer);
+    sse_encode_bool(self.hasExpiry, serializer);
+    sse_encode_i_32(self.expiryAlertBeforeDays, serializer);
+    sse_encode_String(self.costingMethod, serializer);
+    sse_encode_String(self.purchasePrice, serializer);
+    sse_encode_String(self.salePrice, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_String(self.unitName, serializer);
+    sse_encode_String(self.conversionFactor, serializer);
+  }
+
+  @protected
+  void sse_encode_material_unit_create_input(
+    MaterialUnitCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.materialId, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.conversionFactor, serializer);
+    sse_encode_opt_String(self.barcode, serializer);
+  }
+
+  @protected
+  void sse_encode_material_unit_input(
+    MaterialUnitInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.conversionFactor, serializer);
+    sse_encode_opt_String(self.barcode, serializer);
+  }
+
+  @protected
+  void sse_encode_material_unit_item(
+    MaterialUnitItem self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.conversionFactor, serializer);
+    sse_encode_opt_String(self.barcode, serializer);
+    sse_encode_bool(self.isBase, serializer);
+  }
+
+  @protected
+  void sse_encode_material_update_input(
+    MaterialUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.nameEn, serializer);
+    sse_encode_String(self.barcode, serializer);
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.minimumStock, serializer);
+    sse_encode_list_String(self.categoryIds, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_opt_String(self.purchasePrice, serializer);
+    sse_encode_opt_String(self.salePrice, serializer);
+    sse_encode_opt_String(self.currency, serializer);
+    sse_encode_bool(self.hasExpiry, serializer);
+    sse_encode_i_32(self.expiryAlertBeforeDays, serializer);
+  }
+
+  @protected
+  void sse_encode_opt_String(String? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_String(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_setup_company_input(
+    SetupCompanyInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.companyName, serializer);
+    sse_encode_String(self.baseCurrencyCode, serializer);
+    sse_encode_opt_String(self.secondaryCurrencyCode, serializer);
+    sse_encode_i_32(self.fiscalYearStartMonth, serializer);
+    sse_encode_opt_String(self.accountingStartMode, serializer);
+  }
+
+  @protected
+  void sse_encode_setup_status_view(
+    SetupStatusView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self.setupComplete, serializer);
+    sse_encode_String(self.companyName, serializer);
+    sse_encode_String(self.baseCurrencyCode, serializer);
+    sse_encode_String(self.currencySymbol, serializer);
+    sse_encode_i_32(self.fiscalYearStartMonth, serializer);
+    sse_encode_String(self.accountingStartMode, serializer);
+  }
+
+  @protected
+  void sse_encode_supplier_create_input(
+    SupplierCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.phone, serializer);
+    sse_encode_opt_String(self.address, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_String(self.openingBalance, serializer);
+  }
+
+  @protected
+  void sse_encode_supplier_item(SupplierItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.phone, serializer);
+    sse_encode_opt_String(self.address, serializer);
+    sse_encode_opt_String(self.accountId, serializer);
+    sse_encode_String(self.debit, serializer);
+    sse_encode_String(self.credit, serializer);
+    sse_encode_String(self.openingBalance, serializer);
+    sse_encode_String(self.balance, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_bool(self.isActive, serializer);
+  }
+
+  @protected
+  void sse_encode_supplier_update_input(
+    SupplierUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.phone, serializer);
+    sse_encode_opt_String(self.address, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_opt_String(self.openingBalance, serializer);
+    sse_encode_bool(self.isActive, serializer);
+  }
+
+  @protected
+  void sse_encode_trial_balance_line_view(
+    TrialBalanceLineView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.accountId, serializer);
+    sse_encode_String(self.accountCode, serializer);
+    sse_encode_String(self.accountName, serializer);
+    sse_encode_String(self.accountType, serializer);
+    sse_encode_String(self.debitTotal, serializer);
+    sse_encode_String(self.creditTotal, serializer);
+    sse_encode_String(self.balance, serializer);
+  }
+
+  @protected
+  void sse_encode_trial_balance_view(
+    TrialBalanceView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_trial_balance_line_view(self.lines, serializer);
+    sse_encode_String(self.totalDebit, serializer);
+    sse_encode_String(self.totalCredit, serializer);
+    sse_encode_String(self.generatedAt, serializer);
   }
 
   @protected
@@ -230,14 +3308,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_i_32(int self, SseSerializer serializer) {
+  void sse_encode_world_currency_view(
+    WorldCurrencyView self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putInt32(self);
-  }
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putUint8(self ? 1 : 0);
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.nameAr, serializer);
+    sse_encode_String(self.nameEn, serializer);
+    sse_encode_String(self.symbol, serializer);
+    sse_encode_i_32(self.decimals, serializer);
   }
 }

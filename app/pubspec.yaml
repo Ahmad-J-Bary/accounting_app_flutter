@@ -39,8 +39,13 @@ dependencies:
   accounting_app_flutter_isolates:
     path: ../packages/accounting_app_flutter_isolates
 
+  path_provider: ^2.1.5
+
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+
+  integration_test:
     sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to

@@ -64,12 +64,13 @@ impl UpdateCategoryUseCase {
             category.code_prefix = req.code_prefix;
         }
 
-        if let Some(ref p) = category.code_prefix {
-            if !category.is_hybrid && p.chars().count() > 1 {
-                return Err(AppError::Invalid(
-                    "بادئة التصنيف العادي يجب أن تكون محرفاً واحداً فقط".into(),
-                ));
-            }
+        if let Some(ref p) = category.code_prefix
+            && !category.is_hybrid
+            && p.chars().count() > 1
+        {
+            return Err(AppError::Invalid(
+                "بادئة التصنيف العادي يجب أن تكون محرفاً واحداً فقط".into(),
+            ));
         }
 
         if req.is_active {

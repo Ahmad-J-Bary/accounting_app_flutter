@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
   accounting_app_flutter_isolates
+  jni
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

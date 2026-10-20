@@ -100,12 +100,12 @@ impl FixedAssetUseCases {
         &self,
         account_id: &AccountId,
     ) -> Result<(), AppError> {
-        if let Some(mut account) = self.account_repo.find_by_id(account_id).await? {
-            if account.purpose == AccountPurpose::General {
-                account.purpose = AccountPurpose::FixedAsset;
-                account.updated_at = Utc::now();
-                self.account_repo.save(&account).await?;
-            }
+        if let Some(mut account) = self.account_repo.find_by_id(account_id).await?
+            && account.purpose == AccountPurpose::General
+        {
+            account.purpose = AccountPurpose::FixedAsset;
+            account.updated_at = Utc::now();
+            self.account_repo.save(&account).await?;
         }
         Ok(())
     }

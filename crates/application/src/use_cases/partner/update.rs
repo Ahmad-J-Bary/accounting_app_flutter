@@ -106,42 +106,42 @@ impl UpdatePartnerUseCase {
         let mut current_replacement = None;
         let sync_capital_amount = accounting_start_mode == START_MODE_EXISTING;
         if old_name != req.name || sync_capital_amount {
-            if let Some(cap_id) = partner.linked_account_id {
-                if let Some(mut acc) = self.account_repo.find_by_id(&cap_id).await? {
-                    if old_name != req.name {
-                        acc.name_ar = req.name.clone();
-                        acc.name_en = req.name.clone();
-                    }
-                    // Existing-company registered capital lives as the capital
-                    // account's static opening balance (create.rs books it with
-                    // "no journal"); re-sync it so partner.amount_local always
-                    // equals capital.opening_balance (Sec 4 / Sec 13).
-                    if sync_capital_amount {
-                        acc.opening_balance = partner.amount_local;
-                        acc.balance = partner.amount_local + acc.debit - acc.credit;
-                    }
-                    acc.updated_at = Utc::now();
-                    capital_replacement = Some(acc);
+            if let Some(cap_id) = partner.linked_account_id
+                && let Some(mut acc) = self.account_repo.find_by_id(&cap_id).await?
+            {
+                if old_name != req.name {
+                    acc.name_ar = req.name.clone();
+                    acc.name_en = req.name.clone();
                 }
+                // Existing-company registered capital lives as the capital
+                // account's static opening balance (create.rs books it with
+                // "no journal"); re-sync it so partner.amount_local always
+                // equals capital.opening_balance (Sec 4 / Sec 13).
+                if sync_capital_amount {
+                    acc.opening_balance = partner.amount_local;
+                    acc.balance = partner.amount_local + acc.debit - acc.credit;
+                }
+                acc.updated_at = Utc::now();
+                capital_replacement = Some(acc);
             }
             if old_name != req.name {
-                if let Some(draw_id) = partner.drawings_account_id {
-                    if let Some(mut acc) = self.account_repo.find_by_id(&draw_id).await? {
-                        let draw_account_name = format!("مسحوبات {}", req.name);
-                        acc.name_ar = draw_account_name.clone();
-                        acc.name_en = draw_account_name;
-                        acc.updated_at = Utc::now();
-                        drawings_replacement = Some(acc);
-                    }
+                if let Some(draw_id) = partner.drawings_account_id
+                    && let Some(mut acc) = self.account_repo.find_by_id(&draw_id).await?
+                {
+                    let draw_account_name = format!("مسحوبات {}", req.name);
+                    acc.name_ar = draw_account_name.clone();
+                    acc.name_en = draw_account_name;
+                    acc.updated_at = Utc::now();
+                    drawings_replacement = Some(acc);
                 }
-                if let Some(cur_id) = partner.current_account_id {
-                    if let Some(mut acc) = self.account_repo.find_by_id(&cur_id).await? {
-                        let cur_account_name = format!("حساب جاري {}", req.name);
-                        acc.name_ar = cur_account_name.clone();
-                        acc.name_en = cur_account_name;
-                        acc.updated_at = Utc::now();
-                        current_replacement = Some(acc);
-                    }
+                if let Some(cur_id) = partner.current_account_id
+                    && let Some(mut acc) = self.account_repo.find_by_id(&cur_id).await?
+                {
+                    let cur_account_name = format!("حساب جاري {}", req.name);
+                    acc.name_ar = cur_account_name.clone();
+                    acc.name_en = cur_account_name;
+                    acc.updated_at = Utc::now();
+                    current_replacement = Some(acc);
                 }
             }
         }

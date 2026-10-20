@@ -39,20 +39,19 @@ impl ListInvoicesUseCase {
             let mut dto = InvoiceDto::from(inv);
 
             // Populate Customer Name
-            if let Some(cid_str) = &dto.customer_id {
-                if let Ok(id) = cid_str.parse::<domain::shared::ids::CustomerId>() {
-                    if let Ok(Some(customer)) = self.customer_repo.find_by_id(&id).await {
-                        dto.customer_name = Some(customer.name);
-                    }
-                }
+            if let Some(cid_str) = &dto.customer_id
+                && let Ok(id) = cid_str.parse::<domain::shared::ids::CustomerId>()
+                && let Ok(Some(customer)) = self.customer_repo.find_by_id(&id).await
+            {
+                dto.customer_name = Some(customer.name);
             }
 
             // Populate Material Names
             for line in &mut dto.lines {
-                if let Ok(mid) = line.material_id.parse::<domain::shared::ids::MaterialId>() {
-                    if let Ok(Some(material)) = self.material_repo.find_by_id(&mid).await {
-                        line.material_name = Some(material.name);
-                    }
+                if let Ok(mid) = line.material_id.parse::<domain::shared::ids::MaterialId>()
+                    && let Ok(Some(material)) = self.material_repo.find_by_id(&mid).await
+                {
+                    line.material_name = Some(material.name);
                 }
             }
             dtos.push(dto);

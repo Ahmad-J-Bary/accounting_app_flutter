@@ -49,16 +49,16 @@ impl SalesReturnQueries {
     }
 
     pub async fn populate(&self, mut dto: SalesReturnDto) -> Result<SalesReturnDto, AppError> {
-        if let Ok(cid) = CustomerId::from_str(&dto.customer_id) {
-            if let Ok(Some(c)) = self.customer_repo.find_by_id(&cid).await {
-                dto.customer_name = Some(c.name);
-            }
+        if let Ok(cid) = CustomerId::from_str(&dto.customer_id)
+            && let Ok(Some(c)) = self.customer_repo.find_by_id(&cid).await
+        {
+            dto.customer_name = Some(c.name);
         }
         for line in &mut dto.lines {
-            if let Ok(mid) = MaterialId::from_str(&line.material_id) {
-                if let Ok(Some(m)) = self.material_repo.find_by_id(&mid).await {
-                    line.material_name = Some(m.name);
-                }
+            if let Ok(mid) = MaterialId::from_str(&line.material_id)
+                && let Ok(Some(m)) = self.material_repo.find_by_id(&mid).await
+            {
+                line.material_name = Some(m.name);
             }
         }
         Ok(dto)

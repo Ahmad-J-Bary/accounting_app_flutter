@@ -49,12 +49,13 @@ impl CreateCategoryUseCase {
             req.code_prefix.clone()
         };
 
-        if let Some(ref p) = actual_prefix {
-            if !is_hybrid && p.chars().count() > 1 {
-                return Err(AppError::Invalid(
-                    "بادئة التصنيف العادي يجب أن تكون محرفاً واحداً فقط".into(),
-                ));
-            }
+        if let Some(ref p) = actual_prefix
+            && !is_hybrid
+            && p.chars().count() > 1
+        {
+            return Err(AppError::Invalid(
+                "بادئة التصنيف العادي يجب أن تكون محرفاً واحداً فقط".into(),
+            ));
         }
 
         // Enforce unique names

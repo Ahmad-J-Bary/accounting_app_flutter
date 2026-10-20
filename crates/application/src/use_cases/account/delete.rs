@@ -92,17 +92,17 @@ impl DeleteAccountUseCase {
         }
 
         // Cascade: delete linked customer if any
-        if let Some(customer_id) = &account.linked_customer_id {
-            if let Some(ref customer_repo) = self.customer_repo {
-                let _ = customer_repo.delete(customer_id).await;
-            }
+        if let Some(customer_id) = &account.linked_customer_id
+            && let Some(ref customer_repo) = self.customer_repo
+        {
+            let _ = customer_repo.delete(customer_id).await;
         }
 
         // Cascade: delete linked supplier if any
-        if let Some(supplier_id) = &account.linked_supplier_id {
-            if let Some(ref supplier_repo) = self.supplier_repo {
-                let _ = supplier_repo.delete(supplier_id).await;
-            }
+        if let Some(supplier_id) = &account.linked_supplier_id
+            && let Some(ref supplier_repo) = self.supplier_repo
+        {
+            let _ = supplier_repo.delete(supplier_id).await;
         }
 
         self.account_repo

@@ -26,8 +26,13 @@ dependencies = [
 name = "accounting_app_flutter_isolates"
 version = "0.1.0"
 dependencies = [
- "accounting-core",
+ "application",
+ "bridge",
+ "domain",
  "flutter_rust_bridge",
+ "rust_decimal",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
@@ -296,6 +301,18 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.9",
+]
+
+[[package]]
+name = "bridge"
+version = "0.1.0"
+dependencies = [
+ "application",
+ "chrono",
+ "domain",
+ "infrastructure",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

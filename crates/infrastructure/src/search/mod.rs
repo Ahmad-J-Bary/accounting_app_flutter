@@ -231,10 +231,10 @@ fn sort_and_truncate(items: &mut Vec<SearchResultDto>, limit: Option<usize>) {
             .cmp(&left.score)
             .then_with(|| left.title.cmp(&right.title))
     });
-    if let Some(limit) = limit {
-        if items.len() > limit {
-            items.truncate(limit);
-        }
+    if let Some(limit) = limit
+        && items.len() > limit
+    {
+        items.truncate(limit);
     }
 }
 

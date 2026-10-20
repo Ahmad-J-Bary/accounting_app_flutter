@@ -57,10 +57,10 @@ impl CreateJournalEntryUseCase {
                     MonetaryAmount::new(credit, fx_rate),
                     dto.description,
                 );
-                if let Some(pid_str) = dto.partner_id {
-                    if let Ok(pid) = Uuid::parse_str(&pid_str) {
-                        line.partner_id = Some(pid);
-                    }
+                if let Some(pid_str) = dto.partner_id
+                    && let Ok(pid) = Uuid::parse_str(&pid_str)
+                {
+                    line.partner_id = Some(pid);
                 }
                 Ok(line)
             })

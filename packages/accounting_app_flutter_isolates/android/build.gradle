@@ -11,7 +11,7 @@ buildscript {
 
     dependencies {
         // The Android Gradle Plugin knows how to build native code with the NDK.
-        classpath 'com.android.tools.build:gradle:7.3.0'
+        classpath 'com.android.tools.build:gradle:8.11.1'
     }
 }
 
@@ -31,21 +31,25 @@ android {
 
     // Bumping the plugin compileSdkVersion requires all clients of this plugin
     // to bump the version in their app.
-    compileSdkVersion 33
+    // Kept in sync with the Flutter 3.41 default (app/android/app/build.gradle.kts
+    // uses flutter.compileSdkVersion = 36). Do not lower it back to 33: the
+    // Android SDK platform 33 is no longer installed/required by this project.
+    compileSdkVersion 36
 
     // Use the NDK version
     // declared in /android/app/build.gradle file of the Flutter project.
-    // Replace it with a version number if this plugin requires a specfic NDK version.
-    // (e.g. ndkVersion "23.1.7779620")
-    ndkVersion android.ndkVersion
+    // Keep this explicit: `android.ndkVersion` is not inherited from the app in
+    // this library module and falls back to the AGP default, which may be an
+    // incomplete NDK installation. 28.2.13676358 is the Flutter 3.41.x default.
+    ndkVersion "28.2.13676358"
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     defaultConfig {
-        minSdkVersion 19
+        minSdkVersion 24
     }
 }
 

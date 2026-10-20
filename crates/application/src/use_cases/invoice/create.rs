@@ -101,10 +101,10 @@ impl CreateInvoiceUseCase {
 
         // Enrich with material names
         for line in &mut dto.lines {
-            if let Ok(mid) = line.material_id.parse::<MaterialId>() {
-                if let Ok(Some(material)) = self.material_repo.find_by_id(&mid).await {
-                    line.material_name = Some(material.name);
-                }
+            if let Ok(mid) = line.material_id.parse::<MaterialId>()
+                && let Ok(Some(material)) = self.material_repo.find_by_id(&mid).await
+            {
+                line.material_name = Some(material.name);
             }
         }
 

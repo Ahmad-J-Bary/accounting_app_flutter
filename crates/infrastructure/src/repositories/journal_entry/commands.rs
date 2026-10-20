@@ -492,12 +492,12 @@ pub(crate) async fn delete_tx<'a>(
             .await
             .map_err(|e| AppError::Infrastructure(e.to_string()))?;
 
-    if let Some(status) = status.as_deref() {
-        if status == "Posted" || status == "Reversed" || status == "Cancelled" {
-            return Err(AppError::Forbidden(
-                "لا يمكن حذف قيد مرحَّل أو ملغى؛ استخدم قيد التراجع (Reversal)".into(),
-            ));
-        }
+    if let Some(status) = status.as_deref()
+        && (status == "Posted" || status == "Reversed" || status == "Cancelled")
+    {
+        return Err(AppError::Forbidden(
+            "لا يمكن حذف قيد مرحَّل أو ملغى؛ استخدم قيد التراجع (Reversal)".into(),
+        ));
     }
 
     sqlx::query("DELETE FROM journal_lines WHERE journal_entry_id = ?")

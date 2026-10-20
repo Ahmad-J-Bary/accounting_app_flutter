@@ -3,6 +3,8 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
+import 'api/accounting.dart';
+import 'api/error.dart';
 import 'api/simple.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -22,7 +24,166 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String dco_decode_String(dynamic raw);
 
   @protected
+  AccountItem dco_decode_account_item(dynamic raw);
+
+  @protected
+  ApiError dco_decode_api_error(dynamic raw);
+
+  @protected
+  bool dco_decode_bool(dynamic raw);
+
+  @protected
+  CategoryCreateInput dco_decode_box_autoadd_category_create_input(dynamic raw);
+
+  @protected
+  CategoryUpdateInput dco_decode_box_autoadd_category_update_input(dynamic raw);
+
+  @protected
+  CreateJournalEntryInput dco_decode_box_autoadd_create_journal_entry_input(
+    dynamic raw,
+  );
+
+  @protected
+  CustomerCreateInput dco_decode_box_autoadd_customer_create_input(dynamic raw);
+
+  @protected
+  CustomerUpdateInput dco_decode_box_autoadd_customer_update_input(dynamic raw);
+
+  @protected
+  MaterialCreateInput dco_decode_box_autoadd_material_create_input(dynamic raw);
+
+  @protected
+  MaterialUnitCreateInput dco_decode_box_autoadd_material_unit_create_input(
+    dynamic raw,
+  );
+
+  @protected
+  MaterialUpdateInput dco_decode_box_autoadd_material_update_input(dynamic raw);
+
+  @protected
+  SetupCompanyInput dco_decode_box_autoadd_setup_company_input(dynamic raw);
+
+  @protected
+  SupplierCreateInput dco_decode_box_autoadd_supplier_create_input(dynamic raw);
+
+  @protected
+  SupplierUpdateInput dco_decode_box_autoadd_supplier_update_input(dynamic raw);
+
+  @protected
+  CategoryCreateInput dco_decode_category_create_input(dynamic raw);
+
+  @protected
+  CategoryDeleteResult dco_decode_category_delete_result(dynamic raw);
+
+  @protected
+  CategoryItem dco_decode_category_item(dynamic raw);
+
+  @protected
+  CategoryUpdateInput dco_decode_category_update_input(dynamic raw);
+
+  @protected
+  CompanySetupView dco_decode_company_setup_view(dynamic raw);
+
+  @protected
+  CreateJournalEntryInput dco_decode_create_journal_entry_input(dynamic raw);
+
+  @protected
+  CustomerCreateInput dco_decode_customer_create_input(dynamic raw);
+
+  @protected
+  CustomerItem dco_decode_customer_item(dynamic raw);
+
+  @protected
+  CustomerUpdateInput dco_decode_customer_update_input(dynamic raw);
+
+  @protected
+  int dco_decode_i_32(dynamic raw);
+
+  @protected
+  JournalEntryView dco_decode_journal_entry_view(dynamic raw);
+
+  @protected
+  JournalLineInput dco_decode_journal_line_input(dynamic raw);
+
+  @protected
+  List<String> dco_decode_list_String(dynamic raw);
+
+  @protected
+  List<AccountItem> dco_decode_list_account_item(dynamic raw);
+
+  @protected
+  List<CategoryItem> dco_decode_list_category_item(dynamic raw);
+
+  @protected
+  List<CustomerItem> dco_decode_list_customer_item(dynamic raw);
+
+  @protected
+  List<JournalLineInput> dco_decode_list_journal_line_input(dynamic raw);
+
+  @protected
+  List<MaterialItem> dco_decode_list_material_item(dynamic raw);
+
+  @protected
+  List<MaterialUnitInput> dco_decode_list_material_unit_input(dynamic raw);
+
+  @protected
+  List<MaterialUnitItem> dco_decode_list_material_unit_item(dynamic raw);
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  List<SupplierItem> dco_decode_list_supplier_item(dynamic raw);
+
+  @protected
+  List<TrialBalanceLineView> dco_decode_list_trial_balance_line_view(
+    dynamic raw,
+  );
+
+  @protected
+  List<WorldCurrencyView> dco_decode_list_world_currency_view(dynamic raw);
+
+  @protected
+  MaterialCreateInput dco_decode_material_create_input(dynamic raw);
+
+  @protected
+  MaterialItem dco_decode_material_item(dynamic raw);
+
+  @protected
+  MaterialUnitCreateInput dco_decode_material_unit_create_input(dynamic raw);
+
+  @protected
+  MaterialUnitInput dco_decode_material_unit_input(dynamic raw);
+
+  @protected
+  MaterialUnitItem dco_decode_material_unit_item(dynamic raw);
+
+  @protected
+  MaterialUpdateInput dco_decode_material_update_input(dynamic raw);
+
+  @protected
+  String? dco_decode_opt_String(dynamic raw);
+
+  @protected
+  SetupCompanyInput dco_decode_setup_company_input(dynamic raw);
+
+  @protected
+  SetupStatusView dco_decode_setup_status_view(dynamic raw);
+
+  @protected
+  SupplierCreateInput dco_decode_supplier_create_input(dynamic raw);
+
+  @protected
+  SupplierItem dco_decode_supplier_item(dynamic raw);
+
+  @protected
+  SupplierUpdateInput dco_decode_supplier_update_input(dynamic raw);
+
+  @protected
+  TrialBalanceLineView dco_decode_trial_balance_line_view(dynamic raw);
+
+  @protected
+  TrialBalanceView dco_decode_trial_balance_view(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
@@ -31,10 +192,234 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void dco_decode_unit(dynamic raw);
 
   @protected
+  WorldCurrencyView dco_decode_world_currency_view(dynamic raw);
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
+  AccountItem sse_decode_account_item(SseDeserializer deserializer);
+
+  @protected
+  ApiError sse_decode_api_error(SseDeserializer deserializer);
+
+  @protected
+  bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
+  CategoryCreateInput sse_decode_box_autoadd_category_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CategoryUpdateInput sse_decode_box_autoadd_category_update_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CreateJournalEntryInput sse_decode_box_autoadd_create_journal_entry_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CustomerCreateInput sse_decode_box_autoadd_customer_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CustomerUpdateInput sse_decode_box_autoadd_customer_update_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MaterialCreateInput sse_decode_box_autoadd_material_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MaterialUnitCreateInput sse_decode_box_autoadd_material_unit_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MaterialUpdateInput sse_decode_box_autoadd_material_update_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SetupCompanyInput sse_decode_box_autoadd_setup_company_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SupplierCreateInput sse_decode_box_autoadd_supplier_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SupplierUpdateInput sse_decode_box_autoadd_supplier_update_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CategoryCreateInput sse_decode_category_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CategoryDeleteResult sse_decode_category_delete_result(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CategoryItem sse_decode_category_item(SseDeserializer deserializer);
+
+  @protected
+  CategoryUpdateInput sse_decode_category_update_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CompanySetupView sse_decode_company_setup_view(SseDeserializer deserializer);
+
+  @protected
+  CreateJournalEntryInput sse_decode_create_journal_entry_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CustomerCreateInput sse_decode_customer_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CustomerItem sse_decode_customer_item(SseDeserializer deserializer);
+
+  @protected
+  CustomerUpdateInput sse_decode_customer_update_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  int sse_decode_i_32(SseDeserializer deserializer);
+
+  @protected
+  JournalEntryView sse_decode_journal_entry_view(SseDeserializer deserializer);
+
+  @protected
+  JournalLineInput sse_decode_journal_line_input(SseDeserializer deserializer);
+
+  @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer);
+
+  @protected
+  List<AccountItem> sse_decode_list_account_item(SseDeserializer deserializer);
+
+  @protected
+  List<CategoryItem> sse_decode_list_category_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<CustomerItem> sse_decode_list_customer_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<JournalLineInput> sse_decode_list_journal_line_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<MaterialItem> sse_decode_list_material_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<MaterialUnitInput> sse_decode_list_material_unit_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<MaterialUnitItem> sse_decode_list_material_unit_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  List<SupplierItem> sse_decode_list_supplier_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<TrialBalanceLineView> sse_decode_list_trial_balance_line_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<WorldCurrencyView> sse_decode_list_world_currency_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MaterialCreateInput sse_decode_material_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MaterialItem sse_decode_material_item(SseDeserializer deserializer);
+
+  @protected
+  MaterialUnitCreateInput sse_decode_material_unit_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MaterialUnitInput sse_decode_material_unit_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MaterialUnitItem sse_decode_material_unit_item(SseDeserializer deserializer);
+
+  @protected
+  MaterialUpdateInput sse_decode_material_update_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  String? sse_decode_opt_String(SseDeserializer deserializer);
+
+  @protected
+  SetupCompanyInput sse_decode_setup_company_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SetupStatusView sse_decode_setup_status_view(SseDeserializer deserializer);
+
+  @protected
+  SupplierCreateInput sse_decode_supplier_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SupplierItem sse_decode_supplier_item(SseDeserializer deserializer);
+
+  @protected
+  SupplierUpdateInput sse_decode_supplier_update_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  TrialBalanceLineView sse_decode_trial_balance_line_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  TrialBalanceView sse_decode_trial_balance_view(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
@@ -43,17 +428,292 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_decode_unit(SseDeserializer deserializer);
 
   @protected
-  int sse_decode_i_32(SseDeserializer deserializer);
-
-  @protected
-  bool sse_decode_bool(SseDeserializer deserializer);
+  WorldCurrencyView sse_decode_world_currency_view(
+    SseDeserializer deserializer,
+  );
 
   @protected
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
+  void sse_encode_account_item(AccountItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_api_error(ApiError self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_category_create_input(
+    CategoryCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_category_update_input(
+    CategoryUpdateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_create_journal_entry_input(
+    CreateJournalEntryInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_customer_create_input(
+    CustomerCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_customer_update_input(
+    CustomerUpdateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_material_create_input(
+    MaterialCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_material_unit_create_input(
+    MaterialUnitCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_material_update_input(
+    MaterialUpdateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_setup_company_input(
+    SetupCompanyInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_supplier_create_input(
+    SupplierCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_supplier_update_input(
+    SupplierUpdateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_category_create_input(
+    CategoryCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_category_delete_result(
+    CategoryDeleteResult self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_category_item(CategoryItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_category_update_input(
+    CategoryUpdateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_company_setup_view(
+    CompanySetupView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_create_journal_entry_input(
+    CreateJournalEntryInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_customer_create_input(
+    CustomerCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_customer_item(CustomerItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_customer_update_input(
+    CustomerUpdateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_i_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_journal_entry_view(
+    JournalEntryView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_journal_line_input(
+    JournalLineInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_account_item(
+    List<AccountItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_category_item(
+    List<CategoryItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_customer_item(
+    List<CustomerItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_journal_line_input(
+    List<JournalLineInput> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_material_item(
+    List<MaterialItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_material_unit_input(
+    List<MaterialUnitInput> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_material_unit_item(
+    List<MaterialUnitItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_supplier_item(
+    List<SupplierItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_trial_balance_line_view(
+    List<TrialBalanceLineView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_world_currency_view(
+    List<WorldCurrencyView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_material_create_input(
+    MaterialCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_material_item(MaterialItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_material_unit_create_input(
+    MaterialUnitCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_material_unit_input(
+    MaterialUnitInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_material_unit_item(
+    MaterialUnitItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_material_update_input(
+    MaterialUpdateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_String(String? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_setup_company_input(
+    SetupCompanyInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_setup_status_view(
+    SetupStatusView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_supplier_create_input(
+    SupplierCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_supplier_item(SupplierItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_supplier_update_input(
+    SupplierUpdateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_trial_balance_line_view(
+    TrialBalanceLineView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_trial_balance_view(
+    TrialBalanceView self,
     SseSerializer serializer,
   );
 
@@ -64,10 +724,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_unit(void self, SseSerializer serializer);
 
   @protected
-  void sse_encode_i_32(int self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer);
+  void sse_encode_world_currency_view(
+    WorldCurrencyView self,
+    SseSerializer serializer,
+  );
 }
 
 // Section: wire_class

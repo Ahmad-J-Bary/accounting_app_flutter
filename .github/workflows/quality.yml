@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - "fix/**"
+      - "feat/**"
   pull_request:
     branches:
       - main
@@ -25,6 +26,8 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Check the full Rust workspace
         run: cargo check --workspace
+      - name: Lint the full Rust workspace
+        run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Run Rust workspace tests
         run: cargo test --workspace -- --test-threads=1
 
@@ -51,3 +54,56 @@ jobs:
       - name: Build Windows release
         working-directory: app
         run: flutter build windows
+      - name: Verify Rust bridge DLL is packaged
+        working-directory: app
+        run: |
+          $dll = 'build/windows/x64/runner/Release/accounting_app_flutter_isolates.dll'
+          if (-not (Test-Path $dll)) { throw "Missing Rust bridge DLL: $dll" }
+          Get-Item $dll | Select-Object FullName, Length
+
+  flutter-android:
+    name: Flutter Android release build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      - name: Install Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      # Do not use android-actions/setup-android@v3: it runs `sdkmanager tools`,
+      # and Google removed the legacy `tools` package from the SDK repository.
+      # The ubuntu-latest image already ships the Android SDK and sdkmanager.
+      - name: Install Android NDK and CMake
+        run: |
+          SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -name sdkmanager -type f | sort | tail -n1)"
+          echo "Using $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "ndk;28.2.13676358" "cmake;3.22.1"
+      - name: Install pinned Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1.16.1
+      - name: Install Rust stable and Android targets
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup target add --toolchain stable aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+      - name: Install Flutter 3.41.9
+        uses: subosito/flutter-action@v2.23.0
+        with:
+          channel: stable
+          flutter-version: "3.41.9"
+          cache: true
+      - name: Resolve Dart workspace dependencies
+        run: flutter pub get
+      - name: Build Android release
+        working-directory: app
+        run: flutter build apk --release
+      - name: Verify Rust libraries are packaged in the APK
+        working-directory: app
+        run: |
+          apk=build/app/outputs/flutter-apk/app-release.apk
+          test -f "$apk"
+          unzip -l "$apk" | grep -q 'lib/arm64-v8a/libaccounting_app_flutter_isolates.so'
+          unzip -l "$apk" | grep -q 'lib/armeabi-v7a/libaccounting_app_flutter_isolates.so'
+          unzip -l "$apk" | grep -q 'lib/x86_64/libaccounting_app_flutter_isolates.so'
+          echo "Rust libraries present in $apk"

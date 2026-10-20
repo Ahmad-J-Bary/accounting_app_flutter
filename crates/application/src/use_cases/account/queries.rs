@@ -52,17 +52,17 @@ impl AccountQueries {
             account_map: &mut HashMap<AccountId, Account>,
             children_map: &HashMap<AccountId, Vec<AccountId>>,
         ) -> Decimal {
-            if let Some(children) = children_map.get(node_id) {
-                if !children.is_empty() {
-                    let mut sum = Decimal::ZERO;
-                    for child_id in children {
-                        sum += calculate_balance(child_id, account_map, children_map);
-                    }
-                    if let Some(node) = account_map.get_mut(node_id) {
-                        node.balance = sum;
-                    }
-                    return sum;
+            if let Some(children) = children_map.get(node_id)
+                && !children.is_empty()
+            {
+                let mut sum = Decimal::ZERO;
+                for child_id in children {
+                    sum += calculate_balance(child_id, account_map, children_map);
                 }
+                if let Some(node) = account_map.get_mut(node_id) {
+                    node.balance = sum;
+                }
+                return sum;
             }
 
             account_map

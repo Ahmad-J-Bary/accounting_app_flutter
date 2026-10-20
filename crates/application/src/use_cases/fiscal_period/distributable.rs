@@ -88,10 +88,10 @@ impl GetDistributableProfitUseCase {
         // scan the window's posted entries by their source prefix instead.
         let mut allocated = Decimal::ZERO;
         for entry in &period_entries {
-            if let Some(source_id) = &entry.source_id {
-                if source_id.starts_with(AUTH_ALLOCATION_SOURCE_PREFIX) {
-                    allocated += entry.total_base_debit();
-                }
+            if let Some(source_id) = &entry.source_id
+                && source_id.starts_with(AUTH_ALLOCATION_SOURCE_PREFIX)
+            {
+                allocated += entry.total_base_debit();
             }
         }
 

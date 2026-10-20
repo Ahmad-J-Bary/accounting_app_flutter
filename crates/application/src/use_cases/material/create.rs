@@ -32,14 +32,13 @@ impl CreateMaterialUseCase {
             category_ids.push(cid);
         }
 
-        if category_ids.is_empty() {
-            if let Some(cat) = self
+        if category_ids.is_empty()
+            && let Some(cat) = self
                 .category_repo
                 .find_by_name(DEFAULT_CATEGORY_NAME)
                 .await?
-            {
-                category_ids.push(cat.id);
-            }
+        {
+            category_ids.push(cat.id);
         }
 
         let min_stock = crate::utils::parse_decimal(Some(&req.minimum_stock), "حد الطلب")?;

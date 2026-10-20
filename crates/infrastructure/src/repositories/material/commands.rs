@@ -121,9 +121,34 @@ pub(crate) async fn update_tx<'a>(
 }
 
 pub async fn delete(pool: &SqlitePool, id: &MaterialId) -> Result<(), AppError> {
-    sqlx::query("DELETE FROM materials WHERE id = ?")
-        .bind(id.to_string())
-        .execute(pool)
+    let material_id = id.to_string();
+    let mut tx = pool
+        .begin()
+        .await
+        .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+
+    // Price rows reference the material without ON DELETE CASCADE, so they
+    // must be removed before the material itself. Units and category links
+    // cascade from the materials table.
+    for table in ["material_purchase_prices", "material_sale_prices"] {
+        sqlx::query(&format!("DELETE FROM {table} WHERE material_id = ?"))
+            .bind(&material_id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+    }
+
+    let result = sqlx::query("DELETE FROM materials WHERE id = ?")
+        .bind(&material_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+
+    if result.rows_affected() == 0 {
+        return Err(AppError::NotFound("المادة غير موجودة".into()));
+    }
+
+    tx.commit()
         .await
         .map_err(|e| AppError::Infrastructure(e.to_string()))?;
     Ok(())
@@ -156,9 +181,53 @@ pub async fn add_unit(
 }
 
 pub async fn delete_unit(pool: &SqlitePool, unit_id: &str) -> Result<(), AppError> {
-    sqlx::query("DELETE FROM material_units WHERE id = ? AND is_base = 0")
+    let mut tx = pool
+        .begin()
+        .await
+        .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+
+    let row: Option<(String, bool)> =
+        sqlx::query_as("SELECT material_id, is_base FROM material_units WHERE id = ?")
+            .bind(unit_id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+
+    let (_, is_base) = row.ok_or_else(|| AppError::NotFound("الوحدة غير موجودة".into()))?;
+    if is_base {
+        return Err(AppError::Forbidden(
+            "لا يمكن حذف الوحدة الأساسية للمادة".into(),
+        ));
+    }
+
+    // Price rows reference the unit without ON DELETE CASCADE, so they are
+    // removed first. Other references (stock movements, invoice lines) are
+    // protected by the foreign key and reported as a conflict below.
+    for table in ["material_purchase_prices", "material_sale_prices"] {
+        sqlx::query(&format!("DELETE FROM {table} WHERE unit_id = ?"))
+            .bind(unit_id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+    }
+
+    let result = sqlx::query("DELETE FROM material_units WHERE id = ? AND is_base = 0")
         .bind(unit_id)
-        .execute(pool)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| {
+            if e.to_string().contains("FOREIGN KEY") {
+                AppError::Conflict("لا يمكن حذف الوحدة لأنها مستخدمة في حركات مخزون أو فواتير".into())
+            } else {
+                AppError::Infrastructure(e.to_string())
+            }
+        })?;
+
+    if result.rows_affected() == 0 {
+        return Err(AppError::NotFound("الوحدة غير موجودة".into()));
+    }
+
+    tx.commit()
         .await
         .map_err(|e| AppError::Infrastructure(e.to_string()))?;
     Ok(())

@@ -81,77 +81,77 @@ impl CreateInvoiceUseCase {
         };
 
         let mut customer_id = None;
-        if let Some(id_str) = req.customer_id {
-            if let Ok(id) = CustomerId::from_str(&id_str) {
-                customer_id = Some(id);
-            }
+        if let Some(id_str) = req.customer_id
+            && let Ok(id) = CustomerId::from_str(&id_str)
+        {
+            customer_id = Some(id);
         }
 
-        if customer_id.is_none() && invoice_type == InvoiceType::Sales {
-            if let Some(name) = req.customer_name.clone() {
-                if !is_cash_party_name(&name, "customer") {
-                    // Auto-create customer
-                    let create_customer = CreateCustomerUseCase::new(
-                        self.customer_repo.clone(),
-                        self.account_repo.clone(),
-                        self.journal_repo.clone(),
-                        self.opening_migration_repo.clone(),
-                    );
-                    let customer_dto = create_customer
-                        .execute(CreateCustomerRequest {
-                            code: "".into(),
-                            name,
-                            phone: None,
-                            address: None,
-                            account_id: None,
-                            debit: None,
-                            credit: None,
-                            opening_balance: None,
-                            currency: Some(req.currency_code.clone()),
-                            exchange_rate: Some(req.exchange_rate.clone()),
-                            notes: None,
-                        })
-                        .await?;
-                    customer_id = Some(CustomerId::from_str(&customer_dto.id).unwrap());
-                }
-            }
+        if customer_id.is_none()
+            && invoice_type == InvoiceType::Sales
+            && let Some(name) = req.customer_name.clone()
+            && !is_cash_party_name(&name, "customer")
+        {
+            // Auto-create customer
+            let create_customer = CreateCustomerUseCase::new(
+                self.customer_repo.clone(),
+                self.account_repo.clone(),
+                self.journal_repo.clone(),
+                self.opening_migration_repo.clone(),
+            );
+            let customer_dto = create_customer
+                .execute(CreateCustomerRequest {
+                    code: "".into(),
+                    name,
+                    phone: None,
+                    address: None,
+                    account_id: None,
+                    debit: None,
+                    credit: None,
+                    opening_balance: None,
+                    currency: Some(req.currency_code.clone()),
+                    exchange_rate: Some(req.exchange_rate.clone()),
+                    notes: None,
+                })
+                .await?;
+            customer_id = Some(CustomerId::from_str(&customer_dto.id).unwrap());
         }
 
         let mut supplier_id = None;
-        if let Some(id_str) = req.supplier_id {
-            if let Ok(id) = SupplierId::from_str(&id_str) {
-                supplier_id = Some(id);
-            }
+        if let Some(id_str) = req.supplier_id
+            && let Ok(id) = SupplierId::from_str(&id_str)
+        {
+            supplier_id = Some(id);
         }
 
-        if supplier_id.is_none() && invoice_type == InvoiceType::Purchase {
-            if let Some(name) = req.supplier_name.clone() {
-                if !is_cash_party_name(&name, "supplier") {
-                    // Auto-create supplier
-                    let create_supplier = CreateSupplierUseCase::new(
-                        self.supplier_repo.clone(),
-                        self.account_repo.clone(),
-                        self.journal_repo.clone(),
-                        self.opening_migration_repo.clone(),
-                    );
-                    let supplier_dto = create_supplier
-                        .execute(CreateSupplierRequest {
-                            code: "".into(),
-                            name,
-                            phone: None,
-                            address: None,
-                            account_id: None,
-                            debit: None,
-                            credit: None,
-                            opening_balance: None,
-                            currency: Some(req.currency_code.clone()),
-                            exchange_rate: Some(req.exchange_rate.clone()),
-                            notes: None,
-                        })
-                        .await?;
-                    supplier_id = Some(SupplierId::from_str(&supplier_dto.id).unwrap());
-                }
-            }
+        if supplier_id.is_none()
+            && invoice_type == InvoiceType::Purchase
+            && let Some(name) = req.supplier_name.clone()
+            && !is_cash_party_name(&name, "supplier")
+        {
+            // Auto-create supplier
+            let create_supplier = CreateSupplierUseCase::new(
+                self.supplier_repo.clone(),
+                self.account_repo.clone(),
+                self.journal_repo.clone(),
+                self.opening_migration_repo.clone(),
+            );
+            let supplier_dto = create_supplier
+                .execute(CreateSupplierRequest {
+                    code: "".into(),
+                    name,
+                    phone: None,
+                    address: None,
+                    account_id: None,
+                    debit: None,
+                    credit: None,
+                    opening_balance: None,
+                    currency: Some(req.currency_code.clone()),
+                    exchange_rate: Some(req.exchange_rate.clone()),
+                    notes: None,
+                })
+                .await?;
+            supplier_id = Some(SupplierId::from_str(&supplier_dto.id).unwrap());
         }
 
         let payment_method = match req.payment_method.as_str() {

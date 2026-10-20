@@ -80,12 +80,11 @@ pub async fn resolve_designated_account(
     {
         return Ok(Some((*a).clone()));
     }
-    if let Some(code) = designated_code(classification) {
-        if let Some(a) = account_repo.find_by_code(code).await? {
-            if a.is_active {
-                return Ok(Some(a));
-            }
-        }
+    if let Some(code) = designated_code(classification)
+        && let Some(a) = account_repo.find_by_code(code).await?
+        && a.is_active
+    {
+        return Ok(Some(a));
     }
     Ok(active.first().map(|a| (*a).clone()))
 }

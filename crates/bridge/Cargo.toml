@@ -1,0 +1,15 @@
+[package]
+name = "bridge"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+application = { workspace = true }
+domain = { workspace = true }
+infrastructure = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+uuid = { workspace = true }
+chrono = { workspace = true }
+tokio = { workspace = true }
