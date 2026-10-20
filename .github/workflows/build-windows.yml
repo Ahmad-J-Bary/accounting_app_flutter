@@ -93,7 +93,7 @@ jobs:
           try {
             & (Join-Path $env:WIXBIN 'candle.exe') -arch x64 "-dAppVersion=$version" "-dSourceDir=$release" $product 'Files.wxs'
             if ($LASTEXITCODE -ne 0) { throw 'WiX candle failed.' }
-            & (Join-Path $env:WIXBIN 'light.exe') -ext WixUIExtension -cultures:en-us -out $msi 'Product.wixobj' 'Files.wixobj'
+            & (Join-Path $env:WIXBIN 'light.exe') -ext WixUIExtension -cultures:en-us -pdbtype none -out $msi 'Product.wixobj' 'Files.wixobj'
             if ($LASTEXITCODE -ne 0) { throw 'WiX light failed.' }
           } finally {
             Pop-Location
