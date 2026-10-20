@@ -85,13 +85,19 @@ jobs:
           $msiBuild = Join-Path (Get-Location) 'app/build/msi'
           New-Item -ItemType Directory -Path $msiBuild -Force | Out-Null
           $heat = Join-Path $env:WIXBIN 'heat.exe'
+          $product = Join-Path (Get-Location) 'installer/windows/Product.wxs'
           & $heat dir $release -cg AppFiles -gg -scom -sreg -sfrag -srd -dr INSTALLFOLDER -var var.SourceDir -out (Join-Path $msiBuild 'Files.wxs')
           if ($LASTEXITCODE -ne 0) { throw 'WiX heat failed.' }
-          & (Join-Path $env:WIXBIN 'candle.exe') -arch x64 "-dAppVersion=$version" "-dSourceDir=$release" -out "$msiBuild\" 'installer/windows/Product.wxs' (Join-Path $msiBuild 'Files.wxs')
-          if ($LASTEXITCODE -ne 0) { throw 'WiX candle failed.' }
           $msi = Join-Path $dist "accounting-app-$version-windows-x64.msi"
-          & (Join-Path $env:WIXBIN 'light.exe') -ext WixUIExtension -cultures:en-us -out $msi (Join-Path $msiBuild 'Product.wixobj') (Join-Path $msiBuild 'Files.wixobj')
-          if ($LASTEXITCODE -ne 0) { throw 'WiX light failed.' }
+          Push-Location $msiBuild
+          try {
+            & (Join-Path $env:WIXBIN 'candle.exe') -arch x64 "-dAppVersion=$version" "-dSourceDir=$release" $product 'Files.wxs'
+            if ($LASTEXITCODE -ne 0) { throw 'WiX candle failed.' }
+            & (Join-Path $env:WIXBIN 'light.exe') -ext WixUIExtension -cultures:en-us -out $msi 'Product.wixobj' 'Files.wixobj'
+            if ($LASTEXITCODE -ne 0) { throw 'WiX light failed.' }
+          } finally {
+            Pop-Location
+          }
           if (-not (Test-Path $msi)) { throw "Missing MSI: $msi" }
 
           Get-ChildItem $dist -File | Where-Object { $_.Extension -in '.zip', '.exe', '.msi' } | ForEach-Object {

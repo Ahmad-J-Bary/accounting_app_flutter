@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  WiX 3 authoring for the per-user MSI.
+  WiX 3 authoring for the per-machine MSI.
   AppVersion is supplied on the candle command line; FileSourceDir is used by
   the heat-generated Files.wxs file.
 -->
@@ -16,7 +16,7 @@
     <Package
       InstallerVersion="500"
       Compressed="yes"
-      InstallScope="perUser"
+      InstallScope="perMachine"
       Platform="x64"
       Description="Accounting App"
       Comments="Accounting App for Windows" />
@@ -29,10 +29,8 @@
     <UIRef Id="WixUI_InstallDir" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="LocalAppDataFolder">
-        <Directory Id="ProgramsFolder" Name="Programs">
-          <Directory Id="INSTALLFOLDER" Name="AccountingApp" />
-        </Directory>
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLFOLDER" Name="Accounting App" />
       </Directory>
       <Directory Id="ProgramMenuFolder">
         <Directory Id="ApplicationProgramsFolder" Name="Accounting App" />
