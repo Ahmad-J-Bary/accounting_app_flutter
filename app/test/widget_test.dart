@@ -521,7 +521,7 @@ void main() {
     expect(find.text('هذا الحقل مطلوب.'), findsOneWidget);
   });
 
-  testWidgets('opens the customer editor with the read-only opening balance', (
+  testWidgets('opens the customer editor with the opening-balance hint', (
     tester,
   ) async {
     await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
@@ -535,7 +535,7 @@ void main() {
 
     expect(find.text('تعديل عميل'), findsOneWidget);
     expect(
-      find.text('لا يمكن تعديل الرصيد الافتتاحي من هنا؛ استخدم قيود التسوية.'),
+      find.text('يمكن تعديل الرصيد الافتتاحي من شاشة «الأرصدة الافتتاحية».'),
       findsOneWidget,
     );
     expect(find.text('نشط'), findsOneWidget);

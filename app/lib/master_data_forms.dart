@@ -241,7 +241,7 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
                 decoration: InputDecoration(
                   labelText: 'الرصيد الافتتاحي (مدين)',
                   helperText: _isEdit
-                      ? 'لا يمكن تعديل الرصيد الافتتاحي من هنا؛ استخدم قيود التسوية.'
+                      ? 'يمكن تعديل الرصيد الافتتاحي من شاشة «الأرصدة الافتتاحية».'
                       : 'المبلغ الذي على العميل دفعه لنا عند بداية النظام.',
                   border: const OutlineInputBorder(),
                 ),
