@@ -41,6 +41,11 @@
 | توليد FRB | ناجح بـ`2.13.0` ثم `cargo fmt` |
 | ترجمة مثبّت Inno محلياً | ناجح بعد ضبط الضغط إلى `lzma2/max` |
 | بناء MSI محلياً عبر WiX 3.14.1 | ناجح (تحذيرات ICE60 فقط، بلا أخطاء) |
+| `fvm flutter build windows --release` | ناجح (130s) وبناء `1.0.1+2` |
+| تثبيت مثبّت Inno صامتاً | ناجح: وُضعت `accounting_app_flutter.exe` و`accounting_app_flutter_isolates.dll` و`flutter_windows.dll` و`data/flutter_assets` |
+| تشغيل التطبيق المثبّت | ناجح: العملية ظلت تعمل (`WorkingSet` ‏140MB) ثم أُغلقت |
+| إزالة مثبّت Inno | ناجحة: حُذف مجلد التثبيت بالكامل |
+| استخراج MSI إدارياً (`msiexec /a`) | ناجح: نفس ملفات التطبيق وحجم 16.6MB |
 
 ## ما لم يُثبت بعد
 
