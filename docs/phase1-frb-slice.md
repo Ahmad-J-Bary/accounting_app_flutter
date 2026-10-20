@@ -238,7 +238,7 @@
 وتأكيدات DLL و`.so`:
 
 - `quality.yml`: يشغّل Rust (fmt/check/clippy/505 اختبار)، وFlutter
-  (تنسيق/تحليل/15 اختبار)، وفحص **نضارة توليد FRB**، ثم يستدعي بناء
+  (تنسيق/تحليل/18 اختبار)، وفحص **نضارة توليد FRB**، ثم يستدعي بناء
   Windows وAndroid كـworkflows قابلة لإعادة الاستخدام.
 - `build-windows.yml`: يقرأ الإصدار من `app/pubspec.yaml`، يبني Windows
   `--release`، يتحقق من DLL، ثم ينتج ZIP محمولاً و**مثبّت EXE عبر Inno
@@ -265,7 +265,7 @@
 | `cargo clippy --workspace --all-targets -- -D warnings` | نجح |
 | `cargo fmt --all -- --check` | نجح |
 | `fvm flutter analyze` | `No issues found` (Flutter 3.41.9 / Dart 3.11.5) |
-| `fvm flutter test` | نجح: **15/15** |
+| `fvm flutter test` | نجح: **18/18** |
 | `fvm flutter test integration_test/bridge_test.dart -d windows` | نجح: Dart→Rust حقيقي، SQLite، migrations، `isSetupComplete=false`، `setupCompany`، `isSetupComplete=true`، قراءة العملاء/الموردين/المواد/التصنيفات، **التقاط `ApiError` مكتوب**، إنشاء وترحيل قيد، ميزان متوازن، CRUD كامل للعميل والمورد والمادة، تصنيف مادة، وحدتان عند الإنشاء مع منع تكرار الوحدة وحذف الأساسية، حالة نشاط المورد، تحديث الرصيد الافتتاحي، فاتورة شراء لفتح المخزون، فاتورة بيع وترحيلها، مرتجعا بيع وشراء، سند قبض، بند مصاريف، سند مصروف، ورفض حذف السند المرحّل |
 | بناء Windows DLL | نجح: `app/build/windows/x64/runner/Release/accounting_app_flutter_isolates.dll` مع خط Cairo داخل `data/flutter_assets` |
 | ترجمة Rust لأندرويد | نجحت سابقاً للبنى الثلاث: arm64-v8a، armeabi-v7a، x86_64 |
@@ -275,7 +275,7 @@
 | CI run `39449326465` (الإصدار 1.0.1) | **أخضر بالكامل**: Rust (`24m46s`، 505 اختبار) + Flutter (`2m48s`، 15 اختبار) + codegen (`1m17s`) + Windows (`8m43s`: ZIP + مثبّت EXE + مثبّت MSI) + Android (`8m21s`: ثلاثة APKs مع تحقق `.so` لكل ABI) |
 | Release Draft run `39449352813` (1.0.1) | **أخضر**: Windows (`7m`) + Android (`11m2s`) + المسودة (`23s`)؛ تحقق البصمات ورفع **عشرة** ملفات إلى `v1.0.1` |
 | `flutter_rust_bridge_codegen` | أُعيد التوليد بـ`2.13.0` ثم `cargo fmt`؛ لا فرق في الملفات المولّدة (فحص النضارة قابل للتكرار) |
-| اختبارات الواجهة بعد التصميم الجديد | نجح: **15/15** على مقاس مكتبي `1440×1024`، منها اختبار Drawer على `430×900` |
+| اختبارات الواجهة بعد التصميم الجديد | نجح: **18/18** على مقاس مكتبي `1440×1024`، منها اختبار Drawer على `430×900` واختبارات الفواتير والمرتجعات والمقبوضات |
 | `dart format --set-exit-if-changed lib test` | نجح بعد تنسيق الملفات الثمانية الجديدة/المعدّلة |
 
 الإصدار `v1.0.0` نُشر كـ**pre-release** بستة ملفات (ZIP + بصمته، وثلاثة

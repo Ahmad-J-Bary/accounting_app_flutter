@@ -682,6 +682,7 @@ class _InvoiceEditorPageState extends State<InvoiceEditorPage> {
                       width: 300,
                       child: DropdownButtonFormField<String>(
                         initialValue: _partyId,
+                        isExpanded: true,
                         decoration: InputDecoration(
                           labelText: _isSales ? 'العميل' : 'المورد',
                           prefixIcon: Icon(
@@ -721,6 +722,7 @@ class _InvoiceEditorPageState extends State<InvoiceEditorPage> {
                       width: 190,
                       child: DropdownButtonFormField<String>(
                         initialValue: _paymentMethod,
+                        isExpanded: true,
                         decoration: const InputDecoration(
                           labelText: 'طريقة الدفع',
                           prefixIcon: Icon(Icons.payments_outlined),
@@ -1163,12 +1165,18 @@ class _SummaryRow extends StatelessWidget {
         : Theme.of(context).textTheme.bodyMedium;
     return Row(
       children: [
-        Text(label, style: style),
-        const Spacer(),
-        Text(
-          value,
-          style: style?.copyWith(
-            fontWeight: strong ? FontWeight.w800 : FontWeight.w600,
+        Expanded(
+          child: Text(label, style: style, overflow: TextOverflow.ellipsis),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: style?.copyWith(
+              fontWeight: strong ? FontWeight.w800 : FontWeight.w600,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -1712,6 +1720,7 @@ class _ReturnEditorPageState extends State<ReturnEditorPage> {
                   width: 300,
                   child: DropdownButtonFormField<String>(
                     initialValue: _partyId,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: _isSales ? 'العميل' : 'المورد',
                       prefixIcon: const Icon(Icons.person_outline),
@@ -1755,6 +1764,7 @@ class _ReturnEditorPageState extends State<ReturnEditorPage> {
                   width: 280,
                   child: DropdownButtonFormField<String>(
                     initialValue: _settlementMode,
+                    isExpanded: true,
                     decoration: const InputDecoration(
                       labelText: 'طريقة التسوية',
                       prefixIcon: Icon(Icons.account_balance_wallet_outlined),

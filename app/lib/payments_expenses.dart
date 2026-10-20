@@ -453,6 +453,7 @@ class _PaymentEditorPageState extends State<PaymentEditorPage> {
                     width: 300,
                     child: DropdownButtonFormField<String>(
                       initialValue: _partyId,
+                      isExpanded: true,
                       decoration: InputDecoration(
                         labelText: widget.isReceipt ? 'العميل' : 'المورد',
                         prefixIcon: const Icon(Icons.person_outline),
@@ -520,6 +521,7 @@ class _PaymentEditorPageState extends State<PaymentEditorPage> {
                   width: 190,
                   child: DropdownButtonFormField<String>(
                     initialValue: _currency,
+                    isExpanded: true,
                     decoration: const InputDecoration(
                       labelText: 'العملة',
                       prefixIcon: Icon(Icons.currency_exchange_outlined),

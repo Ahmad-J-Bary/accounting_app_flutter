@@ -507,6 +507,52 @@ void main() {
     expect(find.text('لا توجد بنود مصاريف'), findsOneWidget);
   });
 
+  testWidgets('opens the sales invoice editor and validates the party', (
+    tester,
+  ) async {
+    await _pumpWorkspace(tester);
+    await tester.tap(find.text('فواتير البيع').first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('إنشاء فاتورة'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('فاتورة بيع جديدة'), findsOneWidget);
+    expect(find.text('بيانات الفاتورة'), findsOneWidget);
+    expect(find.text('بنود الفاتورة'), findsOneWidget);
+    expect(find.text('العميل'), findsOneWidget);
+
+    await tester.tap(find.text('حفظ كمسودة'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('اختر العميل أولًا.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('shows the returns page summary and empty state', (tester) async {
+    await _pumpWorkspace(tester);
+    await tester.tap(find.text('مرتجعات البيع').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('عدد المرتجعات'), findsOneWidget);
+    expect(find.text('قيمة المرتجعات'), findsOneWidget);
+    expect(find.text('لا توجد مرتجعات'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('shows the receipts page summary and empty state', (
+    tester,
+  ) async {
+    await _pumpWorkspace(tester);
+    await tester.tap(find.text('المقبوضات').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('عدد السندات'), findsOneWidget);
+    expect(find.text('إجمالي المبلغ'), findsOneWidget);
+    expect(find.text('لا توجد سندات'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('opens category management from master data', (tester) async {
     await _pumpWorkspace(tester);
     await _openCustomers(tester);

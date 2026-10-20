@@ -36,7 +36,7 @@
 | `cargo clippy --workspace --all-targets -- -D warnings` | ناجح |
 | `cargo test --workspace -- --test-threads=1` | ناجح (505 اختباراً) |
 | `fvm flutter analyze` | `No issues found` |
-| `fvm flutter test test` | **15/15** |
+| `fvm flutter test test` | **18/18** |
 | `fvm flutter test integration_test/bridge_test.dart -d windows` | ناجح: فاتورة شراء لفتح المخزون، فاتورة بيع آجلة، فاتورة بيع نقدية، مرتجع بيع، مرتجع شراء، سند قبض، بند مصاريف، سند مصروف، ورفض حذف سند مرحّل |
 | توليد FRB | ناجح بـ`2.13.0` ثم `cargo fmt` |
 | ترجمة مثبّت Inno محلياً | ناجح بعد ضبط الضغط إلى `lzma2/max` |
