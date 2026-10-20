@@ -44,6 +44,7 @@ use application::use_cases::currency::commands::CurrencyCommands;
 use application::use_cases::currency::queries::CurrencyQueries;
 use application::use_cases::currency::setup::CurrencySetupUseCase;
 use application::use_cases::material::MaterialCodeUseCases;
+use application::use_cases::setup::SetupCompanyUseCase;
 use infrastructure::SqliteWarehouseRepository;
 use infrastructure::db::backup;
 use infrastructure::repositories::SqliteFiscalPeriodRepository;
@@ -112,6 +113,7 @@ pub struct AppState {
     pub currency_commands: Arc<CurrencyCommands>,
     pub currency_queries: Arc<CurrencyQueries>,
     pub currency_setup: Arc<CurrencySetupUseCase>,
+    pub setup_company: Arc<SetupCompanyUseCase>,
 }
 
 /// Build a SQLx SQLite URL for an on-disk database file.
@@ -186,6 +188,14 @@ pub async fn build_app_state(database_url: &str) -> Result<AppState, String> {
         )),
     ];
 
+    let fiscal_period_repo = Arc::new(SqliteFiscalPeriodRepository::new(pool.clone()));
+    let fiscal_year_repo = Arc::new(SqliteFiscalYearRepository::new(pool.clone()));
+    let currency_setup = Arc::new(CurrencySetupUseCase::new(
+        currency_repo.clone() as Arc<dyn CurrencyRepository>,
+        exchange_rate_repo.clone() as Arc<dyn ExchangeRateRepository>,
+        settings_repo.clone() as Arc<dyn SettingsRepository>,
+    ));
+
     Ok(AppState {
         pool: pool.clone(),
         customer_repo: customer_repo.clone() as Arc<dyn CustomerRepository>,
@@ -229,10 +239,8 @@ pub async fn build_app_state(database_url: &str) -> Result<AppState, String> {
             as Arc<dyn OpeningItemRepository>,
         opening_draft_repo: Arc::new(SqliteOpeningDraftRepository::new(pool.clone()))
             as Arc<dyn OpeningDraftRepository>,
-        fiscal_period_repo: Arc::new(SqliteFiscalPeriodRepository::new(pool.clone()))
-            as Arc<dyn FiscalPeriodRepository>,
-        fiscal_year_repo: Arc::new(SqliteFiscalYearRepository::new(pool.clone()))
-            as Arc<dyn FiscalYearRepository>,
+        fiscal_period_repo: fiscal_period_repo.clone() as Arc<dyn FiscalPeriodRepository>,
+        fiscal_year_repo: fiscal_year_repo.clone() as Arc<dyn FiscalYearRepository>,
         app_config_repo: app_config_repo.clone() as Arc<dyn AppConfigRepository>,
         search_providers,
         material_code_use_cases: Arc::new(MaterialCodeUseCases::new(
@@ -247,10 +255,12 @@ pub async fn build_app_state(database_url: &str) -> Result<AppState, String> {
             currency_repo.clone() as Arc<dyn CurrencyRepository>,
             exchange_rate_repo.clone() as Arc<dyn ExchangeRateRepository>,
         )),
-        currency_setup: Arc::new(CurrencySetupUseCase::new(
-            currency_repo.clone() as Arc<dyn CurrencyRepository>,
-            exchange_rate_repo.clone() as Arc<dyn ExchangeRateRepository>,
+        currency_setup: currency_setup.clone(),
+        setup_company: Arc::new(SetupCompanyUseCase::new(
+            currency_setup,
             settings_repo.clone() as Arc<dyn SettingsRepository>,
+            fiscal_year_repo.clone() as Arc<dyn FiscalYearRepository>,
+            fiscal_period_repo.clone() as Arc<dyn FiscalPeriodRepository>,
         )),
     })
 }
@@ -261,63 +271,18 @@ pub async fn build_app_state_from_path(db_path: &str) -> Result<AppState, String
     build_app_state(&url).await
 }
 
-/// First-run bootstrap: make sure the current calendar year has an open fiscal
-/// year and period, otherwise posting any entry is rejected by the lifecycle
-/// policy. Existing years/periods are never modified, and this is a no-op once
-/// the user configures their own fiscal calendar.
+/// First-run bootstrap: make sure an open fiscal year and period exist,
+/// otherwise posting any entry is rejected by the lifecycle policy. The window
+/// follows `settings.fiscal_year_start_month`. Existing years/periods are never
+/// modified, and this is a no-op once the user configures their own calendar.
 pub async fn ensure_default_fiscal_year(state: &AppState) -> Result<(), String> {
-    use chrono::{Datelike, NaiveDate, Utc};
+    let settings = state.settings_repo.get().await.map_err(|e| e.to_string())?;
 
-    let years = state
-        .fiscal_year_repo
-        .list()
-        .await
-        .map_err(|e| e.to_string())?;
-    let periods = state
-        .fiscal_period_repo
-        .list()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    if !years.is_empty() && !periods.is_empty() {
-        return Ok(());
-    }
-
-    let year = Utc::now().year();
-    let start = NaiveDate::from_ymd_opt(year, 1, 1)
-        .and_then(|d| d.and_hms_opt(0, 0, 0))
-        .map(|d| d.and_utc())
-        .ok_or_else(|| format!("Invalid fiscal-year start for {year}"))?;
-    let end = NaiveDate::from_ymd_opt(year, 12, 31)
-        .and_then(|d| d.and_hms_opt(23, 59, 59))
-        .map(|d| d.and_utc())
-        .ok_or_else(|| format!("Invalid fiscal-year end for {year}"))?;
-
-    if years.is_empty() {
-        let fiscal_year = domain::accounting::fiscal_year::FiscalYear::new(
-            None,
-            format!("Fiscal year {year}"),
-            start,
-            end,
-            None,
-        )
-        .map_err(|e| e.to_string())?;
-        state
-            .fiscal_year_repo
-            .create(&fiscal_year)
-            .await
-            .map_err(|e| e.to_string())?;
-    }
-
-    if periods.is_empty() {
-        let fiscal_period = domain::accounting::fiscal_period::FiscalPeriod::new(None, start, end)
-            .map_err(|e| e.to_string())?;
-        state
-            .fiscal_period_repo
-            .create(&fiscal_period)
-            .await
-            .map_err(|e| e.to_string())?;
-    }
-
-    Ok(())
+    application::use_cases::fiscal_year::EnsureDefaultFiscalYearUseCase::new(
+        state.fiscal_year_repo.clone(),
+        state.fiscal_period_repo.clone(),
+    )
+    .execute(settings.fiscal_year_start_month)
+    .await
+    .map_err(|e| e.to_string())
 }

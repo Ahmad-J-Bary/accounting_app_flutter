@@ -44,7 +44,7 @@ pub fn get_world_currencies() -> Vec<WorldCurrency> {
             code: "SAR".into(),
             name_ar: "ريال سعودي".into(),
             name_en: "Saudi Riyal".into(),
-            symbol: "﷼".into(),
+            symbol: "ر.س".into(),
             decimals: 2,
         },
         WorldCurrency {
@@ -58,7 +58,7 @@ pub fn get_world_currencies() -> Vec<WorldCurrency> {
             code: "QAR".into(),
             name_ar: "ريال قطري".into(),
             name_en: "Qatari Riyal".into(),
-            symbol: "﷼".into(),
+            symbol: "ر.ق".into(),
             decimals: 2,
         },
         WorldCurrency {
@@ -79,14 +79,14 @@ pub fn get_world_currencies() -> Vec<WorldCurrency> {
             code: "OMR".into(),
             name_ar: "ريال عماني".into(),
             name_en: "Omani Rial".into(),
-            symbol: "﷼".into(),
+            symbol: "ر.ع".into(),
             decimals: 3,
         },
         WorldCurrency {
             code: "JOD".into(),
             name_ar: "دينار أردني".into(),
             name_en: "Jordanian Dinar".into(),
-            symbol: "د.ا".into(),
+            symbol: "د.أ".into(),
             decimals: 3,
         },
         WorldCurrency {
@@ -156,7 +156,7 @@ pub fn get_world_currencies() -> Vec<WorldCurrency> {
             code: "YER".into(),
             name_ar: "ريال يمني".into(),
             name_en: "Yemeni Rial".into(),
-            symbol: "﷼".into(),
+            symbol: "ر.ي".into(),
             decimals: 2,
         },
         WorldCurrency {
@@ -210,21 +210,21 @@ pub fn get_world_currencies() -> Vec<WorldCurrency> {
         },
         WorldCurrency {
             code: "SEK".into(),
-            name_ar: "كرونا سويدية".into(),
+            name_ar: "كرونة سويدية".into(),
             name_en: "Swedish Krona".into(),
             symbol: "kr".into(),
             decimals: 2,
         },
         WorldCurrency {
             code: "NOK".into(),
-            name_ar: "كرونا نرويجية".into(),
+            name_ar: "كرونة نرويجية".into(),
             name_en: "Norwegian Krone".into(),
             symbol: "kr".into(),
             decimals: 2,
         },
         WorldCurrency {
             code: "DKK".into(),
-            name_ar: "كرونا دنماركية".into(),
+            name_ar: "كرونة دنماركية".into(),
             name_en: "Danish Krone".into(),
             symbol: "kr".into(),
             decimals: 2,

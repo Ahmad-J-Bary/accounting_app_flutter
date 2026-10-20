@@ -28,6 +28,7 @@ pub mod sales_return;
 pub mod search;
 pub mod settings;
 pub mod settle_partner_balance;
+pub mod setup;
 pub mod transfer;
 pub mod unified_invoice;
 pub mod user;

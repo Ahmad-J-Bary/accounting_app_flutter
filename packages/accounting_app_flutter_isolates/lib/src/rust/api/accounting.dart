@@ -4,18 +4,39 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import '../frb_generated.dart';
+import 'error.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `entry_view`, `state`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Open (or create) the SQLite ledger, run all migrations and wire the core.
 ///
-/// On a fresh database, an open fiscal year/period for the current calendar
-/// year is created so entries can be posted. Safe to call more than once with
-/// the same path: the existing state is reused.
+/// On a database that is already configured, the fiscal year/period bootstrap
+/// also runs so posting keeps working after a restart. A fresh database is left
+/// without a fiscal year until `setup_company` runs, because only setup knows
+/// the company's fiscal-year start month.
+///
+/// Safe to call more than once with the same path: the existing state is reused.
 Future<void> initApp({required String dbPath}) =>
     RustLib.instance.api.crateApiAccountingInitApp(dbPath: dbPath);
+
+/// Whether a base currency and a company identity have already been installed.
+Future<bool> isSetupComplete() =>
+    RustLib.instance.api.crateApiAccountingIsSetupComplete();
+
+/// Read the company identity and setup state in one bridge call.
+Future<SetupStatusView> getSetupStatus() =>
+    RustLib.instance.api.crateApiAccountingGetSetupStatus();
+
+/// First-run company setup through the shared application use case.
+Future<CompanySetupView> setupCompany({required SetupCompanyInput input}) =>
+    RustLib.instance.api.crateApiAccountingSetupCompany(input: input);
+
+/// The currency catalogue is static Rust data, exposed so the Flutter setup
+/// screen does not need a second, drifting copy.
+Future<List<WorldCurrencyView>> worldCurrencies() =>
+    RustLib.instance.api.crateApiAccountingWorldCurrencies();
 
 Future<List<AccountItem>> listAccounts() =>
     RustLib.instance.api.crateApiAccountingListAccounts();
@@ -32,6 +53,15 @@ Future<TrialBalanceView> trialBalance({String? fromDate, String? toDate}) =>
       fromDate: fromDate,
       toDate: toDate,
     );
+
+Future<List<CustomerItem>> listCustomers() =>
+    RustLib.instance.api.crateApiAccountingListCustomers();
+
+Future<List<SupplierItem>> listSuppliers() =>
+    RustLib.instance.api.crateApiAccountingListSuppliers();
+
+Future<List<MaterialItem>> listMaterials() =>
+    RustLib.instance.api.crateApiAccountingListMaterials();
 
 class AccountItem {
   final String id;
@@ -88,6 +118,49 @@ class AccountItem {
           isFinal == other.isFinal;
 }
 
+class CompanySetupView {
+  final String companyName;
+  final String baseCurrencyCode;
+  final String currencySymbol;
+  final String? secondaryCurrencyCode;
+  final int fiscalYearStartMonth;
+  final String accountingStartMode;
+  final bool setupComplete;
+
+  const CompanySetupView({
+    required this.companyName,
+    required this.baseCurrencyCode,
+    required this.currencySymbol,
+    this.secondaryCurrencyCode,
+    required this.fiscalYearStartMonth,
+    required this.accountingStartMode,
+    required this.setupComplete,
+  });
+
+  @override
+  int get hashCode =>
+      companyName.hashCode ^
+      baseCurrencyCode.hashCode ^
+      currencySymbol.hashCode ^
+      secondaryCurrencyCode.hashCode ^
+      fiscalYearStartMonth.hashCode ^
+      accountingStartMode.hashCode ^
+      setupComplete.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CompanySetupView &&
+          runtimeType == other.runtimeType &&
+          companyName == other.companyName &&
+          baseCurrencyCode == other.baseCurrencyCode &&
+          currencySymbol == other.currencySymbol &&
+          secondaryCurrencyCode == other.secondaryCurrencyCode &&
+          fiscalYearStartMonth == other.fiscalYearStartMonth &&
+          accountingStartMode == other.accountingStartMode &&
+          setupComplete == other.setupComplete;
+}
+
 class CreateJournalEntryInput {
   final String journalType;
   final String? sourceId;
@@ -121,6 +194,73 @@ class CreateJournalEntryInput {
           entryDate == other.entryDate &&
           description == other.description &&
           lines == other.lines;
+}
+
+class CustomerItem {
+  final String id;
+  final String code;
+  final String name;
+  final String? phone;
+  final String? address;
+  final String? accountId;
+  final String debit;
+  final String credit;
+  final String openingBalance;
+  final String balance;
+  final String currency;
+  final String? notes;
+  final bool isActive;
+
+  const CustomerItem({
+    required this.id,
+    required this.code,
+    required this.name,
+    this.phone,
+    this.address,
+    this.accountId,
+    required this.debit,
+    required this.credit,
+    required this.openingBalance,
+    required this.balance,
+    required this.currency,
+    this.notes,
+    required this.isActive,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      code.hashCode ^
+      name.hashCode ^
+      phone.hashCode ^
+      address.hashCode ^
+      accountId.hashCode ^
+      debit.hashCode ^
+      credit.hashCode ^
+      openingBalance.hashCode ^
+      balance.hashCode ^
+      currency.hashCode ^
+      notes.hashCode ^
+      isActive.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CustomerItem &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          code == other.code &&
+          name == other.name &&
+          phone == other.phone &&
+          address == other.address &&
+          accountId == other.accountId &&
+          debit == other.debit &&
+          credit == other.credit &&
+          openingBalance == other.openingBalance &&
+          balance == other.balance &&
+          currency == other.currency &&
+          notes == other.notes &&
+          isActive == other.isActive;
 }
 
 class JournalEntryView {
@@ -213,6 +353,234 @@ class JournalLineInput {
           description == other.description;
 }
 
+class MaterialItem {
+  final String id;
+  final String name;
+  final String nameEn;
+  final String barcode;
+  final String code;
+  final List<String> categoryIds;
+  final String minimumStock;
+  final String totalReceived;
+  final String totalSold;
+  final String totalAvailable;
+  final String totalDamaged;
+  final String lastPurchasePrice;
+  final String lastSalePrice;
+  final String averageCost;
+  final String averageCostBase;
+  final int unitsCount;
+  final bool hasExpiry;
+  final String costingMethod;
+
+  const MaterialItem({
+    required this.id,
+    required this.name,
+    required this.nameEn,
+    required this.barcode,
+    required this.code,
+    required this.categoryIds,
+    required this.minimumStock,
+    required this.totalReceived,
+    required this.totalSold,
+    required this.totalAvailable,
+    required this.totalDamaged,
+    required this.lastPurchasePrice,
+    required this.lastSalePrice,
+    required this.averageCost,
+    required this.averageCostBase,
+    required this.unitsCount,
+    required this.hasExpiry,
+    required this.costingMethod,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      name.hashCode ^
+      nameEn.hashCode ^
+      barcode.hashCode ^
+      code.hashCode ^
+      categoryIds.hashCode ^
+      minimumStock.hashCode ^
+      totalReceived.hashCode ^
+      totalSold.hashCode ^
+      totalAvailable.hashCode ^
+      totalDamaged.hashCode ^
+      lastPurchasePrice.hashCode ^
+      lastSalePrice.hashCode ^
+      averageCost.hashCode ^
+      averageCostBase.hashCode ^
+      unitsCount.hashCode ^
+      hasExpiry.hashCode ^
+      costingMethod.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MaterialItem &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          nameEn == other.nameEn &&
+          barcode == other.barcode &&
+          code == other.code &&
+          categoryIds == other.categoryIds &&
+          minimumStock == other.minimumStock &&
+          totalReceived == other.totalReceived &&
+          totalSold == other.totalSold &&
+          totalAvailable == other.totalAvailable &&
+          totalDamaged == other.totalDamaged &&
+          lastPurchasePrice == other.lastPurchasePrice &&
+          lastSalePrice == other.lastSalePrice &&
+          averageCost == other.averageCost &&
+          averageCostBase == other.averageCostBase &&
+          unitsCount == other.unitsCount &&
+          hasExpiry == other.hasExpiry &&
+          costingMethod == other.costingMethod;
+}
+
+class SetupCompanyInput {
+  final String companyName;
+  final String baseCurrencyCode;
+  final String? secondaryCurrencyCode;
+  final int fiscalYearStartMonth;
+  final String? accountingStartMode;
+
+  const SetupCompanyInput({
+    required this.companyName,
+    required this.baseCurrencyCode,
+    this.secondaryCurrencyCode,
+    required this.fiscalYearStartMonth,
+    this.accountingStartMode,
+  });
+
+  @override
+  int get hashCode =>
+      companyName.hashCode ^
+      baseCurrencyCode.hashCode ^
+      secondaryCurrencyCode.hashCode ^
+      fiscalYearStartMonth.hashCode ^
+      accountingStartMode.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SetupCompanyInput &&
+          runtimeType == other.runtimeType &&
+          companyName == other.companyName &&
+          baseCurrencyCode == other.baseCurrencyCode &&
+          secondaryCurrencyCode == other.secondaryCurrencyCode &&
+          fiscalYearStartMonth == other.fiscalYearStartMonth &&
+          accountingStartMode == other.accountingStartMode;
+}
+
+class SetupStatusView {
+  final bool setupComplete;
+  final String companyName;
+  final String baseCurrencyCode;
+  final String currencySymbol;
+  final int fiscalYearStartMonth;
+  final String accountingStartMode;
+
+  const SetupStatusView({
+    required this.setupComplete,
+    required this.companyName,
+    required this.baseCurrencyCode,
+    required this.currencySymbol,
+    required this.fiscalYearStartMonth,
+    required this.accountingStartMode,
+  });
+
+  @override
+  int get hashCode =>
+      setupComplete.hashCode ^
+      companyName.hashCode ^
+      baseCurrencyCode.hashCode ^
+      currencySymbol.hashCode ^
+      fiscalYearStartMonth.hashCode ^
+      accountingStartMode.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SetupStatusView &&
+          runtimeType == other.runtimeType &&
+          setupComplete == other.setupComplete &&
+          companyName == other.companyName &&
+          baseCurrencyCode == other.baseCurrencyCode &&
+          currencySymbol == other.currencySymbol &&
+          fiscalYearStartMonth == other.fiscalYearStartMonth &&
+          accountingStartMode == other.accountingStartMode;
+}
+
+class SupplierItem {
+  final String id;
+  final String code;
+  final String name;
+  final String? phone;
+  final String? address;
+  final String? accountId;
+  final String debit;
+  final String credit;
+  final String openingBalance;
+  final String balance;
+  final String currency;
+  final String? notes;
+  final bool isActive;
+
+  const SupplierItem({
+    required this.id,
+    required this.code,
+    required this.name,
+    this.phone,
+    this.address,
+    this.accountId,
+    required this.debit,
+    required this.credit,
+    required this.openingBalance,
+    required this.balance,
+    required this.currency,
+    this.notes,
+    required this.isActive,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      code.hashCode ^
+      name.hashCode ^
+      phone.hashCode ^
+      address.hashCode ^
+      accountId.hashCode ^
+      debit.hashCode ^
+      credit.hashCode ^
+      openingBalance.hashCode ^
+      balance.hashCode ^
+      currency.hashCode ^
+      notes.hashCode ^
+      isActive.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SupplierItem &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          code == other.code &&
+          name == other.name &&
+          phone == other.phone &&
+          address == other.address &&
+          accountId == other.accountId &&
+          debit == other.debit &&
+          credit == other.credit &&
+          openingBalance == other.openingBalance &&
+          balance == other.balance &&
+          currency == other.currency &&
+          notes == other.notes &&
+          isActive == other.isActive;
+}
+
 class TrialBalanceLineView {
   final String accountId;
   final String accountCode;
@@ -285,4 +653,39 @@ class TrialBalanceView {
           totalDebit == other.totalDebit &&
           totalCredit == other.totalCredit &&
           generatedAt == other.generatedAt;
+}
+
+class WorldCurrencyView {
+  final String code;
+  final String nameAr;
+  final String nameEn;
+  final String symbol;
+  final int decimals;
+
+  const WorldCurrencyView({
+    required this.code,
+    required this.nameAr,
+    required this.nameEn,
+    required this.symbol,
+    required this.decimals,
+  });
+
+  @override
+  int get hashCode =>
+      code.hashCode ^
+      nameAr.hashCode ^
+      nameEn.hashCode ^
+      symbol.hashCode ^
+      decimals.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is WorldCurrencyView &&
+          runtimeType == other.runtimeType &&
+          code == other.code &&
+          nameAr == other.nameAr &&
+          nameEn == other.nameEn &&
+          symbol == other.symbol &&
+          decimals == other.decimals;
 }

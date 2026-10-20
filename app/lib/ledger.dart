@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:accounting_app_flutter_isolates/accounting_app_flutter_isolates.dart';
+import 'package:accounting_app_flutter_isolates/accounting_app_flutter_isolates.dart'
+    as rust;
 import 'package:path_provider/path_provider.dart';
 
 /// UI-facing account model (decoupled from the generated FRB types).
@@ -46,24 +47,164 @@ class TrialBalanceRow {
   final String credit;
 }
 
+class LedgerCustomer {
+  const LedgerCustomer({
+    required this.id,
+    required this.code,
+    required this.name,
+    required this.phone,
+    required this.address,
+    required this.balance,
+    required this.currency,
+    required this.isActive,
+  });
+
+  final String id;
+  final String code;
+  final String name;
+  final String? phone;
+  final String? address;
+  final String balance;
+  final String currency;
+  final bool isActive;
+}
+
+class LedgerSupplier {
+  const LedgerSupplier({
+    required this.id,
+    required this.code,
+    required this.name,
+    required this.phone,
+    required this.address,
+    required this.balance,
+    required this.currency,
+    required this.isActive,
+  });
+
+  final String id;
+  final String code;
+  final String name;
+  final String? phone;
+  final String? address;
+  final String balance;
+  final String currency;
+  final bool isActive;
+}
+
+class LedgerMaterial {
+  const LedgerMaterial({
+    required this.id,
+    required this.code,
+    required this.name,
+    required this.nameEn,
+    required this.barcode,
+    required this.totalAvailable,
+    required this.minimumStock,
+    required this.averageCost,
+    required this.unitsCount,
+    required this.hasExpiry,
+  });
+
+  final String id;
+  final String code;
+  final String name;
+  final String nameEn;
+  final String barcode;
+  final String totalAvailable;
+  final String minimumStock;
+  final String averageCost;
+  final int unitsCount;
+  final bool hasExpiry;
+}
+
+/// Company identity and setup state returned by the Rust core.
+class LedgerStatus {
+  const LedgerStatus({
+    required this.setupComplete,
+    required this.companyName,
+    required this.baseCurrencyCode,
+    required this.currencySymbol,
+    required this.fiscalYearStartMonth,
+    required this.accountingStartMode,
+  });
+
+  final bool setupComplete;
+  final String companyName;
+  final String baseCurrencyCode;
+  final String currencySymbol;
+  final int fiscalYearStartMonth;
+  final String accountingStartMode;
+
+  String get currencyLabel {
+    final code = baseCurrencyCode.trim();
+    final symbol = currencySymbol.trim();
+    if (code.isEmpty) {
+      return 'غير محددة';
+    }
+    return symbol.isEmpty ? code : '$code ($symbol)';
+  }
+}
+
 class LedgerSnapshot {
   const LedgerSnapshot({
+    required this.status,
     required this.accounts,
     required this.rows,
     required this.totalDebit,
     required this.totalCredit,
   });
 
+  final LedgerStatus status;
   final List<LedgerAccount> accounts;
   final List<TrialBalanceRow> rows;
   final String totalDebit;
   final String totalCredit;
 }
 
+/// A currency offered by the Rust catalogue.
+class CurrencyOption {
+  const CurrencyOption({
+    required this.code,
+    required this.nameAr,
+    required this.nameEn,
+    required this.symbol,
+    required this.decimals,
+  });
+
+  final String code;
+  final String nameAr;
+  final String nameEn;
+  final String symbol;
+  final int decimals;
+
+  String get displayName {
+    final hasArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(nameAr);
+    return hasArabic ? nameAr : nameEn;
+  }
+}
+
 /// Boundary between the widget tree and the Rust core. Keeping this abstract
 /// lets widget tests run without loading the native library.
 abstract class LedgerGateway {
+  Future<LedgerStatus> loadStatus();
+
   Future<LedgerSnapshot> load();
+
+  Future<List<LedgerCustomer>> loadCustomers();
+
+  Future<List<LedgerSupplier>> loadSuppliers();
+
+  Future<List<LedgerMaterial>> loadMaterials();
+
+  Future<List<CurrencyOption>> availableCurrencies();
+
+  Future<void> setupCompany({
+    required String companyName,
+    required String baseCurrencyCode,
+    String? secondaryCurrencyCode,
+    required int fiscalYearStartMonth,
+    String? accountingStartMode,
+  });
 
   Future<void> createEntry({
     required String debitAccountId,
@@ -80,7 +221,7 @@ class RustLedgerGateway implements LedgerGateway {
 
   Future<void> _ensureReady() async {
     try {
-      _rustInit ??= RustLib.init();
+      _rustInit ??= rust.RustLib.init();
       await _rustInit;
     } catch (error) {
       // Allow a later retry if loading the native library failed.
@@ -94,18 +235,63 @@ class RustLedgerGateway implements LedgerGateway {
 
     final supportDir = await getApplicationSupportDirectory();
     final dbPath = '${supportDir.path}${Platform.pathSeparator}accounting.db';
-    await initApp(dbPath: dbPath);
+    await rust.initApp(dbPath: dbPath);
     _databaseReady = true;
+  }
+
+  @override
+  Future<LedgerStatus> loadStatus() async {
+    await _ensureReady();
+    return _statusFromBridge(await rust.getSetupStatus());
+  }
+
+  @override
+  Future<List<CurrencyOption>> availableCurrencies() async {
+    await _ensureReady();
+    final currencies = await rust.worldCurrencies();
+    return currencies
+        .map(
+          (currency) => CurrencyOption(
+            code: currency.code,
+            nameAr: currency.nameAr,
+            nameEn: currency.nameEn,
+            symbol: currency.symbol,
+            decimals: currency.decimals,
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  Future<void> setupCompany({
+    required String companyName,
+    required String baseCurrencyCode,
+    String? secondaryCurrencyCode,
+    required int fiscalYearStartMonth,
+    String? accountingStartMode,
+  }) async {
+    await _ensureReady();
+    await rust.setupCompany(
+      input: rust.SetupCompanyInput(
+        companyName: companyName,
+        baseCurrencyCode: baseCurrencyCode,
+        secondaryCurrencyCode: secondaryCurrencyCode,
+        fiscalYearStartMonth: fiscalYearStartMonth,
+        accountingStartMode: accountingStartMode,
+      ),
+    );
   }
 
   @override
   Future<LedgerSnapshot> load() async {
     await _ensureReady();
 
-    final accounts = await listAccounts();
-    final trial = await trialBalance();
+    final status = _statusFromBridge(await rust.getSetupStatus());
+    final accounts = await rust.listAccounts();
+    final trial = await rust.trialBalance();
 
     return LedgerSnapshot(
+      status: status,
       accounts: accounts
           .map(
             (account) => LedgerAccount(
@@ -138,6 +324,68 @@ class RustLedgerGateway implements LedgerGateway {
   }
 
   @override
+  Future<List<LedgerCustomer>> loadCustomers() async {
+    await _ensureReady();
+    final customers = await rust.listCustomers();
+    return customers
+        .map(
+          (customer) => LedgerCustomer(
+            id: customer.id,
+            code: customer.code,
+            name: customer.name,
+            phone: customer.phone,
+            address: customer.address,
+            balance: customer.balance,
+            currency: customer.currency,
+            isActive: customer.isActive,
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  Future<List<LedgerSupplier>> loadSuppliers() async {
+    await _ensureReady();
+    final suppliers = await rust.listSuppliers();
+    return suppliers
+        .map(
+          (supplier) => LedgerSupplier(
+            id: supplier.id,
+            code: supplier.code,
+            name: supplier.name,
+            phone: supplier.phone,
+            address: supplier.address,
+            balance: supplier.balance,
+            currency: supplier.currency,
+            isActive: supplier.isActive,
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  Future<List<LedgerMaterial>> loadMaterials() async {
+    await _ensureReady();
+    final materials = await rust.listMaterials();
+    return materials
+        .map(
+          (material) => LedgerMaterial(
+            id: material.id,
+            code: material.code,
+            name: material.name,
+            nameEn: material.nameEn,
+            barcode: material.barcode,
+            totalAvailable: material.totalAvailable,
+            minimumStock: material.minimumStock,
+            averageCost: material.averageCost,
+            unitsCount: material.unitsCount,
+            hasExpiry: material.hasExpiry,
+          ),
+        )
+        .toList();
+  }
+
+  @override
   Future<void> createEntry({
     required String debitAccountId,
     required String creditAccountId,
@@ -147,13 +395,13 @@ class RustLedgerGateway implements LedgerGateway {
   }) async {
     await _ensureReady();
 
-    final entry = await createJournalEntry(
-      input: CreateJournalEntryInput(
+    final entry = await rust.createJournalEntry(
+      input: rust.CreateJournalEntryInput(
         journalType: 'GeneralJournal',
         entryDate: DateTime.now().toUtc().toIso8601String(),
         description: description.isEmpty ? 'قيد يومية' : description,
         lines: [
-          JournalLineInput(
+          rust.JournalLineInput(
             accountId: debitAccountId,
             currency: currency,
             fxRate: '1',
@@ -161,7 +409,7 @@ class RustLedgerGateway implements LedgerGateway {
             credit: '0',
             description: description,
           ),
-          JournalLineInput(
+          rust.JournalLineInput(
             accountId: creditAccountId,
             currency: currency,
             fxRate: '1',
@@ -173,6 +421,29 @@ class RustLedgerGateway implements LedgerGateway {
       ),
     );
 
-    await postJournalEntry(entryId: entry.id);
+    await rust.postJournalEntry(entryId: entry.id);
   }
+}
+
+LedgerStatus _statusFromBridge(rust.SetupStatusView status) {
+  return LedgerStatus(
+    setupComplete: status.setupComplete,
+    companyName: status.companyName,
+    baseCurrencyCode: status.baseCurrencyCode,
+    currencySymbol: status.currencySymbol,
+    fiscalYearStartMonth: status.fiscalYearStartMonth,
+    accountingStartMode: status.accountingStartMode,
+  );
+}
+
+/// Readable Arabic-first error text for the UI.
+String describeError(Object error) {
+  if (error is rust.ApiError) {
+    final details = error.details?.trim();
+    if (details != null && details.isNotEmpty) {
+      return '${error.message}\n$details';
+    }
+    return error.message;
+  }
+  return error.toString();
 }

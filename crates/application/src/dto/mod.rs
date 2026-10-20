@@ -18,6 +18,7 @@ pub mod report_dto;
 pub mod returns_dto;
 pub mod search_dto;
 pub mod settings_dto;
+pub mod setup_dto;
 pub mod stock_dto;
 pub mod supplier_dto;
 pub mod transfer_dto;

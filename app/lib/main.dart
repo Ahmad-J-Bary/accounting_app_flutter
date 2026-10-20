@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'directory.dart';
 import 'ledger.dart';
+import 'setup.dart';
 
 void main() {
   runApp(AccountingApp(gateway: RustLedgerGateway()));
@@ -41,13 +43,59 @@ class LedgerHomePage extends StatefulWidget {
 
 class _LedgerHomePageState extends State<LedgerHomePage> {
   LedgerSnapshot? _data;
+  LedgerStatus? _status;
+  List<CurrencyOption> _currencies = const [];
   Object? _error;
   bool _loading = true;
+  bool _bootstrapping = true;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    setState(() {
+      _bootstrapping = true;
+      _error = null;
+    });
+
+    try {
+      final status = await widget.gateway.loadStatus();
+      if (!mounted) {
+        return;
+      }
+
+      if (!status.setupComplete) {
+        final currencies = await widget.gateway.availableCurrencies();
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _status = status;
+          _currencies = currencies;
+          _bootstrapping = false;
+          _loading = false;
+        });
+        return;
+      }
+
+      setState(() {
+        _status = status;
+        _bootstrapping = false;
+      });
+      await _load();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = error;
+        _bootstrapping = false;
+        _loading = false;
+      });
+    }
   }
 
   Future<void> _load() async {
@@ -63,6 +111,7 @@ class _LedgerHomePageState extends State<LedgerHomePage> {
       }
       setState(() {
         _data = data;
+        _status = data.status;
         _loading = false;
       });
     } catch (error) {
@@ -74,6 +123,15 @@ class _LedgerHomePageState extends State<LedgerHomePage> {
         _loading = false;
       });
     }
+  }
+
+  Future<void> _completeSetup() async {
+    final status = await widget.gateway.loadStatus();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _status = status);
+    await _load();
   }
 
   Future<void> _createEntry({
@@ -98,12 +156,38 @@ class _LedgerHomePageState extends State<LedgerHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_bootstrapping) {
+      return const _BootstrapScaffold();
+    }
+
+    final status = _status;
+    if (status != null && !status.setupComplete) {
+      return CompanySetupPage(
+        gateway: widget.gateway,
+        initialStatus: status,
+        currencies: _currencies,
+        onCompleted: _completeSetup,
+      );
+    }
+
     final data = _data;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('المحاسبة — ميزان المراجعة'),
         actions: [
+          IconButton(
+            tooltip: 'البيانات الأساسية',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) =>
+                      DirectoryPage(gateway: widget.gateway),
+                ),
+              );
+            },
+            icon: const Icon(Icons.folder_shared_outlined),
+          ),
           IconButton(
             tooltip: 'تحديث',
             onPressed: _loading ? null : _load,
@@ -113,14 +197,14 @@ class _LedgerHomePageState extends State<LedgerHomePage> {
       ),
       body: data == null
           ? (_error != null
-              ? _ErrorView(error: _error!, onRetry: _load)
+              ? _ErrorView(error: _error!, onRetry: _bootstrap)
               : const _LoadingView())
           : Column(
               children: [
                 if (_loading) const LinearProgressIndicator(),
                 if (_error != null)
                   MaterialBanner(
-                    content: Text('تعذّر تحديث البيانات: $_error'),
+                    content: Text('تعذّر تحديث البيانات: ${describeError(_error!)}'),
                     actions: [
                       TextButton(
                         onPressed: _load,
@@ -132,6 +216,8 @@ class _LedgerHomePageState extends State<LedgerHomePage> {
                   child: ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
+                      _ReadyBanner(status: data.status),
+                      const SizedBox(height: 16),
                       _TotalsCard(
                         totalDebit: data.totalDebit,
                         totalCredit: data.totalCredit,
@@ -141,6 +227,7 @@ class _LedgerHomePageState extends State<LedgerHomePage> {
                         accounts: data.accounts
                             .where((a) => a.isActive && a.isFinal)
                             .toList(),
+                        baseCurrency: data.status.baseCurrencyCode,
                         onSubmit: _createEntry,
                       ),
                       const SizedBox(height: 16),
@@ -150,6 +237,69 @@ class _LedgerHomePageState extends State<LedgerHomePage> {
                 ),
               ],
             ),
+    );
+  }
+}
+
+class _BootstrapScaffold extends StatelessWidget {
+  const _BootstrapScaffold();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('جارٍ تهيئة قاعدة البيانات…'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReadyBanner extends StatelessWidget {
+  const _ReadyBanner({required this.status});
+
+  final LedgerStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      color: Colors.green.shade50,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green.shade700, size: 32),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'جاهز',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.green.shade900,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${status.companyName} • العملة الأساسية: ${status.currencyLabel}',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -193,7 +343,10 @@ class _ErrorView extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            SelectableText('$error', textAlign: TextAlign.center),
+            SelectableText(
+              describeError(error),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: onRetry,
@@ -276,10 +429,12 @@ class JournalEntryForm extends StatefulWidget {
   const JournalEntryForm({
     super.key,
     required this.accounts,
+    required this.baseCurrency,
     required this.onSubmit,
   });
 
   final List<LedgerAccount> accounts;
+  final String baseCurrency;
   final Future<void> Function({
     required String debitAccountId,
     required String creditAccountId,
@@ -316,15 +471,6 @@ class _JournalEntryFormState extends State<JournalEntryForm> {
     if (_creditId != null && !ids.contains(_creditId)) {
       _creditId = null;
     }
-  }
-
-  String _currencyFor(String? accountId) {
-    for (final account in widget.accounts) {
-      if (account.id == accountId) {
-        return account.currency.isEmpty ? 'SYP' : account.currency;
-      }
-    }
-    return 'SYP';
   }
 
   void _showMessage(String message, {bool error = false}) {
@@ -368,7 +514,7 @@ class _JournalEntryFormState extends State<JournalEntryForm> {
         creditAccountId: _creditId!,
         amount: amountText,
         description: _descriptionController.text.trim(),
-        currency: _currencyFor(_debitId),
+        currency: widget.baseCurrency.isEmpty ? 'SYP' : widget.baseCurrency,
       );
       if (!mounted) {
         return;
