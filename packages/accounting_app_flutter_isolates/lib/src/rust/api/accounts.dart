@@ -8,7 +8,7 @@ import 'accounting.dart';
 import 'error.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `expense_account`, `expenses_parent_id`, `parent_level`
+// These functions are ignored because they are not marked as `pub`: `expense_account`, `expenses_parent_id`, `parent_level`, `require_expense_child`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`
 
 /// Expense items (بنود المصاريف) are detail accounts under the expenses root.
