@@ -68,7 +68,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -1659275649;
+  int get rustContentHash => -1124305389;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -80,9 +80,27 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<CustomerItem> crateApiAccountingCreateCustomer({
+    required CustomerCreateInput input,
+  });
+
   Future<JournalEntryView> crateApiAccountingCreateJournalEntry({
     required CreateJournalEntryInput input,
   });
+
+  Future<MaterialItem> crateApiAccountingCreateMaterial({
+    required MaterialCreateInput input,
+  });
+
+  Future<SupplierItem> crateApiAccountingCreateSupplier({
+    required SupplierCreateInput input,
+  });
+
+  Future<void> crateApiAccountingDeleteCustomer({required String id});
+
+  Future<void> crateApiAccountingDeleteMaterial({required String id});
+
+  Future<void> crateApiAccountingDeleteSupplier({required String id});
 
   Future<SetupStatusView> crateApiAccountingGetSetupStatus();
 
@@ -115,6 +133,18 @@ abstract class RustLibApi extends BaseApi {
     String? toDate,
   });
 
+  Future<CustomerItem> crateApiAccountingUpdateCustomer({
+    required CustomerUpdateInput input,
+  });
+
+  Future<MaterialItem> crateApiAccountingUpdateMaterial({
+    required MaterialUpdateInput input,
+  });
+
+  Future<SupplierItem> crateApiAccountingUpdateSupplier({
+    required SupplierUpdateInput input,
+  });
+
   Future<List<WorldCurrencyView>> crateApiAccountingWorldCurrencies();
 }
 
@@ -125,6 +155,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required super.generalizedFrbRustBinding,
     required super.portManager,
   });
+
+  @override
+  Future<CustomerItem> crateApiAccountingCreateCustomer({
+    required CustomerCreateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_customer_create_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_customer_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingCreateCustomerConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingCreateCustomerConstMeta =>
+      const TaskConstMeta(debugName: "create_customer", argNames: ["input"]);
 
   @override
   Future<JournalEntryView> crateApiAccountingCreateJournalEntry({
@@ -138,7 +198,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 1,
+            funcId: 2,
             port: port_,
           );
         },
@@ -160,6 +220,150 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<MaterialItem> crateApiAccountingCreateMaterial({
+    required MaterialCreateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_material_create_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 3,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_material_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingCreateMaterialConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingCreateMaterialConstMeta =>
+      const TaskConstMeta(debugName: "create_material", argNames: ["input"]);
+
+  @override
+  Future<SupplierItem> crateApiAccountingCreateSupplier({
+    required SupplierCreateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_supplier_create_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 4,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_supplier_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingCreateSupplierConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingCreateSupplierConstMeta =>
+      const TaskConstMeta(debugName: "create_supplier", argNames: ["input"]);
+
+  @override
+  Future<void> crateApiAccountingDeleteCustomer({required String id}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 5,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingDeleteCustomerConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingDeleteCustomerConstMeta =>
+      const TaskConstMeta(debugName: "delete_customer", argNames: ["id"]);
+
+  @override
+  Future<void> crateApiAccountingDeleteMaterial({required String id}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 6,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingDeleteMaterialConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingDeleteMaterialConstMeta =>
+      const TaskConstMeta(debugName: "delete_material", argNames: ["id"]);
+
+  @override
+  Future<void> crateApiAccountingDeleteSupplier({required String id}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 7,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingDeleteSupplierConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingDeleteSupplierConstMeta =>
+      const TaskConstMeta(debugName: "delete_supplier", argNames: ["id"]);
+
+  @override
   Future<SetupStatusView> crateApiAccountingGetSetupStatus() {
     return handler.executeNormal(
       NormalTask(
@@ -168,7 +372,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 2,
+            funcId: 8,
             port: port_,
           );
         },
@@ -193,7 +397,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(name, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -219,7 +423,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 10,
             port: port_,
           );
         },
@@ -246,7 +450,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 5,
+            funcId: 11,
             port: port_,
           );
         },
@@ -273,7 +477,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 6,
+            funcId: 12,
             port: port_,
           );
         },
@@ -300,7 +504,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 13,
             port: port_,
           );
         },
@@ -327,7 +531,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 14,
             port: port_,
           );
         },
@@ -354,7 +558,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 15,
             port: port_,
           );
         },
@@ -384,7 +588,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 10,
+            funcId: 16,
             port: port_,
           );
         },
@@ -414,7 +618,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 17,
             port: port_,
           );
         },
@@ -444,7 +648,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 12,
+            funcId: 18,
             port: port_,
           );
         },
@@ -476,7 +680,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 13,
+            funcId: 19,
             port: port_,
           );
         },
@@ -498,6 +702,96 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<CustomerItem> crateApiAccountingUpdateCustomer({
+    required CustomerUpdateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_customer_update_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 20,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_customer_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingUpdateCustomerConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingUpdateCustomerConstMeta =>
+      const TaskConstMeta(debugName: "update_customer", argNames: ["input"]);
+
+  @override
+  Future<MaterialItem> crateApiAccountingUpdateMaterial({
+    required MaterialUpdateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_material_update_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 21,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_material_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingUpdateMaterialConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingUpdateMaterialConstMeta =>
+      const TaskConstMeta(debugName: "update_material", argNames: ["input"]);
+
+  @override
+  Future<SupplierItem> crateApiAccountingUpdateSupplier({
+    required SupplierUpdateInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_supplier_update_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 22,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_supplier_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountingUpdateSupplierConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountingUpdateSupplierConstMeta =>
+      const TaskConstMeta(debugName: "update_supplier", argNames: ["input"]);
+
+  @override
   Future<List<WorldCurrencyView>> crateApiAccountingWorldCurrencies() {
     return handler.executeNormal(
       NormalTask(
@@ -506,7 +800,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 23,
             port: port_,
           );
         },
@@ -578,9 +872,57 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CustomerCreateInput dco_decode_box_autoadd_customer_create_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_customer_create_input(raw);
+  }
+
+  @protected
+  CustomerUpdateInput dco_decode_box_autoadd_customer_update_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_customer_update_input(raw);
+  }
+
+  @protected
+  MaterialCreateInput dco_decode_box_autoadd_material_create_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_material_create_input(raw);
+  }
+
+  @protected
+  MaterialUpdateInput dco_decode_box_autoadd_material_update_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_material_update_input(raw);
+  }
+
+  @protected
   SetupCompanyInput dco_decode_box_autoadd_setup_company_input(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_setup_company_input(raw);
+  }
+
+  @protected
+  SupplierCreateInput dco_decode_box_autoadd_supplier_create_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_supplier_create_input(raw);
+  }
+
+  @protected
+  SupplierUpdateInput dco_decode_box_autoadd_supplier_update_input(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_supplier_update_input(raw);
   }
 
   @protected
@@ -616,6 +958,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CustomerCreateInput dco_decode_customer_create_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return CustomerCreateInput(
+      name: dco_decode_String(arr[0]),
+      phone: dco_decode_opt_String(arr[1]),
+      address: dco_decode_opt_String(arr[2]),
+      notes: dco_decode_opt_String(arr[3]),
+      currency: dco_decode_String(arr[4]),
+      openingBalance: dco_decode_String(arr[5]),
+    );
+  }
+
+  @protected
   CustomerItem dco_decode_customer_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -635,6 +993,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       currency: dco_decode_String(arr[10]),
       notes: dco_decode_opt_String(arr[11]),
       isActive: dco_decode_bool(arr[12]),
+    );
+  }
+
+  @protected
+  CustomerUpdateInput dco_decode_customer_update_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return CustomerUpdateInput(
+      id: dco_decode_String(arr[0]),
+      code: dco_decode_String(arr[1]),
+      name: dco_decode_String(arr[2]),
+      phone: dco_decode_opt_String(arr[3]),
+      address: dco_decode_opt_String(arr[4]),
+      notes: dco_decode_opt_String(arr[5]),
+      isActive: dco_decode_bool(arr[6]),
     );
   }
 
@@ -738,11 +1113,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  MaterialCreateInput dco_decode_material_create_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 13)
+      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
+    return MaterialCreateInput(
+      name: dco_decode_String(arr[0]),
+      nameEn: dco_decode_opt_String(arr[1]),
+      barcode: dco_decode_opt_String(arr[2]),
+      code: dco_decode_opt_String(arr[3]),
+      minimumStock: dco_decode_String(arr[4]),
+      unitName: dco_decode_String(arr[5]),
+      conversionFactor: dco_decode_String(arr[6]),
+      purchasePrice: dco_decode_opt_String(arr[7]),
+      salePrice: dco_decode_opt_String(arr[8]),
+      currency: dco_decode_String(arr[9]),
+      notes: dco_decode_opt_String(arr[10]),
+      hasExpiry: dco_decode_bool(arr[11]),
+      expiryAlertBeforeDays: dco_decode_i_32(arr[12]),
+    );
+  }
+
+  @protected
   MaterialItem dco_decode_material_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 18)
-      throw Exception('unexpected arr length: expect 18 but see ${arr.length}');
+    if (arr.length != 25)
+      throw Exception('unexpected arr length: expect 25 but see ${arr.length}');
     return MaterialItem(
       id: dco_decode_String(arr[0]),
       name: dco_decode_String(arr[1]),
@@ -761,7 +1159,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       averageCostBase: dco_decode_String(arr[14]),
       unitsCount: dco_decode_i_32(arr[15]),
       hasExpiry: dco_decode_bool(arr[16]),
-      costingMethod: dco_decode_String(arr[17]),
+      expiryAlertBeforeDays: dco_decode_i_32(arr[17]),
+      costingMethod: dco_decode_String(arr[18]),
+      purchasePrice: dco_decode_String(arr[19]),
+      salePrice: dco_decode_String(arr[20]),
+      currency: dco_decode_String(arr[21]),
+      notes: dco_decode_opt_String(arr[22]),
+      unitName: dco_decode_String(arr[23]),
+      conversionFactor: dco_decode_String(arr[24]),
+    );
+  }
+
+  @protected
+  MaterialUpdateInput dco_decode_material_update_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 12)
+      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
+    return MaterialUpdateInput(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      nameEn: dco_decode_String(arr[2]),
+      barcode: dco_decode_String(arr[3]),
+      code: dco_decode_String(arr[4]),
+      minimumStock: dco_decode_String(arr[5]),
+      notes: dco_decode_opt_String(arr[6]),
+      purchasePrice: dco_decode_opt_String(arr[7]),
+      salePrice: dco_decode_opt_String(arr[8]),
+      currency: dco_decode_opt_String(arr[9]),
+      hasExpiry: dco_decode_bool(arr[10]),
+      expiryAlertBeforeDays: dco_decode_i_32(arr[11]),
     );
   }
 
@@ -803,6 +1230,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  SupplierCreateInput dco_decode_supplier_create_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return SupplierCreateInput(
+      name: dco_decode_String(arr[0]),
+      phone: dco_decode_opt_String(arr[1]),
+      address: dco_decode_opt_String(arr[2]),
+      notes: dco_decode_opt_String(arr[3]),
+      currency: dco_decode_String(arr[4]),
+      openingBalance: dco_decode_String(arr[5]),
+    );
+  }
+
+  @protected
   SupplierItem dco_decode_supplier_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -822,6 +1265,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       currency: dco_decode_String(arr[10]),
       notes: dco_decode_opt_String(arr[11]),
       isActive: dco_decode_bool(arr[12]),
+    );
+  }
+
+  @protected
+  SupplierUpdateInput dco_decode_supplier_update_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return SupplierUpdateInput(
+      id: dco_decode_String(arr[0]),
+      code: dco_decode_String(arr[1]),
+      name: dco_decode_String(arr[2]),
+      phone: dco_decode_opt_String(arr[3]),
+      address: dco_decode_opt_String(arr[4]),
+      notes: dco_decode_opt_String(arr[5]),
     );
   }
 
@@ -941,11 +1400,59 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CustomerCreateInput sse_decode_box_autoadd_customer_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_customer_create_input(deserializer));
+  }
+
+  @protected
+  CustomerUpdateInput sse_decode_box_autoadd_customer_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_customer_update_input(deserializer));
+  }
+
+  @protected
+  MaterialCreateInput sse_decode_box_autoadd_material_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_material_create_input(deserializer));
+  }
+
+  @protected
+  MaterialUpdateInput sse_decode_box_autoadd_material_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_material_update_input(deserializer));
+  }
+
+  @protected
   SetupCompanyInput sse_decode_box_autoadd_setup_company_input(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_setup_company_input(deserializer));
+  }
+
+  @protected
+  SupplierCreateInput sse_decode_box_autoadd_supplier_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_supplier_create_input(deserializer));
+  }
+
+  @protected
+  SupplierUpdateInput sse_decode_box_autoadd_supplier_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_supplier_update_input(deserializer));
   }
 
   @protected
@@ -989,6 +1496,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CustomerCreateInput sse_decode_customer_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_name = sse_decode_String(deserializer);
+    var var_phone = sse_decode_opt_String(deserializer);
+    var var_address = sse_decode_opt_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_openingBalance = sse_decode_String(deserializer);
+    return CustomerCreateInput(
+      name: var_name,
+      phone: var_phone,
+      address: var_address,
+      notes: var_notes,
+      currency: var_currency,
+      openingBalance: var_openingBalance,
+    );
+  }
+
+  @protected
   CustomerItem sse_decode_customer_item(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_id = sse_decode_String(deserializer);
@@ -1016,6 +1544,29 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       openingBalance: var_openingBalance,
       balance: var_balance,
       currency: var_currency,
+      notes: var_notes,
+      isActive: var_isActive,
+    );
+  }
+
+  @protected
+  CustomerUpdateInput sse_decode_customer_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_code = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_phone = sse_decode_opt_String(deserializer);
+    var var_address = sse_decode_opt_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_isActive = sse_decode_bool(deserializer);
+    return CustomerUpdateInput(
+      id: var_id,
+      code: var_code,
+      name: var_name,
+      phone: var_phone,
+      address: var_address,
       notes: var_notes,
       isActive: var_isActive,
     );
@@ -1187,6 +1738,41 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  MaterialCreateInput sse_decode_material_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_name = sse_decode_String(deserializer);
+    var var_nameEn = sse_decode_opt_String(deserializer);
+    var var_barcode = sse_decode_opt_String(deserializer);
+    var var_code = sse_decode_opt_String(deserializer);
+    var var_minimumStock = sse_decode_String(deserializer);
+    var var_unitName = sse_decode_String(deserializer);
+    var var_conversionFactor = sse_decode_String(deserializer);
+    var var_purchasePrice = sse_decode_opt_String(deserializer);
+    var var_salePrice = sse_decode_opt_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_hasExpiry = sse_decode_bool(deserializer);
+    var var_expiryAlertBeforeDays = sse_decode_i_32(deserializer);
+    return MaterialCreateInput(
+      name: var_name,
+      nameEn: var_nameEn,
+      barcode: var_barcode,
+      code: var_code,
+      minimumStock: var_minimumStock,
+      unitName: var_unitName,
+      conversionFactor: var_conversionFactor,
+      purchasePrice: var_purchasePrice,
+      salePrice: var_salePrice,
+      currency: var_currency,
+      notes: var_notes,
+      hasExpiry: var_hasExpiry,
+      expiryAlertBeforeDays: var_expiryAlertBeforeDays,
+    );
+  }
+
+  @protected
   MaterialItem sse_decode_material_item(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_id = sse_decode_String(deserializer);
@@ -1206,7 +1792,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_averageCostBase = sse_decode_String(deserializer);
     var var_unitsCount = sse_decode_i_32(deserializer);
     var var_hasExpiry = sse_decode_bool(deserializer);
+    var var_expiryAlertBeforeDays = sse_decode_i_32(deserializer);
     var var_costingMethod = sse_decode_String(deserializer);
+    var var_purchasePrice = sse_decode_String(deserializer);
+    var var_salePrice = sse_decode_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_unitName = sse_decode_String(deserializer);
+    var var_conversionFactor = sse_decode_String(deserializer);
     return MaterialItem(
       id: var_id,
       name: var_name,
@@ -1225,7 +1818,47 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       averageCostBase: var_averageCostBase,
       unitsCount: var_unitsCount,
       hasExpiry: var_hasExpiry,
+      expiryAlertBeforeDays: var_expiryAlertBeforeDays,
       costingMethod: var_costingMethod,
+      purchasePrice: var_purchasePrice,
+      salePrice: var_salePrice,
+      currency: var_currency,
+      notes: var_notes,
+      unitName: var_unitName,
+      conversionFactor: var_conversionFactor,
+    );
+  }
+
+  @protected
+  MaterialUpdateInput sse_decode_material_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_nameEn = sse_decode_String(deserializer);
+    var var_barcode = sse_decode_String(deserializer);
+    var var_code = sse_decode_String(deserializer);
+    var var_minimumStock = sse_decode_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_purchasePrice = sse_decode_opt_String(deserializer);
+    var var_salePrice = sse_decode_opt_String(deserializer);
+    var var_currency = sse_decode_opt_String(deserializer);
+    var var_hasExpiry = sse_decode_bool(deserializer);
+    var var_expiryAlertBeforeDays = sse_decode_i_32(deserializer);
+    return MaterialUpdateInput(
+      id: var_id,
+      name: var_name,
+      nameEn: var_nameEn,
+      barcode: var_barcode,
+      code: var_code,
+      minimumStock: var_minimumStock,
+      notes: var_notes,
+      purchasePrice: var_purchasePrice,
+      salePrice: var_salePrice,
+      currency: var_currency,
+      hasExpiry: var_hasExpiry,
+      expiryAlertBeforeDays: var_expiryAlertBeforeDays,
     );
   }
 
@@ -1279,6 +1912,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  SupplierCreateInput sse_decode_supplier_create_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_name = sse_decode_String(deserializer);
+    var var_phone = sse_decode_opt_String(deserializer);
+    var var_address = sse_decode_opt_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_openingBalance = sse_decode_String(deserializer);
+    return SupplierCreateInput(
+      name: var_name,
+      phone: var_phone,
+      address: var_address,
+      notes: var_notes,
+      currency: var_currency,
+      openingBalance: var_openingBalance,
+    );
+  }
+
+  @protected
   SupplierItem sse_decode_supplier_item(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_id = sse_decode_String(deserializer);
@@ -1308,6 +1962,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       currency: var_currency,
       notes: var_notes,
       isActive: var_isActive,
+    );
+  }
+
+  @protected
+  SupplierUpdateInput sse_decode_supplier_update_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_code = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_phone = sse_decode_opt_String(deserializer);
+    var var_address = sse_decode_opt_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    return SupplierUpdateInput(
+      id: var_id,
+      code: var_code,
+      name: var_name,
+      phone: var_phone,
+      address: var_address,
+      notes: var_notes,
     );
   }
 
@@ -1424,12 +2099,66 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_customer_create_input(
+    CustomerCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_customer_create_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_customer_update_input(
+    CustomerUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_customer_update_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_material_create_input(
+    MaterialCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_material_create_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_material_update_input(
+    MaterialUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_material_update_input(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_setup_company_input(
     SetupCompanyInput self,
     SseSerializer serializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_setup_company_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_supplier_create_input(
+    SupplierCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_supplier_create_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_supplier_update_input(
+    SupplierUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_supplier_update_input(self, serializer);
   }
 
   @protected
@@ -1461,6 +2190,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_customer_create_input(
+    CustomerCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.phone, serializer);
+    sse_encode_opt_String(self.address, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_String(self.openingBalance, serializer);
+  }
+
+  @protected
   void sse_encode_customer_item(CustomerItem self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.id, serializer);
@@ -1474,6 +2217,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.openingBalance, serializer);
     sse_encode_String(self.balance, serializer);
     sse_encode_String(self.currency, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_bool(self.isActive, serializer);
+  }
+
+  @protected
+  void sse_encode_customer_update_input(
+    CustomerUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.phone, serializer);
+    sse_encode_opt_String(self.address, serializer);
     sse_encode_opt_String(self.notes, serializer);
     sse_encode_bool(self.isActive, serializer);
   }
@@ -1619,6 +2377,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_material_create_input(
+    MaterialCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.nameEn, serializer);
+    sse_encode_opt_String(self.barcode, serializer);
+    sse_encode_opt_String(self.code, serializer);
+    sse_encode_String(self.minimumStock, serializer);
+    sse_encode_String(self.unitName, serializer);
+    sse_encode_String(self.conversionFactor, serializer);
+    sse_encode_opt_String(self.purchasePrice, serializer);
+    sse_encode_opt_String(self.salePrice, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_bool(self.hasExpiry, serializer);
+    sse_encode_i_32(self.expiryAlertBeforeDays, serializer);
+  }
+
+  @protected
   void sse_encode_material_item(MaterialItem self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.id, serializer);
@@ -1638,7 +2417,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.averageCostBase, serializer);
     sse_encode_i_32(self.unitsCount, serializer);
     sse_encode_bool(self.hasExpiry, serializer);
+    sse_encode_i_32(self.expiryAlertBeforeDays, serializer);
     sse_encode_String(self.costingMethod, serializer);
+    sse_encode_String(self.purchasePrice, serializer);
+    sse_encode_String(self.salePrice, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_String(self.unitName, serializer);
+    sse_encode_String(self.conversionFactor, serializer);
+  }
+
+  @protected
+  void sse_encode_material_update_input(
+    MaterialUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.nameEn, serializer);
+    sse_encode_String(self.barcode, serializer);
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.minimumStock, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_opt_String(self.purchasePrice, serializer);
+    sse_encode_opt_String(self.salePrice, serializer);
+    sse_encode_opt_String(self.currency, serializer);
+    sse_encode_bool(self.hasExpiry, serializer);
+    sse_encode_i_32(self.expiryAlertBeforeDays, serializer);
   }
 
   @protected
@@ -1679,6 +2485,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_supplier_create_input(
+    SupplierCreateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.phone, serializer);
+    sse_encode_opt_String(self.address, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_String(self.openingBalance, serializer);
+  }
+
+  @protected
   void sse_encode_supplier_item(SupplierItem self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.id, serializer);
@@ -1694,6 +2514,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.currency, serializer);
     sse_encode_opt_String(self.notes, serializer);
     sse_encode_bool(self.isActive, serializer);
+  }
+
+  @protected
+  void sse_encode_supplier_update_input(
+    SupplierUpdateInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.phone, serializer);
+    sse_encode_opt_String(self.address, serializer);
+    sse_encode_opt_String(self.notes, serializer);
   }
 
   @protected

@@ -54,6 +54,8 @@ class LedgerCustomer {
     required this.name,
     required this.phone,
     required this.address,
+    required this.notes,
+    required this.openingBalance,
     required this.balance,
     required this.currency,
     required this.isActive,
@@ -64,6 +66,8 @@ class LedgerCustomer {
   final String name;
   final String? phone;
   final String? address;
+  final String? notes;
+  final String openingBalance;
   final String balance;
   final String currency;
   final bool isActive;
@@ -76,6 +80,8 @@ class LedgerSupplier {
     required this.name,
     required this.phone,
     required this.address,
+    required this.notes,
+    required this.openingBalance,
     required this.balance,
     required this.currency,
     required this.isActive,
@@ -86,6 +92,8 @@ class LedgerSupplier {
   final String name;
   final String? phone;
   final String? address;
+  final String? notes;
+  final String openingBalance;
   final String balance;
   final String currency;
   final bool isActive;
@@ -101,6 +109,13 @@ class LedgerMaterial {
     required this.totalAvailable,
     required this.minimumStock,
     required this.averageCost,
+    required this.purchasePrice,
+    required this.salePrice,
+    required this.currency,
+    required this.notes,
+    required this.unitName,
+    required this.conversionFactor,
+    required this.expiryAlertBeforeDays,
     required this.unitsCount,
     required this.hasExpiry,
   });
@@ -113,6 +128,13 @@ class LedgerMaterial {
   final String totalAvailable;
   final String minimumStock;
   final String averageCost;
+  final String purchasePrice;
+  final String salePrice;
+  final String currency;
+  final String? notes;
+  final String unitName;
+  final String conversionFactor;
+  final int expiryAlertBeforeDays;
   final int unitsCount;
   final bool hasExpiry;
 }
@@ -195,6 +217,80 @@ abstract class LedgerGateway {
   Future<List<LedgerSupplier>> loadSuppliers();
 
   Future<List<LedgerMaterial>> loadMaterials();
+
+  Future<void> createCustomer({
+    required String name,
+    String? phone,
+    String? address,
+    String? notes,
+    required String currency,
+    required String openingBalance,
+  });
+
+  Future<void> updateCustomer({
+    required String id,
+    required String code,
+    required String name,
+    String? phone,
+    String? address,
+    String? notes,
+    required bool isActive,
+  });
+
+  Future<void> deleteCustomer(String id);
+
+  Future<void> createSupplier({
+    required String name,
+    String? phone,
+    String? address,
+    String? notes,
+    required String currency,
+    required String openingBalance,
+  });
+
+  Future<void> updateSupplier({
+    required String id,
+    required String code,
+    required String name,
+    String? phone,
+    String? address,
+    String? notes,
+  });
+
+  Future<void> deleteSupplier(String id);
+
+  Future<void> createMaterial({
+    required String name,
+    String? nameEn,
+    String? barcode,
+    String? code,
+    required String minimumStock,
+    required String unitName,
+    required String conversionFactor,
+    String? purchasePrice,
+    String? salePrice,
+    required String currency,
+    String? notes,
+    required bool hasExpiry,
+    required int expiryAlertBeforeDays,
+  });
+
+  Future<void> updateMaterial({
+    required String id,
+    required String name,
+    required String nameEn,
+    required String barcode,
+    required String code,
+    required String minimumStock,
+    String? notes,
+    String? purchasePrice,
+    String? salePrice,
+    String? currency,
+    required bool hasExpiry,
+    required int expiryAlertBeforeDays,
+  });
+
+  Future<void> deleteMaterial(String id);
 
   Future<List<CurrencyOption>> availableCurrencies();
 
@@ -335,6 +431,8 @@ class RustLedgerGateway implements LedgerGateway {
             name: customer.name,
             phone: customer.phone,
             address: customer.address,
+            notes: customer.notes,
+            openingBalance: customer.openingBalance,
             balance: customer.balance,
             currency: customer.currency,
             isActive: customer.isActive,
@@ -355,6 +453,8 @@ class RustLedgerGateway implements LedgerGateway {
             name: supplier.name,
             phone: supplier.phone,
             address: supplier.address,
+            notes: supplier.notes,
+            openingBalance: supplier.openingBalance,
             balance: supplier.balance,
             currency: supplier.currency,
             isActive: supplier.isActive,
@@ -378,11 +478,196 @@ class RustLedgerGateway implements LedgerGateway {
             totalAvailable: material.totalAvailable,
             minimumStock: material.minimumStock,
             averageCost: material.averageCost,
+            purchasePrice: material.purchasePrice,
+            salePrice: material.salePrice,
+            currency: material.currency,
+            notes: material.notes,
+            unitName: material.unitName,
+            conversionFactor: material.conversionFactor,
+            expiryAlertBeforeDays: material.expiryAlertBeforeDays,
             unitsCount: material.unitsCount,
             hasExpiry: material.hasExpiry,
           ),
         )
         .toList();
+  }
+
+  @override
+  Future<void> createCustomer({
+    required String name,
+    String? phone,
+    String? address,
+    String? notes,
+    required String currency,
+    required String openingBalance,
+  }) async {
+    await _ensureReady();
+    await rust.createCustomer(
+      input: rust.CustomerCreateInput(
+        name: name,
+        phone: phone,
+        address: address,
+        notes: notes,
+        currency: currency,
+        openingBalance: openingBalance,
+      ),
+    );
+  }
+
+  @override
+  Future<void> updateCustomer({
+    required String id,
+    required String code,
+    required String name,
+    String? phone,
+    String? address,
+    String? notes,
+    required bool isActive,
+  }) async {
+    await _ensureReady();
+    await rust.updateCustomer(
+      input: rust.CustomerUpdateInput(
+        id: id,
+        code: code,
+        name: name,
+        phone: phone,
+        address: address,
+        notes: notes,
+        isActive: isActive,
+      ),
+    );
+  }
+
+  @override
+  Future<void> deleteCustomer(String id) async {
+    await _ensureReady();
+    await rust.deleteCustomer(id: id);
+  }
+
+  @override
+  Future<void> createSupplier({
+    required String name,
+    String? phone,
+    String? address,
+    String? notes,
+    required String currency,
+    required String openingBalance,
+  }) async {
+    await _ensureReady();
+    await rust.createSupplier(
+      input: rust.SupplierCreateInput(
+        name: name,
+        phone: phone,
+        address: address,
+        notes: notes,
+        currency: currency,
+        openingBalance: openingBalance,
+      ),
+    );
+  }
+
+  @override
+  Future<void> updateSupplier({
+    required String id,
+    required String code,
+    required String name,
+    String? phone,
+    String? address,
+    String? notes,
+  }) async {
+    await _ensureReady();
+    await rust.updateSupplier(
+      input: rust.SupplierUpdateInput(
+        id: id,
+        code: code,
+        name: name,
+        phone: phone,
+        address: address,
+        notes: notes,
+      ),
+    );
+  }
+
+  @override
+  Future<void> deleteSupplier(String id) async {
+    await _ensureReady();
+    await rust.deleteSupplier(id: id);
+  }
+
+  @override
+  Future<void> createMaterial({
+    required String name,
+    String? nameEn,
+    String? barcode,
+    String? code,
+    required String minimumStock,
+    required String unitName,
+    required String conversionFactor,
+    String? purchasePrice,
+    String? salePrice,
+    required String currency,
+    String? notes,
+    required bool hasExpiry,
+    required int expiryAlertBeforeDays,
+  }) async {
+    await _ensureReady();
+    await rust.createMaterial(
+      input: rust.MaterialCreateInput(
+        name: name,
+        nameEn: nameEn,
+        barcode: barcode,
+        code: code,
+        minimumStock: minimumStock,
+        unitName: unitName,
+        conversionFactor: conversionFactor,
+        purchasePrice: purchasePrice,
+        salePrice: salePrice,
+        currency: currency,
+        notes: notes,
+        hasExpiry: hasExpiry,
+        expiryAlertBeforeDays: expiryAlertBeforeDays,
+      ),
+    );
+  }
+
+  @override
+  Future<void> updateMaterial({
+    required String id,
+    required String name,
+    required String nameEn,
+    required String barcode,
+    required String code,
+    required String minimumStock,
+    String? notes,
+    String? purchasePrice,
+    String? salePrice,
+    String? currency,
+    required bool hasExpiry,
+    required int expiryAlertBeforeDays,
+  }) async {
+    await _ensureReady();
+    await rust.updateMaterial(
+      input: rust.MaterialUpdateInput(
+        id: id,
+        name: name,
+        nameEn: nameEn,
+        barcode: barcode,
+        code: code,
+        minimumStock: minimumStock,
+        notes: notes,
+        purchasePrice: purchasePrice,
+        salePrice: salePrice,
+        currency: currency,
+        hasExpiry: hasExpiry,
+        expiryAlertBeforeDays: expiryAlertBeforeDays,
+      ),
+    );
+  }
+
+  @override
+  Future<void> deleteMaterial(String id) async {
+    await _ensureReady();
+    await rust.deleteMaterial(id: id);
   }
 
   @override

@@ -55,6 +55,8 @@ class _FakeGateway implements LedgerGateway {
           name: 'أحمد محمد',
           phone: '0999999999',
           address: 'دمشق',
+          notes: null,
+          openingBalance: '150.00',
           balance: '150.00',
           currency: 'SYP',
           isActive: true,
@@ -69,6 +71,8 @@ class _FakeGateway implements LedgerGateway {
           name: 'مورد النور',
           phone: '0888888888',
           address: 'حلب',
+          notes: null,
+          openingBalance: '75.00',
           balance: '75.00',
           currency: 'SYP',
           isActive: true,
@@ -86,6 +90,13 @@ class _FakeGateway implements LedgerGateway {
           totalAvailable: '50',
           minimumStock: '10',
           averageCost: '12.50',
+          purchasePrice: '12.50',
+          salePrice: '15.00',
+          currency: 'SYP',
+          notes: null,
+          unitName: 'كغ',
+          conversionFactor: '1',
+          expiryAlertBeforeDays: 30,
           unitsCount: 1,
           hasExpiry: false,
         ),
@@ -132,6 +143,89 @@ class _FakeGateway implements LedgerGateway {
       totalCredit: '100',
     );
   }
+
+  @override
+  Future<void> createCustomer({
+    required String name,
+    String? phone,
+    String? address,
+    String? notes,
+    required String currency,
+    required String openingBalance,
+  }) async {}
+
+  @override
+  Future<void> updateCustomer({
+    required String id,
+    required String code,
+    required String name,
+    String? phone,
+    String? address,
+    String? notes,
+    required bool isActive,
+  }) async {}
+
+  @override
+  Future<void> deleteCustomer(String id) async {}
+
+  @override
+  Future<void> createSupplier({
+    required String name,
+    String? phone,
+    String? address,
+    String? notes,
+    required String currency,
+    required String openingBalance,
+  }) async {}
+
+  @override
+  Future<void> updateSupplier({
+    required String id,
+    required String code,
+    required String name,
+    String? phone,
+    String? address,
+    String? notes,
+  }) async {}
+
+  @override
+  Future<void> deleteSupplier(String id) async {}
+
+  @override
+  Future<void> createMaterial({
+    required String name,
+    String? nameEn,
+    String? barcode,
+    String? code,
+    required String minimumStock,
+    required String unitName,
+    required String conversionFactor,
+    String? purchasePrice,
+    String? salePrice,
+    required String currency,
+    String? notes,
+    required bool hasExpiry,
+    required int expiryAlertBeforeDays,
+  }) async {}
+
+  @override
+  Future<void> updateMaterial({
+    required String id,
+    required String name,
+    required String nameEn,
+    required String barcode,
+    required String code,
+    required String minimumStock,
+    String? notes,
+    String? purchasePrice,
+    String? salePrice,
+    String? currency,
+    required bool hasExpiry,
+    required int expiryAlertBeforeDays,
+  }) async {}
+
+  @override
+  Future<void> deleteMaterial(String id) async {}
 
   @override
   Future<void> createEntry({
@@ -214,5 +308,70 @@ void main() {
 
     expect(find.text('قمح'), findsOneWidget);
     expect(find.textContaining('متاح: 50'), findsOneWidget);
+  });
+
+  testWidgets('opens the customer form and validates the name', (tester) async {
+    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('البيانات الأساسية'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.widgetWithText(FloatingActionButton, 'إضافة عميل'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('اسم العميل'), findsOneWidget);
+    expect(find.text('الرصيد الافتتاحي (مدين)'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'حفظ'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('هذا الحقل مطلوب.'), findsOneWidget);
+  });
+
+  testWidgets('opens the customer editor with the read-only opening balance', (
+    tester,
+  ) async {
+    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('البيانات الأساسية'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('أحمد محمد'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('تعديل عميل'), findsOneWidget);
+    expect(
+      find.text(
+        'لا يمكن تعديل الرصيد الافتتاحي من هنا؛ استخدم قيود التسوية.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('نشط'), findsOneWidget);
+  });
+
+  testWidgets('asks for confirmation before deleting a customer', (
+    tester,
+  ) async {
+    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('البيانات الأساسية'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('إجراءات').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('حذف').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('حذف العميل'), findsOneWidget);
+    expect(find.textContaining('أحمد محمد'), findsWidgets);
+
+    await tester.tap(find.text('إلغاء'));
+    await tester.pumpAndSettle();
+    expect(find.text('حذف العميل'), findsNothing);
   });
 }

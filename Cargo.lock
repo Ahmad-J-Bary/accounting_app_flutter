@@ -30,6 +30,7 @@ dependencies = [
  "bridge",
  "domain",
  "flutter_rust_bridge",
+ "rust_decimal",
  "serde_json",
  "tokio",
 ]

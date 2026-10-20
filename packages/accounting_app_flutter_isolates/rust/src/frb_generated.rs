@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1659275649;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1124305389;
 
 // Section: executor
 
@@ -47,6 +47,43 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
+fn wire__crate__api__accounting__create_customer_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "create_customer",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_input =
+                <crate::api::accounting::CustomerCreateInput>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::error::ApiError>(
+                    (move || async move {
+                        let output_ok = crate::api::accounting::create_customer(api_input).await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__accounting__create_journal_entry_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -77,6 +114,188 @@ fn wire__crate__api__accounting__create_journal_entry_impl(
                     (move || async move {
                         let output_ok =
                             crate::api::accounting::create_journal_entry(api_input).await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__accounting__create_material_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "create_material",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_input =
+                <crate::api::accounting::MaterialCreateInput>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::error::ApiError>(
+                    (move || async move {
+                        let output_ok = crate::api::accounting::create_material(api_input).await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__accounting__create_supplier_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "create_supplier",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_input =
+                <crate::api::accounting::SupplierCreateInput>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::error::ApiError>(
+                    (move || async move {
+                        let output_ok = crate::api::accounting::create_supplier(api_input).await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__accounting__delete_customer_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "delete_customer",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_id = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::error::ApiError>(
+                    (move || async move {
+                        let output_ok = crate::api::accounting::delete_customer(api_id).await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__accounting__delete_material_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "delete_material",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_id = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::error::ApiError>(
+                    (move || async move {
+                        let output_ok = crate::api::accounting::delete_material(api_id).await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__accounting__delete_supplier_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "delete_supplier",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_id = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::error::ApiError>(
+                    (move || async move {
+                        let output_ok = crate::api::accounting::delete_supplier(api_id).await?;
                         std::result::Result::Ok(output_ok)
                     })()
                     .await,
@@ -508,6 +727,117 @@ fn wire__crate__api__accounting__trial_balance_impl(
         },
     )
 }
+fn wire__crate__api__accounting__update_customer_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "update_customer",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_input =
+                <crate::api::accounting::CustomerUpdateInput>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::error::ApiError>(
+                    (move || async move {
+                        let output_ok = crate::api::accounting::update_customer(api_input).await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__accounting__update_material_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "update_material",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_input =
+                <crate::api::accounting::MaterialUpdateInput>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::error::ApiError>(
+                    (move || async move {
+                        let output_ok = crate::api::accounting::update_material(api_input).await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__accounting__update_supplier_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "update_supplier",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_input =
+                <crate::api::accounting::SupplierUpdateInput>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::error::ApiError>(
+                    (move || async move {
+                        let output_ok = crate::api::accounting::update_supplier(api_input).await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__accounting__world_currencies_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -641,6 +971,26 @@ impl SseDecode for crate::api::accounting::CreateJournalEntryInput {
     }
 }
 
+impl SseDecode for crate::api::accounting::CustomerCreateInput {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_name = <String>::sse_decode(deserializer);
+        let mut var_phone = <Option<String>>::sse_decode(deserializer);
+        let mut var_address = <Option<String>>::sse_decode(deserializer);
+        let mut var_notes = <Option<String>>::sse_decode(deserializer);
+        let mut var_currency = <String>::sse_decode(deserializer);
+        let mut var_openingBalance = <String>::sse_decode(deserializer);
+        return crate::api::accounting::CustomerCreateInput {
+            name: var_name,
+            phone: var_phone,
+            address: var_address,
+            notes: var_notes,
+            currency: var_currency,
+            opening_balance: var_openingBalance,
+        };
+    }
+}
+
 impl SseDecode for crate::api::accounting::CustomerItem {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -669,6 +1019,28 @@ impl SseDecode for crate::api::accounting::CustomerItem {
             opening_balance: var_openingBalance,
             balance: var_balance,
             currency: var_currency,
+            notes: var_notes,
+            is_active: var_isActive,
+        };
+    }
+}
+
+impl SseDecode for crate::api::accounting::CustomerUpdateInput {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <String>::sse_decode(deserializer);
+        let mut var_code = <String>::sse_decode(deserializer);
+        let mut var_name = <String>::sse_decode(deserializer);
+        let mut var_phone = <Option<String>>::sse_decode(deserializer);
+        let mut var_address = <Option<String>>::sse_decode(deserializer);
+        let mut var_notes = <Option<String>>::sse_decode(deserializer);
+        let mut var_isActive = <bool>::sse_decode(deserializer);
+        return crate::api::accounting::CustomerUpdateInput {
+            id: var_id,
+            code: var_code,
+            name: var_name,
+            phone: var_phone,
+            address: var_address,
             notes: var_notes,
             is_active: var_isActive,
         };
@@ -850,6 +1222,40 @@ impl SseDecode for Vec<crate::api::accounting::WorldCurrencyView> {
     }
 }
 
+impl SseDecode for crate::api::accounting::MaterialCreateInput {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_name = <String>::sse_decode(deserializer);
+        let mut var_nameEn = <Option<String>>::sse_decode(deserializer);
+        let mut var_barcode = <Option<String>>::sse_decode(deserializer);
+        let mut var_code = <Option<String>>::sse_decode(deserializer);
+        let mut var_minimumStock = <String>::sse_decode(deserializer);
+        let mut var_unitName = <String>::sse_decode(deserializer);
+        let mut var_conversionFactor = <String>::sse_decode(deserializer);
+        let mut var_purchasePrice = <Option<String>>::sse_decode(deserializer);
+        let mut var_salePrice = <Option<String>>::sse_decode(deserializer);
+        let mut var_currency = <String>::sse_decode(deserializer);
+        let mut var_notes = <Option<String>>::sse_decode(deserializer);
+        let mut var_hasExpiry = <bool>::sse_decode(deserializer);
+        let mut var_expiryAlertBeforeDays = <i32>::sse_decode(deserializer);
+        return crate::api::accounting::MaterialCreateInput {
+            name: var_name,
+            name_en: var_nameEn,
+            barcode: var_barcode,
+            code: var_code,
+            minimum_stock: var_minimumStock,
+            unit_name: var_unitName,
+            conversion_factor: var_conversionFactor,
+            purchase_price: var_purchasePrice,
+            sale_price: var_salePrice,
+            currency: var_currency,
+            notes: var_notes,
+            has_expiry: var_hasExpiry,
+            expiry_alert_before_days: var_expiryAlertBeforeDays,
+        };
+    }
+}
+
 impl SseDecode for crate::api::accounting::MaterialItem {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -870,7 +1276,14 @@ impl SseDecode for crate::api::accounting::MaterialItem {
         let mut var_averageCostBase = <String>::sse_decode(deserializer);
         let mut var_unitsCount = <i32>::sse_decode(deserializer);
         let mut var_hasExpiry = <bool>::sse_decode(deserializer);
+        let mut var_expiryAlertBeforeDays = <i32>::sse_decode(deserializer);
         let mut var_costingMethod = <String>::sse_decode(deserializer);
+        let mut var_purchasePrice = <String>::sse_decode(deserializer);
+        let mut var_salePrice = <String>::sse_decode(deserializer);
+        let mut var_currency = <String>::sse_decode(deserializer);
+        let mut var_notes = <Option<String>>::sse_decode(deserializer);
+        let mut var_unitName = <String>::sse_decode(deserializer);
+        let mut var_conversionFactor = <String>::sse_decode(deserializer);
         return crate::api::accounting::MaterialItem {
             id: var_id,
             name: var_name,
@@ -889,7 +1302,46 @@ impl SseDecode for crate::api::accounting::MaterialItem {
             average_cost_base: var_averageCostBase,
             units_count: var_unitsCount,
             has_expiry: var_hasExpiry,
+            expiry_alert_before_days: var_expiryAlertBeforeDays,
             costing_method: var_costingMethod,
+            purchase_price: var_purchasePrice,
+            sale_price: var_salePrice,
+            currency: var_currency,
+            notes: var_notes,
+            unit_name: var_unitName,
+            conversion_factor: var_conversionFactor,
+        };
+    }
+}
+
+impl SseDecode for crate::api::accounting::MaterialUpdateInput {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <String>::sse_decode(deserializer);
+        let mut var_name = <String>::sse_decode(deserializer);
+        let mut var_nameEn = <String>::sse_decode(deserializer);
+        let mut var_barcode = <String>::sse_decode(deserializer);
+        let mut var_code = <String>::sse_decode(deserializer);
+        let mut var_minimumStock = <String>::sse_decode(deserializer);
+        let mut var_notes = <Option<String>>::sse_decode(deserializer);
+        let mut var_purchasePrice = <Option<String>>::sse_decode(deserializer);
+        let mut var_salePrice = <Option<String>>::sse_decode(deserializer);
+        let mut var_currency = <Option<String>>::sse_decode(deserializer);
+        let mut var_hasExpiry = <bool>::sse_decode(deserializer);
+        let mut var_expiryAlertBeforeDays = <i32>::sse_decode(deserializer);
+        return crate::api::accounting::MaterialUpdateInput {
+            id: var_id,
+            name: var_name,
+            name_en: var_nameEn,
+            barcode: var_barcode,
+            code: var_code,
+            minimum_stock: var_minimumStock,
+            notes: var_notes,
+            purchase_price: var_purchasePrice,
+            sale_price: var_salePrice,
+            currency: var_currency,
+            has_expiry: var_hasExpiry,
+            expiry_alert_before_days: var_expiryAlertBeforeDays,
         };
     }
 }
@@ -943,6 +1395,26 @@ impl SseDecode for crate::api::accounting::SetupStatusView {
     }
 }
 
+impl SseDecode for crate::api::accounting::SupplierCreateInput {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_name = <String>::sse_decode(deserializer);
+        let mut var_phone = <Option<String>>::sse_decode(deserializer);
+        let mut var_address = <Option<String>>::sse_decode(deserializer);
+        let mut var_notes = <Option<String>>::sse_decode(deserializer);
+        let mut var_currency = <String>::sse_decode(deserializer);
+        let mut var_openingBalance = <String>::sse_decode(deserializer);
+        return crate::api::accounting::SupplierCreateInput {
+            name: var_name,
+            phone: var_phone,
+            address: var_address,
+            notes: var_notes,
+            currency: var_currency,
+            opening_balance: var_openingBalance,
+        };
+    }
+}
+
 impl SseDecode for crate::api::accounting::SupplierItem {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -973,6 +1445,26 @@ impl SseDecode for crate::api::accounting::SupplierItem {
             currency: var_currency,
             notes: var_notes,
             is_active: var_isActive,
+        };
+    }
+}
+
+impl SseDecode for crate::api::accounting::SupplierUpdateInput {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <String>::sse_decode(deserializer);
+        let mut var_code = <String>::sse_decode(deserializer);
+        let mut var_name = <String>::sse_decode(deserializer);
+        let mut var_phone = <Option<String>>::sse_decode(deserializer);
+        let mut var_address = <Option<String>>::sse_decode(deserializer);
+        let mut var_notes = <Option<String>>::sse_decode(deserializer);
+        return crate::api::accounting::SupplierUpdateInput {
+            id: var_id,
+            code: var_code,
+            name: var_name,
+            phone: var_phone,
+            address: var_address,
+            notes: var_notes,
         };
     }
 }
@@ -1055,28 +1547,37 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        1 => wire__crate__api__accounting__create_journal_entry_impl(
+        1 => wire__crate__api__accounting__create_customer_impl(port, ptr, rust_vec_len, data_len),
+        2 => wire__crate__api__accounting__create_journal_entry_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        2 => wire__crate__api__accounting__get_setup_status_impl(port, ptr, rust_vec_len, data_len),
-        4 => wire__crate__api__accounting__init_app_impl(port, ptr, rust_vec_len, data_len),
-        5 => {
+        3 => wire__crate__api__accounting__create_material_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__accounting__create_supplier_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__accounting__delete_customer_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__accounting__delete_material_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__accounting__delete_supplier_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__accounting__get_setup_status_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__accounting__init_app_impl(port, ptr, rust_vec_len, data_len),
+        11 => {
             wire__crate__api__accounting__is_setup_complete_impl(port, ptr, rust_vec_len, data_len)
         }
-        6 => wire__crate__api__accounting__list_accounts_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__accounting__list_customers_impl(port, ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__accounting__list_materials_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__accounting__list_suppliers_impl(port, ptr, rust_vec_len, data_len),
-        10 => {
+        12 => wire__crate__api__accounting__list_accounts_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__accounting__list_customers_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__accounting__list_materials_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__accounting__list_suppliers_impl(port, ptr, rust_vec_len, data_len),
+        16 => {
             wire__crate__api__accounting__post_journal_entry_impl(port, ptr, rust_vec_len, data_len)
         }
-        11 => wire__crate__api__simple__setup_bridge_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__accounting__setup_company_impl(port, ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__accounting__trial_balance_impl(port, ptr, rust_vec_len, data_len),
-        14 => {
+        17 => wire__crate__api__simple__setup_bridge_impl(port, ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__accounting__setup_company_impl(port, ptr, rust_vec_len, data_len),
+        19 => wire__crate__api__accounting__trial_balance_impl(port, ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__accounting__update_customer_impl(port, ptr, rust_vec_len, data_len),
+        21 => wire__crate__api__accounting__update_material_impl(port, ptr, rust_vec_len, data_len),
+        22 => wire__crate__api__accounting__update_supplier_impl(port, ptr, rust_vec_len, data_len),
+        23 => {
             wire__crate__api__accounting__world_currencies_impl(port, ptr, rust_vec_len, data_len)
         }
         _ => unreachable!(),
@@ -1091,7 +1592,7 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        3 => wire__crate__api__simple__greet_impl(ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__simple__greet_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1197,6 +1698,31 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::accounting::CreateJournalEntr
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::accounting::CustomerCreateInput {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.name.into_into_dart().into_dart(),
+            self.phone.into_into_dart().into_dart(),
+            self.address.into_into_dart().into_dart(),
+            self.notes.into_into_dart().into_dart(),
+            self.currency.into_into_dart().into_dart(),
+            self.opening_balance.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::accounting::CustomerCreateInput
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::accounting::CustomerCreateInput>
+    for crate::api::accounting::CustomerCreateInput
+{
+    fn into_into_dart(self) -> crate::api::accounting::CustomerCreateInput {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::accounting::CustomerItem {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -1225,6 +1751,32 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::accounting::CustomerItem>
     for crate::api::accounting::CustomerItem
 {
     fn into_into_dart(self) -> crate::api::accounting::CustomerItem {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::accounting::CustomerUpdateInput {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.id.into_into_dart().into_dart(),
+            self.code.into_into_dart().into_dart(),
+            self.name.into_into_dart().into_dart(),
+            self.phone.into_into_dart().into_dart(),
+            self.address.into_into_dart().into_dart(),
+            self.notes.into_into_dart().into_dart(),
+            self.is_active.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::accounting::CustomerUpdateInput
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::accounting::CustomerUpdateInput>
+    for crate::api::accounting::CustomerUpdateInput
+{
+    fn into_into_dart(self) -> crate::api::accounting::CustomerUpdateInput {
         self
     }
 }
@@ -1282,6 +1834,38 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::accounting::JournalLineInput>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::accounting::MaterialCreateInput {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.name.into_into_dart().into_dart(),
+            self.name_en.into_into_dart().into_dart(),
+            self.barcode.into_into_dart().into_dart(),
+            self.code.into_into_dart().into_dart(),
+            self.minimum_stock.into_into_dart().into_dart(),
+            self.unit_name.into_into_dart().into_dart(),
+            self.conversion_factor.into_into_dart().into_dart(),
+            self.purchase_price.into_into_dart().into_dart(),
+            self.sale_price.into_into_dart().into_dart(),
+            self.currency.into_into_dart().into_dart(),
+            self.notes.into_into_dart().into_dart(),
+            self.has_expiry.into_into_dart().into_dart(),
+            self.expiry_alert_before_days.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::accounting::MaterialCreateInput
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::accounting::MaterialCreateInput>
+    for crate::api::accounting::MaterialCreateInput
+{
+    fn into_into_dart(self) -> crate::api::accounting::MaterialCreateInput {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::accounting::MaterialItem {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -1302,7 +1886,14 @@ impl flutter_rust_bridge::IntoDart for crate::api::accounting::MaterialItem {
             self.average_cost_base.into_into_dart().into_dart(),
             self.units_count.into_into_dart().into_dart(),
             self.has_expiry.into_into_dart().into_dart(),
+            self.expiry_alert_before_days.into_into_dart().into_dart(),
             self.costing_method.into_into_dart().into_dart(),
+            self.purchase_price.into_into_dart().into_dart(),
+            self.sale_price.into_into_dart().into_dart(),
+            self.currency.into_into_dart().into_dart(),
+            self.notes.into_into_dart().into_dart(),
+            self.unit_name.into_into_dart().into_dart(),
+            self.conversion_factor.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -1315,6 +1906,37 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::accounting::MaterialItem>
     for crate::api::accounting::MaterialItem
 {
     fn into_into_dart(self) -> crate::api::accounting::MaterialItem {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::accounting::MaterialUpdateInput {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.id.into_into_dart().into_dart(),
+            self.name.into_into_dart().into_dart(),
+            self.name_en.into_into_dart().into_dart(),
+            self.barcode.into_into_dart().into_dart(),
+            self.code.into_into_dart().into_dart(),
+            self.minimum_stock.into_into_dart().into_dart(),
+            self.notes.into_into_dart().into_dart(),
+            self.purchase_price.into_into_dart().into_dart(),
+            self.sale_price.into_into_dart().into_dart(),
+            self.currency.into_into_dart().into_dart(),
+            self.has_expiry.into_into_dart().into_dart(),
+            self.expiry_alert_before_days.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::accounting::MaterialUpdateInput
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::accounting::MaterialUpdateInput>
+    for crate::api::accounting::MaterialUpdateInput
+{
+    fn into_into_dart(self) -> crate::api::accounting::MaterialUpdateInput {
         self
     }
 }
@@ -1368,6 +1990,31 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::accounting::SetupStatusView>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::accounting::SupplierCreateInput {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.name.into_into_dart().into_dart(),
+            self.phone.into_into_dart().into_dart(),
+            self.address.into_into_dart().into_dart(),
+            self.notes.into_into_dart().into_dart(),
+            self.currency.into_into_dart().into_dart(),
+            self.opening_balance.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::accounting::SupplierCreateInput
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::accounting::SupplierCreateInput>
+    for crate::api::accounting::SupplierCreateInput
+{
+    fn into_into_dart(self) -> crate::api::accounting::SupplierCreateInput {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::accounting::SupplierItem {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -1396,6 +2043,31 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::accounting::SupplierItem>
     for crate::api::accounting::SupplierItem
 {
     fn into_into_dart(self) -> crate::api::accounting::SupplierItem {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::accounting::SupplierUpdateInput {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.id.into_into_dart().into_dart(),
+            self.code.into_into_dart().into_dart(),
+            self.name.into_into_dart().into_dart(),
+            self.phone.into_into_dart().into_dart(),
+            self.address.into_into_dart().into_dart(),
+            self.notes.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::accounting::SupplierUpdateInput
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::accounting::SupplierUpdateInput>
+    for crate::api::accounting::SupplierUpdateInput
+{
+    fn into_into_dart(self) -> crate::api::accounting::SupplierUpdateInput {
         self
     }
 }
@@ -1536,6 +2208,18 @@ impl SseEncode for crate::api::accounting::CreateJournalEntryInput {
     }
 }
 
+impl SseEncode for crate::api::accounting::CustomerCreateInput {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.name, serializer);
+        <Option<String>>::sse_encode(self.phone, serializer);
+        <Option<String>>::sse_encode(self.address, serializer);
+        <Option<String>>::sse_encode(self.notes, serializer);
+        <String>::sse_encode(self.currency, serializer);
+        <String>::sse_encode(self.opening_balance, serializer);
+    }
+}
+
 impl SseEncode for crate::api::accounting::CustomerItem {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1550,6 +2234,19 @@ impl SseEncode for crate::api::accounting::CustomerItem {
         <String>::sse_encode(self.opening_balance, serializer);
         <String>::sse_encode(self.balance, serializer);
         <String>::sse_encode(self.currency, serializer);
+        <Option<String>>::sse_encode(self.notes, serializer);
+        <bool>::sse_encode(self.is_active, serializer);
+    }
+}
+
+impl SseEncode for crate::api::accounting::CustomerUpdateInput {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.id, serializer);
+        <String>::sse_encode(self.code, serializer);
+        <String>::sse_encode(self.name, serializer);
+        <Option<String>>::sse_encode(self.phone, serializer);
+        <Option<String>>::sse_encode(self.address, serializer);
         <Option<String>>::sse_encode(self.notes, serializer);
         <bool>::sse_encode(self.is_active, serializer);
     }
@@ -1679,6 +2376,25 @@ impl SseEncode for Vec<crate::api::accounting::WorldCurrencyView> {
     }
 }
 
+impl SseEncode for crate::api::accounting::MaterialCreateInput {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.name, serializer);
+        <Option<String>>::sse_encode(self.name_en, serializer);
+        <Option<String>>::sse_encode(self.barcode, serializer);
+        <Option<String>>::sse_encode(self.code, serializer);
+        <String>::sse_encode(self.minimum_stock, serializer);
+        <String>::sse_encode(self.unit_name, serializer);
+        <String>::sse_encode(self.conversion_factor, serializer);
+        <Option<String>>::sse_encode(self.purchase_price, serializer);
+        <Option<String>>::sse_encode(self.sale_price, serializer);
+        <String>::sse_encode(self.currency, serializer);
+        <Option<String>>::sse_encode(self.notes, serializer);
+        <bool>::sse_encode(self.has_expiry, serializer);
+        <i32>::sse_encode(self.expiry_alert_before_days, serializer);
+    }
+}
+
 impl SseEncode for crate::api::accounting::MaterialItem {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1699,7 +2415,32 @@ impl SseEncode for crate::api::accounting::MaterialItem {
         <String>::sse_encode(self.average_cost_base, serializer);
         <i32>::sse_encode(self.units_count, serializer);
         <bool>::sse_encode(self.has_expiry, serializer);
+        <i32>::sse_encode(self.expiry_alert_before_days, serializer);
         <String>::sse_encode(self.costing_method, serializer);
+        <String>::sse_encode(self.purchase_price, serializer);
+        <String>::sse_encode(self.sale_price, serializer);
+        <String>::sse_encode(self.currency, serializer);
+        <Option<String>>::sse_encode(self.notes, serializer);
+        <String>::sse_encode(self.unit_name, serializer);
+        <String>::sse_encode(self.conversion_factor, serializer);
+    }
+}
+
+impl SseEncode for crate::api::accounting::MaterialUpdateInput {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.id, serializer);
+        <String>::sse_encode(self.name, serializer);
+        <String>::sse_encode(self.name_en, serializer);
+        <String>::sse_encode(self.barcode, serializer);
+        <String>::sse_encode(self.code, serializer);
+        <String>::sse_encode(self.minimum_stock, serializer);
+        <Option<String>>::sse_encode(self.notes, serializer);
+        <Option<String>>::sse_encode(self.purchase_price, serializer);
+        <Option<String>>::sse_encode(self.sale_price, serializer);
+        <Option<String>>::sse_encode(self.currency, serializer);
+        <bool>::sse_encode(self.has_expiry, serializer);
+        <i32>::sse_encode(self.expiry_alert_before_days, serializer);
     }
 }
 
@@ -1736,6 +2477,18 @@ impl SseEncode for crate::api::accounting::SetupStatusView {
     }
 }
 
+impl SseEncode for crate::api::accounting::SupplierCreateInput {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.name, serializer);
+        <Option<String>>::sse_encode(self.phone, serializer);
+        <Option<String>>::sse_encode(self.address, serializer);
+        <Option<String>>::sse_encode(self.notes, serializer);
+        <String>::sse_encode(self.currency, serializer);
+        <String>::sse_encode(self.opening_balance, serializer);
+    }
+}
+
 impl SseEncode for crate::api::accounting::SupplierItem {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1752,6 +2505,18 @@ impl SseEncode for crate::api::accounting::SupplierItem {
         <String>::sse_encode(self.currency, serializer);
         <Option<String>>::sse_encode(self.notes, serializer);
         <bool>::sse_encode(self.is_active, serializer);
+    }
+}
+
+impl SseEncode for crate::api::accounting::SupplierUpdateInput {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.id, serializer);
+        <String>::sse_encode(self.code, serializer);
+        <String>::sse_encode(self.name, serializer);
+        <Option<String>>::sse_encode(self.phone, serializer);
+        <Option<String>>::sse_encode(self.address, serializer);
+        <Option<String>>::sse_encode(self.notes, serializer);
     }
 }
 

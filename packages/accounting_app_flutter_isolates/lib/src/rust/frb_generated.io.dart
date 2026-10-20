@@ -38,7 +38,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  CustomerCreateInput dco_decode_box_autoadd_customer_create_input(dynamic raw);
+
+  @protected
+  CustomerUpdateInput dco_decode_box_autoadd_customer_update_input(dynamic raw);
+
+  @protected
+  MaterialCreateInput dco_decode_box_autoadd_material_create_input(dynamic raw);
+
+  @protected
+  MaterialUpdateInput dco_decode_box_autoadd_material_update_input(dynamic raw);
+
+  @protected
   SetupCompanyInput dco_decode_box_autoadd_setup_company_input(dynamic raw);
+
+  @protected
+  SupplierCreateInput dco_decode_box_autoadd_supplier_create_input(dynamic raw);
+
+  @protected
+  SupplierUpdateInput dco_decode_box_autoadd_supplier_update_input(dynamic raw);
 
   @protected
   CompanySetupView dco_decode_company_setup_view(dynamic raw);
@@ -47,7 +65,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CreateJournalEntryInput dco_decode_create_journal_entry_input(dynamic raw);
 
   @protected
+  CustomerCreateInput dco_decode_customer_create_input(dynamic raw);
+
+  @protected
   CustomerItem dco_decode_customer_item(dynamic raw);
+
+  @protected
+  CustomerUpdateInput dco_decode_customer_update_input(dynamic raw);
 
   @protected
   int dco_decode_i_32(dynamic raw);
@@ -88,7 +112,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<WorldCurrencyView> dco_decode_list_world_currency_view(dynamic raw);
 
   @protected
+  MaterialCreateInput dco_decode_material_create_input(dynamic raw);
+
+  @protected
   MaterialItem dco_decode_material_item(dynamic raw);
+
+  @protected
+  MaterialUpdateInput dco_decode_material_update_input(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
@@ -100,7 +130,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SetupStatusView dco_decode_setup_status_view(dynamic raw);
 
   @protected
+  SupplierCreateInput dco_decode_supplier_create_input(dynamic raw);
+
+  @protected
   SupplierItem dco_decode_supplier_item(dynamic raw);
+
+  @protected
+  SupplierUpdateInput dco_decode_supplier_update_input(dynamic raw);
 
   @protected
   TrialBalanceLineView dco_decode_trial_balance_line_view(dynamic raw);
@@ -135,7 +171,37 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  CustomerCreateInput sse_decode_box_autoadd_customer_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CustomerUpdateInput sse_decode_box_autoadd_customer_update_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MaterialCreateInput sse_decode_box_autoadd_material_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MaterialUpdateInput sse_decode_box_autoadd_material_update_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   SetupCompanyInput sse_decode_box_autoadd_setup_company_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SupplierCreateInput sse_decode_box_autoadd_supplier_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SupplierUpdateInput sse_decode_box_autoadd_supplier_update_input(
     SseDeserializer deserializer,
   );
 
@@ -148,7 +214,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  CustomerCreateInput sse_decode_customer_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   CustomerItem sse_decode_customer_item(SseDeserializer deserializer);
+
+  @protected
+  CustomerUpdateInput sse_decode_customer_update_input(
+    SseDeserializer deserializer,
+  );
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer);
@@ -199,7 +275,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  MaterialCreateInput sse_decode_material_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   MaterialItem sse_decode_material_item(SseDeserializer deserializer);
+
+  @protected
+  MaterialUpdateInput sse_decode_material_update_input(
+    SseDeserializer deserializer,
+  );
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
@@ -213,7 +299,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SetupStatusView sse_decode_setup_status_view(SseDeserializer deserializer);
 
   @protected
+  SupplierCreateInput sse_decode_supplier_create_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   SupplierItem sse_decode_supplier_item(SseDeserializer deserializer);
+
+  @protected
+  SupplierUpdateInput sse_decode_supplier_update_input(
+    SseDeserializer deserializer,
+  );
 
   @protected
   TrialBalanceLineView sse_decode_trial_balance_line_view(
@@ -253,8 +349,44 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_customer_create_input(
+    CustomerCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_customer_update_input(
+    CustomerUpdateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_material_create_input(
+    MaterialCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_material_update_input(
+    MaterialUpdateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_setup_company_input(
     SetupCompanyInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_supplier_create_input(
+    SupplierCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_supplier_update_input(
+    SupplierUpdateInput self,
     SseSerializer serializer,
   );
 
@@ -271,7 +403,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_customer_create_input(
+    CustomerCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_customer_item(CustomerItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_customer_update_input(
+    CustomerUpdateInput self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
@@ -340,7 +484,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_material_create_input(
+    MaterialCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_material_item(MaterialItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_material_update_input(
+    MaterialUpdateInput self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
@@ -358,7 +514,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_supplier_create_input(
+    SupplierCreateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_supplier_item(SupplierItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_supplier_update_input(
+    SupplierUpdateInput self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_trial_balance_line_view(

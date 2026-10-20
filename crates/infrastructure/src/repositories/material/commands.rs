@@ -121,9 +121,34 @@ pub(crate) async fn update_tx<'a>(
 }
 
 pub async fn delete(pool: &SqlitePool, id: &MaterialId) -> Result<(), AppError> {
-    sqlx::query("DELETE FROM materials WHERE id = ?")
-        .bind(id.to_string())
-        .execute(pool)
+    let material_id = id.to_string();
+    let mut tx = pool
+        .begin()
+        .await
+        .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+
+    // Price rows reference the material without ON DELETE CASCADE, so they
+    // must be removed before the material itself. Units and category links
+    // cascade from the materials table.
+    for table in ["material_purchase_prices", "material_sale_prices"] {
+        sqlx::query(&format!("DELETE FROM {table} WHERE material_id = ?"))
+            .bind(&material_id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+    }
+
+    let result = sqlx::query("DELETE FROM materials WHERE id = ?")
+        .bind(&material_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| AppError::Infrastructure(e.to_string()))?;
+
+    if result.rows_affected() == 0 {
+        return Err(AppError::NotFound("المادة غير موجودة".into()));
+    }
+
+    tx.commit()
         .await
         .map_err(|e| AppError::Infrastructure(e.to_string()))?;
     Ok(())

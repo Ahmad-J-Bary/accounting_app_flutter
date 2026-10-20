@@ -7,8 +7,8 @@ import '../frb_generated.dart';
 import 'error.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `entry_view`, `state`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `customer_item`, `entry_view`, `material_item`, `normalize_price`, `parse_non_negative`, `resolve_currency`, `state`, `supplier_item`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Open (or create) the SQLite ledger, run all migrations and wire the core.
 ///
@@ -57,11 +57,38 @@ Future<TrialBalanceView> trialBalance({String? fromDate, String? toDate}) =>
 Future<List<CustomerItem>> listCustomers() =>
     RustLib.instance.api.crateApiAccountingListCustomers();
 
+Future<CustomerItem> createCustomer({required CustomerCreateInput input}) =>
+    RustLib.instance.api.crateApiAccountingCreateCustomer(input: input);
+
+Future<CustomerItem> updateCustomer({required CustomerUpdateInput input}) =>
+    RustLib.instance.api.crateApiAccountingUpdateCustomer(input: input);
+
+Future<void> deleteCustomer({required String id}) =>
+    RustLib.instance.api.crateApiAccountingDeleteCustomer(id: id);
+
 Future<List<SupplierItem>> listSuppliers() =>
     RustLib.instance.api.crateApiAccountingListSuppliers();
 
+Future<SupplierItem> createSupplier({required SupplierCreateInput input}) =>
+    RustLib.instance.api.crateApiAccountingCreateSupplier(input: input);
+
+Future<SupplierItem> updateSupplier({required SupplierUpdateInput input}) =>
+    RustLib.instance.api.crateApiAccountingUpdateSupplier(input: input);
+
+Future<void> deleteSupplier({required String id}) =>
+    RustLib.instance.api.crateApiAccountingDeleteSupplier(id: id);
+
 Future<List<MaterialItem>> listMaterials() =>
     RustLib.instance.api.crateApiAccountingListMaterials();
+
+Future<MaterialItem> createMaterial({required MaterialCreateInput input}) =>
+    RustLib.instance.api.crateApiAccountingCreateMaterial(input: input);
+
+Future<MaterialItem> updateMaterial({required MaterialUpdateInput input}) =>
+    RustLib.instance.api.crateApiAccountingUpdateMaterial(input: input);
+
+Future<void> deleteMaterial({required String id}) =>
+    RustLib.instance.api.crateApiAccountingDeleteMaterial(id: id);
 
 class AccountItem {
   final String id;
@@ -196,6 +223,45 @@ class CreateJournalEntryInput {
           lines == other.lines;
 }
 
+class CustomerCreateInput {
+  final String name;
+  final String? phone;
+  final String? address;
+  final String? notes;
+  final String currency;
+  final String openingBalance;
+
+  const CustomerCreateInput({
+    required this.name,
+    this.phone,
+    this.address,
+    this.notes,
+    required this.currency,
+    required this.openingBalance,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      phone.hashCode ^
+      address.hashCode ^
+      notes.hashCode ^
+      currency.hashCode ^
+      openingBalance.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CustomerCreateInput &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          phone == other.phone &&
+          address == other.address &&
+          notes == other.notes &&
+          currency == other.currency &&
+          openingBalance == other.openingBalance;
+}
+
 class CustomerItem {
   final String id;
   final String code;
@@ -259,6 +325,49 @@ class CustomerItem {
           openingBalance == other.openingBalance &&
           balance == other.balance &&
           currency == other.currency &&
+          notes == other.notes &&
+          isActive == other.isActive;
+}
+
+class CustomerUpdateInput {
+  final String id;
+  final String code;
+  final String name;
+  final String? phone;
+  final String? address;
+  final String? notes;
+  final bool isActive;
+
+  const CustomerUpdateInput({
+    required this.id,
+    required this.code,
+    required this.name,
+    this.phone,
+    this.address,
+    this.notes,
+    required this.isActive,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      code.hashCode ^
+      name.hashCode ^
+      phone.hashCode ^
+      address.hashCode ^
+      notes.hashCode ^
+      isActive.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CustomerUpdateInput &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          code == other.code &&
+          name == other.name &&
+          phone == other.phone &&
+          address == other.address &&
           notes == other.notes &&
           isActive == other.isActive;
 }
@@ -353,6 +462,73 @@ class JournalLineInput {
           description == other.description;
 }
 
+class MaterialCreateInput {
+  final String name;
+  final String? nameEn;
+  final String? barcode;
+  final String? code;
+  final String minimumStock;
+  final String unitName;
+  final String conversionFactor;
+  final String? purchasePrice;
+  final String? salePrice;
+  final String currency;
+  final String? notes;
+  final bool hasExpiry;
+  final int expiryAlertBeforeDays;
+
+  const MaterialCreateInput({
+    required this.name,
+    this.nameEn,
+    this.barcode,
+    this.code,
+    required this.minimumStock,
+    required this.unitName,
+    required this.conversionFactor,
+    this.purchasePrice,
+    this.salePrice,
+    required this.currency,
+    this.notes,
+    required this.hasExpiry,
+    required this.expiryAlertBeforeDays,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      nameEn.hashCode ^
+      barcode.hashCode ^
+      code.hashCode ^
+      minimumStock.hashCode ^
+      unitName.hashCode ^
+      conversionFactor.hashCode ^
+      purchasePrice.hashCode ^
+      salePrice.hashCode ^
+      currency.hashCode ^
+      notes.hashCode ^
+      hasExpiry.hashCode ^
+      expiryAlertBeforeDays.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MaterialCreateInput &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          nameEn == other.nameEn &&
+          barcode == other.barcode &&
+          code == other.code &&
+          minimumStock == other.minimumStock &&
+          unitName == other.unitName &&
+          conversionFactor == other.conversionFactor &&
+          purchasePrice == other.purchasePrice &&
+          salePrice == other.salePrice &&
+          currency == other.currency &&
+          notes == other.notes &&
+          hasExpiry == other.hasExpiry &&
+          expiryAlertBeforeDays == other.expiryAlertBeforeDays;
+}
+
 class MaterialItem {
   final String id;
   final String name;
@@ -371,7 +547,14 @@ class MaterialItem {
   final String averageCostBase;
   final int unitsCount;
   final bool hasExpiry;
+  final int expiryAlertBeforeDays;
   final String costingMethod;
+  final String purchasePrice;
+  final String salePrice;
+  final String currency;
+  final String? notes;
+  final String unitName;
+  final String conversionFactor;
 
   const MaterialItem({
     required this.id,
@@ -391,7 +574,14 @@ class MaterialItem {
     required this.averageCostBase,
     required this.unitsCount,
     required this.hasExpiry,
+    required this.expiryAlertBeforeDays,
     required this.costingMethod,
+    required this.purchasePrice,
+    required this.salePrice,
+    required this.currency,
+    this.notes,
+    required this.unitName,
+    required this.conversionFactor,
   });
 
   @override
@@ -413,7 +603,14 @@ class MaterialItem {
       averageCostBase.hashCode ^
       unitsCount.hashCode ^
       hasExpiry.hashCode ^
-      costingMethod.hashCode;
+      expiryAlertBeforeDays.hashCode ^
+      costingMethod.hashCode ^
+      purchasePrice.hashCode ^
+      salePrice.hashCode ^
+      currency.hashCode ^
+      notes.hashCode ^
+      unitName.hashCode ^
+      conversionFactor.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -437,7 +634,77 @@ class MaterialItem {
           averageCostBase == other.averageCostBase &&
           unitsCount == other.unitsCount &&
           hasExpiry == other.hasExpiry &&
-          costingMethod == other.costingMethod;
+          expiryAlertBeforeDays == other.expiryAlertBeforeDays &&
+          costingMethod == other.costingMethod &&
+          purchasePrice == other.purchasePrice &&
+          salePrice == other.salePrice &&
+          currency == other.currency &&
+          notes == other.notes &&
+          unitName == other.unitName &&
+          conversionFactor == other.conversionFactor;
+}
+
+class MaterialUpdateInput {
+  final String id;
+  final String name;
+  final String nameEn;
+  final String barcode;
+  final String code;
+  final String minimumStock;
+  final String? notes;
+  final String? purchasePrice;
+  final String? salePrice;
+  final String? currency;
+  final bool hasExpiry;
+  final int expiryAlertBeforeDays;
+
+  const MaterialUpdateInput({
+    required this.id,
+    required this.name,
+    required this.nameEn,
+    required this.barcode,
+    required this.code,
+    required this.minimumStock,
+    this.notes,
+    this.purchasePrice,
+    this.salePrice,
+    this.currency,
+    required this.hasExpiry,
+    required this.expiryAlertBeforeDays,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      name.hashCode ^
+      nameEn.hashCode ^
+      barcode.hashCode ^
+      code.hashCode ^
+      minimumStock.hashCode ^
+      notes.hashCode ^
+      purchasePrice.hashCode ^
+      salePrice.hashCode ^
+      currency.hashCode ^
+      hasExpiry.hashCode ^
+      expiryAlertBeforeDays.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MaterialUpdateInput &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          nameEn == other.nameEn &&
+          barcode == other.barcode &&
+          code == other.code &&
+          minimumStock == other.minimumStock &&
+          notes == other.notes &&
+          purchasePrice == other.purchasePrice &&
+          salePrice == other.salePrice &&
+          currency == other.currency &&
+          hasExpiry == other.hasExpiry &&
+          expiryAlertBeforeDays == other.expiryAlertBeforeDays;
 }
 
 class SetupCompanyInput {
@@ -514,6 +781,45 @@ class SetupStatusView {
           accountingStartMode == other.accountingStartMode;
 }
 
+class SupplierCreateInput {
+  final String name;
+  final String? phone;
+  final String? address;
+  final String? notes;
+  final String currency;
+  final String openingBalance;
+
+  const SupplierCreateInput({
+    required this.name,
+    this.phone,
+    this.address,
+    this.notes,
+    required this.currency,
+    required this.openingBalance,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      phone.hashCode ^
+      address.hashCode ^
+      notes.hashCode ^
+      currency.hashCode ^
+      openingBalance.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SupplierCreateInput &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          phone == other.phone &&
+          address == other.address &&
+          notes == other.notes &&
+          currency == other.currency &&
+          openingBalance == other.openingBalance;
+}
+
 class SupplierItem {
   final String id;
   final String code;
@@ -579,6 +885,45 @@ class SupplierItem {
           currency == other.currency &&
           notes == other.notes &&
           isActive == other.isActive;
+}
+
+class SupplierUpdateInput {
+  final String id;
+  final String code;
+  final String name;
+  final String? phone;
+  final String? address;
+  final String? notes;
+
+  const SupplierUpdateInput({
+    required this.id,
+    required this.code,
+    required this.name,
+    this.phone,
+    this.address,
+    this.notes,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      code.hashCode ^
+      name.hashCode ^
+      phone.hashCode ^
+      address.hashCode ^
+      notes.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SupplierUpdateInput &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          code == other.code &&
+          name == other.name &&
+          phone == other.phone &&
+          address == other.address &&
+          notes == other.notes;
 }
 
 class TrialBalanceLineView {
