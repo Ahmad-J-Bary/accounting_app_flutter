@@ -70,8 +70,19 @@ jobs:
           sha256sum -c ./*.sha256
           cd ../android
           sha256sum -c sha256sums.txt
-      - name: Create or update the release draft
-        id: draft
+      - name: Check for an existing release
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "$TAG" --json tagName > /dev/null 2>&1; then
+            echo 'exists=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'exists=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create the release draft
+        if: steps.release.outputs.exists == 'false'
         uses: release-drafter/release-drafter@v6
         with:
           tag: v${{ steps.version.outputs.version }}
@@ -79,19 +90,37 @@ jobs:
           version: ${{ steps.version.outputs.version }}
           commitish: ${{ github.sha }}
           # release-drafter treats the `publish` input as a truthy string:
-          # any non-empty value publishes the release, and an empty value
-          # keeps it as a draft. Only publish when the operator explicitly
-          # asks for it with draft=false; tag pushes stay as drafts.
-          publish: ${{ github.event.inputs.draft == 'false' && 'true' || '' }}
+          # an empty value keeps the release as a draft, and the publish step
+          # below flips it only when the operator asks for it.
+          publish: ''
           # The 1.x desktop/handheld line ships as a pre-release until the
           # financial-year closing and partner-capital modules are complete.
           prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Refresh the release notes
+        if: steps.release.outputs.exists == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ steps.version.outputs.version }}
+        run: |
+          notes="docs/release-notes-${{ steps.version.outputs.version }}.md"
+          if [ -f "$notes" ]; then
+            gh release edit "$TAG" --notes-file "$notes" --prerelease
+          else
+            gh release edit "$TAG" --prerelease
+          fi
       - name: Upload the release assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.draft.outputs.tag_name }}
+          TAG: v${{ steps.version.outputs.version }}
         run: |
           gh release upload "$TAG" dist/windows/* --clobber
           gh release upload "$TAG" dist/android/* --clobber
+      - name: Publish the release when requested
+        if: github.event.inputs.draft == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ steps.version.outputs.version }}
+        run: |
+          gh release edit "$TAG" --draft=false --prerelease
