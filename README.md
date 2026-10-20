@@ -65,9 +65,10 @@ workflows. Each build uploads checksummed artifacts:
   `.sha256` file.
 - Android: split `app-<abi>-release.apk` files plus `sha256sums.txt`.
 
-The Windows installers are per-user installs, so they do not require
-administrator privileges. The EXE and MSI both install the same Flutter runner,
-Rust bridge DLL and `data/flutter_assets` payload as the portable ZIP.
+The Inno Setup EXE is a per-user install, so it does not require administrator
+privileges. The WiX MSI is a per-machine install and prompts for elevation. Both
+install the same Flutter runner, Rust bridge DLL and `data/flutter_assets`
+payload as the portable ZIP.
 
 A real FFI integration test runs on Windows and covers the bridge end to end:
 
