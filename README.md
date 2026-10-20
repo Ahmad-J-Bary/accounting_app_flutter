@@ -27,7 +27,7 @@ Arabic-first accounting and business management application for Windows and Andr
 Set-Location 'E:\My Projects\accounting_app_flutter'
 fvm install
 fvm use
-flutter pub get
+fvm flutter pub get
 ```
 
 ## Quality gates
@@ -39,19 +39,42 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace -- --test-threads=1
 
 Set-Location app
+fvm dart format --output=none --set-exit-if-changed lib test
 fvm flutter analyze
 fvm flutter test
-fvm flutter build windows
-fvm flutter build apk --release
+fvm flutter build windows --release
+fvm flutter build apk --release --split-per-abi
+
+Set-Location 'E:\My Projects\accounting_app_flutter'
+Set-Location packages/accounting_app_flutter_isolates
+flutter_rust_bridge_codegen generate
+Set-Location 'E:\My Projects\accounting_app_flutter'
+cargo fmt --all
 ```
 
-GitHub Actions runs the same gates for Rust, Windows and Android in
-`.github/workflows/quality.yml`.
+GitHub Actions runs the same Rust and Flutter gates in
+`.github/workflows/quality.yml`. That workflow also checks that the generated
+FRB bindings are fresh, then calls the reusable
+`.github/workflows/build-windows.yml` and `.github/workflows/build-android.yml`
+workflows. Each build uploads a checksummed artifact:
+
+- Windows: `accounting-app-<version>-windows-x64.zip` plus a `.sha256` file.
+- Android: split `app-<abi>-release.apk` files plus `sha256sums.txt`.
+
+`.github/workflows/release.yml` can be started manually to build both platforms
+and create or update a draft GitHub release with those assets. Dependabot and a
+dependency-review workflow keep the dependency surface current and reviewed.
 
 ## Current status
 
-Phase 0 (foundation) is in progress. The Rust domain, application and
-infrastructure layers have been ported from the previous Tauri project and are
-covered by the existing test suite. The Flutter application is still the default
-counter template, and the FRB bridge currently exposes only `greet`. The next
-phase is the Rust-to-Flutter adapter and the first end-to-end accounting slice.
+The Phase 1 vertical slice is complete: Rust owns the accounting rules, the
+SQLite migrations and the FRB bridge; Flutter provides company setup, journal
+entries, a trial balance, and full master-data management for customers,
+suppliers, materials, categories, units and opening balances.
+
+The Flutter app now uses a React-derived design system with the bundled Cairo
+font, light/dark themes, a persistent RTL workspace shell, a dashboard, a
+dedicated journal page, ERP-style tables, a `Ctrl+K` command palette and
+inventory notifications. Remaining work includes i18n switching, RBAC, tabs,
+form side panels, financial-year closing UI, and the Axum/PostgreSQL sync layer.
+

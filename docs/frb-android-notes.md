@@ -73,7 +73,10 @@ rustup which --toolchain stable rustc
 A correct build must contain the Rust library:
 
 - Windows: `app\build\windows\x64\runner\Release\accounting_app_flutter_isolates.dll`
-- Android: `lib/{arm64-v8a,armeabi-v7a,x86_64}/libaccounting_app_flutter_isolates.so`
-  inside `app\build\app\outputs\flutter-apk\app-release.apk`
+- Android: `lib/<abi>/libaccounting_app_flutter_isolates.so` inside the matching
+  split APK (`app-arm64-v8a-release.apk`, `app-armeabi-v7a-release.apk`, and
+  `app-x86_64-release.apk` when produced). Each APK carries only its own ABI.
 
-`.github/workflows/quality.yml` fails the build if either is missing.
+`.github/workflows/build-android.yml` fails the build if the ABI-specific Rust
+library is missing, and `.github/workflows/build-windows.yml` does the same for
+the DLL before packaging the ZIP. `quality.yml` calls both reusable workflows.
