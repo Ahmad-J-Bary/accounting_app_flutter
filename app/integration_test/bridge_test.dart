@@ -511,15 +511,7 @@ void main() {
       expect(double.parse(salesInvoice.totalAmount), 40);
       expect(salesInvoice.invoiceNumber, isNotEmpty);
 
-      final postedSales = await postInvoice(id: salesInvoice.id).catchError((
-        Object error,
-      ) {
-        if (error is ApiError) {
-          // ignore: avoid_print
-          print('postInvoice failed: ${error.code}: ${error.message}');
-        }
-        throw error;
-      });
+      final postedSales = await postInvoice(id: salesInvoice.id);
       expect(postedSales.status, 'Posted');
       expect(postedSales.lines, hasLength(1));
       expect(
