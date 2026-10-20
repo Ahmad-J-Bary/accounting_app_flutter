@@ -7,11 +7,26 @@ import 'directory.dart';
 import 'journal.dart';
 import 'ledger.dart';
 import 'opening_balances.dart';
+import 'payments_expenses.dart';
 import 'theme/app_theme.dart';
+import 'trade_documents.dart';
 import 'ui/app_ui.dart';
 import 'workspace_data.dart';
 
-enum WorkspaceSection { dashboard, journal, customers, suppliers, materials }
+enum WorkspaceSection {
+  dashboard,
+  journal,
+  salesInvoices,
+  purchaseInvoices,
+  salesReturns,
+  purchaseReturns,
+  receipts,
+  payments,
+  expenses,
+  customers,
+  suppliers,
+  materials,
+}
 
 class WorkspaceShell extends StatefulWidget {
   const WorkspaceShell({super.key, required this.gateway});
@@ -132,6 +147,18 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
       case DashboardTarget.journal:
         _select(WorkspaceSection.journal);
         break;
+      case DashboardTarget.salesInvoices:
+        _select(WorkspaceSection.salesInvoices);
+        break;
+      case DashboardTarget.purchaseInvoices:
+        _select(WorkspaceSection.purchaseInvoices);
+        break;
+      case DashboardTarget.receipts:
+        _select(WorkspaceSection.receipts);
+        break;
+      case DashboardTarget.expenses:
+        _select(WorkspaceSection.expenses);
+        break;
       case DashboardTarget.customers:
         _select(WorkspaceSection.customers);
         break;
@@ -154,6 +181,13 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
     return switch (section) {
       WorkspaceSection.dashboard => 'لوحة التحكم',
       WorkspaceSection.journal => 'قيود اليومية',
+      WorkspaceSection.salesInvoices => 'فواتير البيع',
+      WorkspaceSection.purchaseInvoices => 'فواتير الشراء',
+      WorkspaceSection.salesReturns => 'مرتجعات البيع',
+      WorkspaceSection.purchaseReturns => 'مرتجعات الشراء',
+      WorkspaceSection.receipts => 'المقبوضات',
+      WorkspaceSection.payments => 'المدفوعات',
+      WorkspaceSection.expenses => 'بنود المصاريف',
       WorkspaceSection.customers => 'العملاء',
       WorkspaceSection.suppliers => 'الموردون',
       WorkspaceSection.materials => 'المواد',
@@ -293,6 +327,47 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
         onRefresh: () => _load(showRefreshing: true),
         onCreateEntry: _createEntry,
       ),
+      WorkspaceSection.salesInvoices => InvoicesPage(
+        gateway: widget.gateway,
+        data: data,
+        kind: InvoiceListKind.sales,
+        onChanged: () => _load(showRefreshing: true),
+      ),
+      WorkspaceSection.purchaseInvoices => InvoicesPage(
+        gateway: widget.gateway,
+        data: data,
+        kind: InvoiceListKind.purchase,
+        onChanged: () => _load(showRefreshing: true),
+      ),
+      WorkspaceSection.salesReturns => ReturnsPage(
+        gateway: widget.gateway,
+        data: data,
+        kind: ReturnListKind.sales,
+        onChanged: () => _load(showRefreshing: true),
+      ),
+      WorkspaceSection.purchaseReturns => ReturnsPage(
+        gateway: widget.gateway,
+        data: data,
+        kind: ReturnListKind.purchase,
+        onChanged: () => _load(showRefreshing: true),
+      ),
+      WorkspaceSection.receipts => PaymentsPage(
+        gateway: widget.gateway,
+        data: data,
+        kind: PaymentListKind.receipts,
+        onChanged: () => _load(showRefreshing: true),
+      ),
+      WorkspaceSection.payments => PaymentsPage(
+        gateway: widget.gateway,
+        data: data,
+        kind: PaymentListKind.payments,
+        onChanged: () => _load(showRefreshing: true),
+      ),
+      WorkspaceSection.expenses => ExpensesPage(
+        gateway: widget.gateway,
+        data: data,
+        onChanged: () => _load(showRefreshing: true),
+      ),
       WorkspaceSection.customers => DirectoryPage(
         gateway: widget.gateway,
         data: data,
@@ -337,6 +412,27 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
         break;
       case _CommandAction.journal:
         _select(WorkspaceSection.journal);
+        break;
+      case _CommandAction.salesInvoices:
+        _select(WorkspaceSection.salesInvoices);
+        break;
+      case _CommandAction.purchaseInvoices:
+        _select(WorkspaceSection.purchaseInvoices);
+        break;
+      case _CommandAction.salesReturns:
+        _select(WorkspaceSection.salesReturns);
+        break;
+      case _CommandAction.purchaseReturns:
+        _select(WorkspaceSection.purchaseReturns);
+        break;
+      case _CommandAction.receipts:
+        _select(WorkspaceSection.receipts);
+        break;
+      case _CommandAction.payments:
+        _select(WorkspaceSection.payments);
+        break;
+      case _CommandAction.expenses:
+        _select(WorkspaceSection.expenses);
         break;
       case _CommandAction.customers:
         _select(WorkspaceSection.customers);
@@ -579,6 +675,61 @@ class _Sidebar extends StatelessWidget {
                     collapsed: collapsed,
                     active: selected == WorkspaceSection.journal,
                     onTap: () => onSelect(WorkspaceSection.journal),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  if (!collapsed)
+                    const _SidebarGroupLabel(label: 'المبيعات والمشتريات'),
+                  _SidebarItem(
+                    icon: Icons.receipt_long_outlined,
+                    label: 'فواتير البيع',
+                    collapsed: collapsed,
+                    active: selected == WorkspaceSection.salesInvoices,
+                    onTap: () => onSelect(WorkspaceSection.salesInvoices),
+                  ),
+                  _SidebarItem(
+                    icon: Icons.shopping_cart_checkout_outlined,
+                    label: 'فواتير الشراء',
+                    collapsed: collapsed,
+                    active: selected == WorkspaceSection.purchaseInvoices,
+                    onTap: () => onSelect(WorkspaceSection.purchaseInvoices),
+                  ),
+                  _SidebarItem(
+                    icon: Icons.assignment_return_outlined,
+                    label: 'مرتجعات البيع',
+                    collapsed: collapsed,
+                    active: selected == WorkspaceSection.salesReturns,
+                    onTap: () => onSelect(WorkspaceSection.salesReturns),
+                  ),
+                  _SidebarItem(
+                    icon: Icons.assignment_return_outlined,
+                    label: 'مرتجعات الشراء',
+                    collapsed: collapsed,
+                    active: selected == WorkspaceSection.purchaseReturns,
+                    onTap: () => onSelect(WorkspaceSection.purchaseReturns),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  if (!collapsed)
+                    const _SidebarGroupLabel(label: 'الخزينة والمصاريف'),
+                  _SidebarItem(
+                    icon: Icons.call_received_outlined,
+                    label: 'المقبوضات',
+                    collapsed: collapsed,
+                    active: selected == WorkspaceSection.receipts,
+                    onTap: () => onSelect(WorkspaceSection.receipts),
+                  ),
+                  _SidebarItem(
+                    icon: Icons.call_made_outlined,
+                    label: 'المدفوعات',
+                    collapsed: collapsed,
+                    active: selected == WorkspaceSection.payments,
+                    onTap: () => onSelect(WorkspaceSection.payments),
+                  ),
+                  _SidebarItem(
+                    icon: Icons.request_quote_outlined,
+                    label: 'بنود المصاريف',
+                    collapsed: collapsed,
+                    active: selected == WorkspaceSection.expenses,
+                    onTap: () => onSelect(WorkspaceSection.expenses),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   if (!collapsed)
@@ -1089,6 +1240,13 @@ class _MenuRow extends StatelessWidget {
 enum _CommandAction {
   dashboard,
   journal,
+  salesInvoices,
+  purchaseInvoices,
+  salesReturns,
+  purchaseReturns,
+  receipts,
+  payments,
+  expenses,
   customers,
   suppliers,
   materials,
@@ -1136,6 +1294,48 @@ class _CommandPaletteState extends State<_CommandPalette> {
       subtitle: 'إنشاء قيد وميزان المراجعة',
       icon: Icons.menu_book_outlined,
       action: _CommandAction.journal,
+    ),
+    _Command(
+      title: 'فواتير البيع',
+      subtitle: 'إصدار فواتير البيع وترحيلها',
+      icon: Icons.receipt_long_outlined,
+      action: _CommandAction.salesInvoices,
+    ),
+    _Command(
+      title: 'فواتير الشراء',
+      subtitle: 'تسجيل فواتير الشراء',
+      icon: Icons.shopping_cart_checkout_outlined,
+      action: _CommandAction.purchaseInvoices,
+    ),
+    _Command(
+      title: 'مرتجعات البيع',
+      subtitle: 'مرتجعات العملاء',
+      icon: Icons.assignment_return_outlined,
+      action: _CommandAction.salesReturns,
+    ),
+    _Command(
+      title: 'مرتجعات الشراء',
+      subtitle: 'مرتجعات الموردين',
+      icon: Icons.assignment_return_outlined,
+      action: _CommandAction.purchaseReturns,
+    ),
+    _Command(
+      title: 'المقبوضات',
+      subtitle: 'سندات القبض من العملاء',
+      icon: Icons.call_received_outlined,
+      action: _CommandAction.receipts,
+    ),
+    _Command(
+      title: 'المدفوعات',
+      subtitle: 'سندات الدفع للموردين',
+      icon: Icons.call_made_outlined,
+      action: _CommandAction.payments,
+    ),
+    _Command(
+      title: 'بنود المصاريف',
+      subtitle: 'إدارة بنود المصاريف وسندات الصرف',
+      icon: Icons.request_quote_outlined,
+      action: _CommandAction.expenses,
     ),
     _Command(
       title: 'العملاء',

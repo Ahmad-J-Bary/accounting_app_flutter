@@ -969,6 +969,43 @@ class AppSectionTitle extends StatelessWidget {
   }
 }
 
+/// A responsive, intrinsic-height grid for [AppMetricCard]s. Using a Wrap
+/// instead of a fixed-aspect-ratio GridView keeps the cards readable at every
+/// window width and avoids vertical overflow in compact layouts.
+class AppMetricGrid extends StatelessWidget {
+  const AppMetricGrid({
+    super.key,
+    required this.children,
+    this.minItemWidth = 230,
+    this.maxColumns = 4,
+  });
+
+  final List<Widget> children;
+  final double minItemWidth;
+  final int maxColumns;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = (constraints.maxWidth / minItemWidth).floor().clamp(
+          1,
+          maxColumns,
+        );
+        final width =
+            (constraints.maxWidth - (AppSpacing.md * (columns - 1))) / columns;
+        return Wrap(
+          spacing: AppSpacing.md,
+          runSpacing: AppSpacing.md,
+          children: [
+            for (final child in children) SizedBox(width: width, child: child),
+          ],
+        );
+      },
+    );
+  }
+}
+
 String formatCompactAmount(String raw) {
   final value = double.tryParse(raw);
   if (value == null) {

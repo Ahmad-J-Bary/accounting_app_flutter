@@ -57,7 +57,7 @@ pub async fn init_app(db_path: String) -> Result<(), ApiError> {
         .map(|_| ())
 }
 
-fn state() -> Result<&'static AppState, ApiError> {
+pub(crate) fn state() -> Result<&'static AppState, ApiError> {
     STATE.get().ok_or_else(|| {
         ApiError::new(
             "not_initialized",
@@ -283,10 +283,43 @@ pub struct AccountItem {
     pub name_en: String,
     pub account_type: String,
     pub purpose: String,
+    pub parent_id: Option<String>,
+    pub category: String,
+    pub level: i32,
+    pub opening_balance: String,
     pub currency: String,
+    pub exchange_rate: String,
+    pub debit: String,
+    pub credit: String,
     pub balance: String,
+    pub notes: Option<String>,
     pub is_active: bool,
     pub is_final: bool,
+    pub is_default: bool,
+}
+
+pub(crate) fn account_item(account: application::dto::account_dto::AccountDto) -> AccountItem {
+    AccountItem {
+        id: account.id,
+        code: account.code,
+        name_ar: account.name_ar,
+        name_en: account.name_en,
+        account_type: account.account_type,
+        purpose: account.purpose,
+        parent_id: account.parent_id,
+        category: account.category,
+        level: account.level,
+        opening_balance: account.opening_balance,
+        currency: account.currency,
+        exchange_rate: account.exchange_rate,
+        debit: account.debit,
+        credit: account.credit,
+        balance: account.balance,
+        notes: account.notes,
+        is_active: account.is_active,
+        is_final: account.is_final,
+        is_default: account.is_default,
+    }
 }
 
 pub async fn list_accounts() -> Result<Vec<AccountItem>, ApiError> {
@@ -294,18 +327,8 @@ pub async fn list_accounts() -> Result<Vec<AccountItem>, ApiError> {
 
     Ok(accounts
         .into_iter()
-        .map(|account| AccountItem {
-            id: account.id.0.to_string(),
-            code: account.code,
-            name_ar: account.name_ar,
-            name_en: account.name_en,
-            account_type: format!("{:?}", account.account_type),
-            purpose: format!("{:?}", account.purpose),
-            currency: account.currency.code,
-            balance: account.balance.to_string(),
-            is_active: account.is_active,
-            is_final: account.is_final,
-        })
+        .map(application::dto::account_dto::AccountDto::from)
+        .map(account_item)
         .collect())
 }
 

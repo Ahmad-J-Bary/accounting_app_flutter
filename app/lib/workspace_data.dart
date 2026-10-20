@@ -10,6 +10,11 @@ class WorkspaceData {
     required this.materials,
     required this.categories,
     required this.currencies,
+    this.invoices = const [],
+    this.salesReturns = const [],
+    this.purchaseReturns = const [],
+    this.payments = const [],
+    this.expenseItems = const [],
   });
 
   final LedgerStatus status;
@@ -19,6 +24,39 @@ class WorkspaceData {
   final List<LedgerMaterial> materials;
   final List<LedgerCategory> categories;
   final List<CurrencyOption> currencies;
+  final List<LedgerInvoice> invoices;
+  final List<LedgerReturn> salesReturns;
+  final List<LedgerReturn> purchaseReturns;
+  final List<LedgerPayment> payments;
+  final List<LedgerAccount> expenseItems;
+
+  List<LedgerInvoice> get salesInvoices => invoices
+      .where((invoice) => invoice.invoiceType == 'Sales')
+      .toList(growable: false);
+
+  List<LedgerInvoice> get purchaseInvoices => invoices
+      .where((invoice) => invoice.invoiceType == 'Purchase')
+      .toList(growable: false);
+
+  double get invoiceSalesTotal => salesInvoices
+      .where((invoice) => invoice.isPosted)
+      .map((invoice) => parseAmount(invoice.total))
+      .fold(0, (total, value) => total + value);
+
+  double get invoicePurchaseTotal => purchaseInvoices
+      .where((invoice) => invoice.isPosted)
+      .map((invoice) => parseAmount(invoice.total))
+      .fold(0, (total, value) => total + value);
+
+  double get openReceivables => salesInvoices
+      .where((invoice) => invoice.isPosted)
+      .map((invoice) => parseAmount(invoice.remaining))
+      .fold(0, (total, value) => total + value);
+
+  double get expenseTotal => payments
+      .where((payment) => payment.paymentType == 'ExpenseVoucher')
+      .map((payment) => parseAmount(payment.amount))
+      .fold(0, (total, value) => total + value);
 
   String get baseCurrency => status.baseCurrencyCode;
 
@@ -91,6 +129,11 @@ class WorkspaceData {
       gateway.loadMaterials(),
       gateway.loadCategories(),
       gateway.availableCurrencies(),
+      gateway.loadInvoices(),
+      gateway.loadSalesReturns(),
+      gateway.loadPurchaseReturns(),
+      gateway.loadPayments(),
+      gateway.loadExpenseItems(),
     ]);
 
     final snapshot = results[0] as LedgerSnapshot;
@@ -102,6 +145,11 @@ class WorkspaceData {
       materials: results[3] as List<LedgerMaterial>,
       categories: results[4] as List<LedgerCategory>,
       currencies: results[5] as List<CurrencyOption>,
+      invoices: results[6] as List<LedgerInvoice>,
+      salesReturns: results[7] as List<LedgerReturn>,
+      purchaseReturns: results[8] as List<LedgerReturn>,
+      payments: results[9] as List<LedgerPayment>,
+      expenseItems: results[10] as List<LedgerAccount>,
     );
   }
 }

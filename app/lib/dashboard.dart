@@ -9,6 +9,10 @@ import 'workspace_data.dart';
 
 enum DashboardTarget {
   journal,
+  salesInvoices,
+  purchaseInvoices,
+  receipts,
+  expenses,
   customers,
   suppliers,
   materials,
@@ -162,6 +166,39 @@ class DashboardPage extends StatelessWidget {
                 tone: AppBadgeTone.info,
                 hint: '${data.suppliers.length} مورد',
                 onTap: () => onNavigate(DashboardTarget.suppliers),
+              ),
+              AppMetricCard(
+                label: 'المبيعات المرحّلة',
+                value: formatMoney(
+                  data.invoiceSalesTotal.toStringAsFixed(2),
+                  currency: data.baseCurrency,
+                ),
+                icon: Icons.receipt_long_outlined,
+                tone: AppBadgeTone.success,
+                hint: '${data.salesInvoices.length} فاتورة بيع',
+                onTap: () => onNavigate(DashboardTarget.salesInvoices),
+              ),
+              AppMetricCard(
+                label: 'المشتريات المرحّلة',
+                value: formatMoney(
+                  data.invoicePurchaseTotal.toStringAsFixed(2),
+                  currency: data.baseCurrency,
+                ),
+                icon: Icons.shopping_cart_checkout_outlined,
+                tone: AppBadgeTone.info,
+                hint: '${data.purchaseInvoices.length} فاتورة شراء',
+                onTap: () => onNavigate(DashboardTarget.purchaseInvoices),
+              ),
+              AppMetricCard(
+                label: 'المصاريف',
+                value: formatMoney(
+                  data.expenseTotal.toStringAsFixed(2),
+                  currency: data.baseCurrency,
+                ),
+                icon: Icons.request_quote_outlined,
+                tone: AppBadgeTone.warning,
+                hint: '${data.expenseItems.length} بند مصروف',
+                onTap: () => onNavigate(DashboardTarget.expenses),
               ),
               AppMetricCard(
                 label: 'قيمة المخزون',
@@ -625,6 +662,27 @@ class _QuickActionsCard extends StatelessWidget {
         icon: Icons.post_add_outlined,
         color: theme.colorScheme.primary,
         target: DashboardTarget.journal,
+      ),
+      _QuickAction(
+        label: 'فاتورة بيع',
+        hint: 'إنشاء فاتورة وترحيلها',
+        icon: Icons.receipt_long_outlined,
+        color: semantic.success,
+        target: DashboardTarget.salesInvoices,
+      ),
+      _QuickAction(
+        label: 'فاتورة شراء',
+        hint: 'تسجيل مشتريات المخزون',
+        icon: Icons.shopping_cart_checkout_outlined,
+        color: semantic.info,
+        target: DashboardTarget.purchaseInvoices,
+      ),
+      _QuickAction(
+        label: 'سند مصروف',
+        hint: 'صرف من بند مصاريف',
+        icon: Icons.request_quote_outlined,
+        color: semantic.warning,
+        target: DashboardTarget.expenses,
       ),
       _QuickAction(
         label: 'عميل جديد',

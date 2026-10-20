@@ -326,6 +326,42 @@ class _DirectoryPageState extends State<DirectoryPage>
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
+              AppMetricGrid(
+                maxColumns: 3,
+                children: [
+                  AppMetricCard(
+                    label: 'العملاء',
+                    value: '${widget.data.customers.length}',
+                    icon: Icons.people_alt_outlined,
+                    tone: AppBadgeTone.warning,
+                    hint: formatMoney(
+                      widget.data.customerBalances.toStringAsFixed(2),
+                      currency: widget.data.baseCurrency,
+                    ),
+                  ),
+                  AppMetricCard(
+                    label: 'الموردون',
+                    value: '${widget.data.suppliers.length}',
+                    icon: Icons.local_shipping_outlined,
+                    tone: AppBadgeTone.info,
+                    hint: formatMoney(
+                      widget.data.supplierBalances.toStringAsFixed(2),
+                      currency: widget.data.baseCurrency,
+                    ),
+                  ),
+                  AppMetricCard(
+                    label: 'المواد',
+                    value: '${widget.data.materials.length}',
+                    icon: Icons.inventory_2_outlined,
+                    tone: AppBadgeTone.success,
+                    hint: formatMoney(
+                      widget.data.inventoryValue.toStringAsFixed(2),
+                      currency: widget.data.baseCurrency,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
               AppCard(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 child: LayoutBuilder(

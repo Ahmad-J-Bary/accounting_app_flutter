@@ -79,6 +79,9 @@ jobs:
           version: ${{ steps.version.outputs.version }}
           commitish: ${{ github.sha }}
           publish: ${{ github.event.inputs.draft == 'false' }}
+          # The 1.x desktop/handheld line ships as a pre-release until the
+          # financial-year closing and partner-capital modules are complete.
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload the release assets

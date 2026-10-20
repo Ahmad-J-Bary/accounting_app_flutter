@@ -416,6 +416,361 @@ void main() {
       expect(double.parse(supplierWithOpening.openingBalance), 50);
       expect(double.parse(supplierWithOpening.balance), 50);
 
+      // Trade documents: a sales invoice, a sales return, a purchase invoice
+      // and a purchase return all go through the same bridge that the UI uses.
+      final tradeMaterial = await createMaterial(
+        input: MaterialCreateInput(
+          name: 'مادة الفواتير',
+          nameEn: 'Invoice material',
+          barcode: 'BRIDGE-INVOICE-001',
+          code: null,
+          minimumStock: '0',
+          unitName: 'قطعة',
+          conversionFactor: '1',
+          extraUnits: [],
+          categoryIds: [],
+          purchasePrice: '10',
+          salePrice: '20',
+          currency: currency,
+          notes: null,
+          hasExpiry: false,
+          expiryAlertBeforeDays: 30,
+        ),
+      );
+      final baseTradeUnit = tradeMaterial.units.firstWhere(
+        (unit) => unit.isBase,
+      );
+
+      // Sales invoices require available stock. Receive an initial purchase
+      // first, then exercise the sales path against real inventory lots.
+      final openingStock = await createInvoice(
+        input: InvoiceInput(
+          invoiceType: 'Purchase',
+          customerId: null,
+          customerName: null,
+          supplierId: openingSupplier.id,
+          supplierName: null,
+          lines: [
+            InvoiceLineInput(
+              materialId: tradeMaterial.id,
+              quantity: '10',
+              unitPrice: '10',
+              discountPercent: '0',
+              unitId: baseTradeUnit.id,
+              conversionFactor: '1',
+              warehouseId: null,
+              notes: null,
+            ),
+          ],
+          taxAmount: '0',
+          discountAmount: '0',
+          extraCosts: '0',
+          paymentMethod: 'Deferred',
+          amountPaid: '0',
+          issuedAt: DateTime.now().toUtc().toIso8601String(),
+          currencyCode: currency,
+          exchangeRate: '1',
+          notes: 'رصيد افتتاحي للمخزون',
+        ),
+        post: true,
+      );
+      expect(openingStock.status, 'Posted');
+
+      final salesInvoice = await createInvoice(
+        input: InvoiceInput(
+          invoiceType: 'Sales',
+          customerId: openingCustomer.id,
+          customerName: null,
+          supplierId: null,
+          supplierName: null,
+          lines: [
+            InvoiceLineInput(
+              materialId: tradeMaterial.id,
+              quantity: '2',
+              unitPrice: '20',
+              discountPercent: '0',
+              unitId: baseTradeUnit.id,
+              conversionFactor: '1',
+              warehouseId: null,
+              notes: null,
+            ),
+          ],
+          taxAmount: '0',
+          discountAmount: '0',
+          extraCosts: '0',
+          paymentMethod: 'Deferred',
+          amountPaid: '0',
+          issuedAt: DateTime.now().toUtc().toIso8601String(),
+          currencyCode: currency,
+          exchangeRate: '1',
+          notes: 'فاتورة اختبار',
+        ),
+        post: false,
+      );
+      expect(salesInvoice.status, 'Draft');
+      expect(double.parse(salesInvoice.totalAmount), 40);
+      expect(salesInvoice.invoiceNumber, isNotEmpty);
+
+      final postedSales = await postInvoice(id: salesInvoice.id).catchError((
+        Object error,
+      ) {
+        if (error is ApiError) {
+          // ignore: avoid_print
+          print('postInvoice failed: ${error.code}: ${error.message}');
+        }
+        throw error;
+      });
+      expect(postedSales.status, 'Posted');
+      expect(postedSales.lines, hasLength(1));
+      expect(
+        (await listInvoices(
+          invoiceType: 'Sales',
+        )).any((invoice) => invoice.id == salesInvoice.id),
+        isTrue,
+      );
+
+      // The Flutter editor defaults to Cash; verify the core settles the
+      // invoice and reports no remaining balance for that path too.
+      final cashSale = await createInvoice(
+        input: InvoiceInput(
+          invoiceType: 'Sales',
+          customerId: openingCustomer.id,
+          customerName: null,
+          supplierId: null,
+          supplierName: null,
+          lines: [
+            InvoiceLineInput(
+              materialId: tradeMaterial.id,
+              quantity: '1',
+              unitPrice: '20',
+              discountPercent: '0',
+              unitId: baseTradeUnit.id,
+              conversionFactor: '1',
+              warehouseId: null,
+              notes: null,
+            ),
+          ],
+          taxAmount: '0',
+          discountAmount: '0',
+          extraCosts: '0',
+          paymentMethod: 'Cash',
+          amountPaid: '20',
+          issuedAt: DateTime.now().toUtc().toIso8601String(),
+          currencyCode: currency,
+          exchangeRate: '1',
+          notes: 'بيع نقدي',
+        ),
+        post: true,
+      );
+      expect(cashSale.status, 'Posted');
+      expect(double.parse(cashSale.totalAmount), 20);
+      expect(double.parse(cashSale.amountPaid), 20);
+      expect(double.parse(cashSale.remainingAmount), 0);
+
+      final salesReturn = await createSalesReturn(
+        input: ReturnInput(
+          partyId: openingCustomer.id,
+          returnDate: DateTime.now().toUtc().toIso8601String(),
+          lines: [
+            ReturnLineInput(
+              materialId: tradeMaterial.id,
+              quantity: '1',
+              unitPrice: '20',
+              unitId: baseTradeUnit.id,
+              notes: null,
+              invoiceLineId: null,
+            ),
+          ],
+          notes: 'مرتجع اختبار',
+          settlementMode: 'deduct_from_debt',
+          settlementAmount: null,
+          isPaid: false,
+        ),
+      );
+      expect(salesReturn.returnNumber, isNotEmpty);
+      expect(double.parse(salesReturn.totalAmount), 20);
+      expect(
+        (await listSalesReturns()).any((item) => item.id == salesReturn.id),
+        isTrue,
+      );
+
+      final purchaseInvoice = await createInvoice(
+        input: InvoiceInput(
+          invoiceType: 'Purchase',
+          customerId: null,
+          customerName: null,
+          supplierId: openingSupplier.id,
+          supplierName: null,
+          lines: [
+            InvoiceLineInput(
+              materialId: tradeMaterial.id,
+              quantity: '3',
+              unitPrice: '10',
+              discountPercent: '0',
+              unitId: baseTradeUnit.id,
+              conversionFactor: '1',
+              warehouseId: null,
+              notes: null,
+            ),
+          ],
+          taxAmount: '0',
+          discountAmount: '0',
+          extraCosts: '0',
+          paymentMethod: 'Deferred',
+          amountPaid: '0',
+          issuedAt: DateTime.now().toUtc().toIso8601String(),
+          currencyCode: currency,
+          exchangeRate: '1',
+          notes: null,
+        ),
+        post: true,
+      );
+      expect(purchaseInvoice.status, 'Posted');
+      expect(double.parse(purchaseInvoice.totalAmount), 30);
+      expect(
+        (await listInvoices(
+          invoiceType: 'Purchase',
+        )).any((invoice) => invoice.id == purchaseInvoice.id),
+        isTrue,
+      );
+
+      final purchaseReturn = await createPurchaseReturn(
+        input: ReturnInput(
+          partyId: openingSupplier.id,
+          returnDate: DateTime.now().toUtc().toIso8601String(),
+          lines: [
+            ReturnLineInput(
+              materialId: tradeMaterial.id,
+              quantity: '1',
+              unitPrice: '10',
+              unitId: baseTradeUnit.id,
+              notes: null,
+              invoiceLineId: null,
+            ),
+          ],
+          notes: null,
+          settlementMode: 'deduct_from_debt',
+          settlementAmount: null,
+          isPaid: false,
+        ),
+      );
+      expect(double.parse(purchaseReturn.totalAmount), 10);
+      expect(
+        (await listPurchaseReturns()).any(
+          (item) => item.id == purchaseReturn.id,
+        ),
+        isTrue,
+      );
+
+      // Receipts, payments and expense vouchers share the payment bridge.
+      final receipt = await createPayment(
+        input: PaymentInput(
+          paymentType: 'Receipt',
+          amount: '5',
+          currencyCode: currency,
+          exchangeRate: '1',
+          paymentDate: DateTime.now().toUtc().toIso8601String(),
+          debitAccountId: null,
+          creditAccountId: null,
+          customerId: openingCustomer.id,
+          supplierId: null,
+          reference: 'BRIDGE-RCV-1',
+          notes: null,
+        ),
+      );
+      expect(receipt.voucherNumber, startsWith('RCV'));
+      expect(receipt.journalEntryNumber, isNotNull);
+      expect(
+        (await listPayments()).any((payment) => payment.id == receipt.id),
+        isTrue,
+      );
+      try {
+        await deletePayment(id: receipt.id);
+        fail('posted receipts must not be deleted directly');
+      } on ApiError catch (error) {
+        expect(error.code, 'forbidden');
+      }
+      expect(
+        (await listPayments()).any((payment) => payment.id == receipt.id),
+        isTrue,
+      );
+
+      final expenseItem = await createExpenseItem(
+        input: ExpenseItemInput(
+          code: '',
+          nameAr: 'كهرباء اختبار',
+          nameEn: 'Bridge electricity',
+          openingBalance: '0',
+          debit: '0',
+          credit: '0',
+          currency: currency,
+          exchangeRate: '1',
+          notes: null,
+        ),
+      );
+      expect(expenseItem.code, isNotEmpty);
+      expect(expenseItem.parentId, isNotNull);
+      expect(
+        (await listExpenseItems()).any((item) => item.id == expenseItem.id),
+        isTrue,
+      );
+
+      final expenseVoucher = await createPayment(
+        input: PaymentInput(
+          paymentType: 'ExpenseVoucher',
+          amount: '7',
+          currencyCode: currency,
+          exchangeRate: '1',
+          paymentDate: DateTime.now().toUtc().toIso8601String(),
+          debitAccountId: expenseItem.id,
+          creditAccountId: null,
+          customerId: null,
+          supplierId: null,
+          reference: 'BRIDGE-EXP-1',
+          notes: 'سند مصروف اختبار',
+        ),
+      );
+      expect(expenseVoucher.voucherNumber, startsWith('EXP'));
+      expect(expenseVoucher.journalEntryNumber, isNotNull);
+
+      final updatedExpense = await updateExpenseItem(
+        input: ExpenseItemInput(
+          id: expenseItem.id,
+          code: expenseItem.code,
+          nameAr: 'كهرباء اختبار محدثة',
+          nameEn: 'Bridge electricity updated',
+          openingBalance: '0',
+          debit: '0',
+          credit: '0',
+          currency: currency,
+          exchangeRate: '1',
+          notes: 'updated',
+        ),
+      );
+      expect(updatedExpense.nameAr, contains('محدثة'));
+      expect(updatedExpense.code, expenseItem.code);
+
+      // A clean item can be deleted; the one used by a posted voucher is kept
+      // as audit history and is not removed by this test.
+      final cleanExpense = await createExpenseItem(
+        input: ExpenseItemInput(
+          code: '',
+          nameAr: 'بند قابل للحذف',
+          nameEn: 'Deletable item',
+          openingBalance: '0',
+          debit: '0',
+          credit: '0',
+          currency: currency,
+          exchangeRate: '1',
+          notes: null,
+        ),
+      );
+      await deleteExpenseItem(id: cleanExpense.id);
+      expect(
+        (await listExpenseItems()).any((item) => item.id == cleanExpense.id),
+        isFalse,
+      );
+
       // The Rust side keeps the SQLite pool open for the app lifetime, so
       // deleting the temp directory is best-effort on Windows.
       try {

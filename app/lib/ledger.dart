@@ -16,6 +16,15 @@ class LedgerAccount {
     required this.balance,
     required this.isFinal,
     required this.isActive,
+    this.purpose = '',
+    this.parentId,
+    this.category = '',
+    this.level = 0,
+    this.openingBalance = '0',
+    this.debit = '0',
+    this.credit = '0',
+    this.notes,
+    this.isDefault = false,
   });
 
   final String id;
@@ -27,8 +36,277 @@ class LedgerAccount {
   final String balance;
   final bool isFinal;
   final bool isActive;
+  final String purpose;
+  final String? parentId;
+  final String category;
+  final int level;
+  final String openingBalance;
+  final String debit;
+  final String credit;
+  final String? notes;
+  final bool isDefault;
 
   String get displayName => nameAr.isNotEmpty ? nameAr : nameEn;
+}
+
+class LedgerInvoiceLine {
+  const LedgerInvoiceLine({
+    required this.materialId,
+    required this.materialName,
+    required this.quantity,
+    required this.unitPrice,
+    this.unitId,
+    this.unitName,
+    this.conversionFactor,
+    this.discountPercent = '0',
+    this.lineTotal = '0',
+    this.code = '',
+    this.barcode = '',
+    this.categoryName = '',
+    this.notes,
+  });
+
+  final String materialId;
+  final String materialName;
+  final String quantity;
+  final String unitPrice;
+  final String? unitId;
+  final String? unitName;
+  final String? conversionFactor;
+  final String discountPercent;
+  final String lineTotal;
+  final String code;
+  final String barcode;
+  final String categoryName;
+  final String? notes;
+}
+
+class LedgerInvoice {
+  const LedgerInvoice({
+    required this.id,
+    required this.number,
+    required this.invoiceType,
+    required this.partyName,
+    required this.status,
+    required this.lines,
+    required this.taxAmount,
+    required this.discountAmount,
+    required this.extraCosts,
+    required this.subtotal,
+    required this.total,
+    required this.amountPaid,
+    required this.remaining,
+    required this.paymentMethod,
+    required this.issuedAt,
+    required this.currency,
+    this.partyId,
+    this.notes,
+  });
+
+  final String id;
+  final String number;
+  final String invoiceType;
+  final String partyName;
+  final String status;
+  final List<LedgerInvoiceLine> lines;
+  final String taxAmount;
+  final String discountAmount;
+  final String extraCosts;
+  final String subtotal;
+  final String total;
+  final String amountPaid;
+  final String remaining;
+  final String paymentMethod;
+  final String issuedAt;
+  final String currency;
+  final String? partyId;
+  final String? notes;
+
+  bool get isPosted => status == 'Posted';
+}
+
+class InvoiceDraft {
+  const InvoiceDraft({
+    required this.invoiceType,
+    required this.partyId,
+    required this.partyName,
+    required this.lines,
+    this.paymentMethod = 'Cash',
+    this.amountPaid = '0',
+    this.discountAmount = '0',
+    this.taxAmount = '0',
+    this.extraCosts = '0',
+    this.notes,
+    this.currency = '',
+    this.issuedAt,
+  });
+
+  final String invoiceType;
+  final String partyId;
+  final String partyName;
+  final List<LedgerInvoiceLine> lines;
+  final String paymentMethod;
+  final String amountPaid;
+  final String discountAmount;
+  final String taxAmount;
+  final String extraCosts;
+  final String? notes;
+  final String currency;
+  final DateTime? issuedAt;
+}
+
+class LedgerReturnLine {
+  const LedgerReturnLine({
+    required this.materialId,
+    required this.materialName,
+    required this.quantity,
+    required this.unitPrice,
+    this.unitId,
+    this.lineTotal = '0',
+    this.notes,
+  });
+
+  final String materialId;
+  final String materialName;
+  final String quantity;
+  final String unitPrice;
+  final String? unitId;
+  final String lineTotal;
+  final String? notes;
+}
+
+class LedgerReturn {
+  const LedgerReturn({
+    required this.id,
+    required this.number,
+    required this.partyId,
+    required this.partyName,
+    required this.returnDate,
+    required this.lines,
+    required this.total,
+    this.notes,
+  });
+
+  final String id;
+  final String number;
+  final String partyId;
+  final String partyName;
+  final String returnDate;
+  final List<LedgerReturnLine> lines;
+  final String total;
+  final String? notes;
+}
+
+class ReturnDraft {
+  const ReturnDraft({
+    required this.kind,
+    required this.partyId,
+    required this.lines,
+    this.notes,
+    this.settlementMode,
+    this.settlementAmount,
+    this.isPaid = false,
+    this.returnDate,
+  });
+
+  final String kind;
+  final String partyId;
+  final List<LedgerReturnLine> lines;
+  final String? notes;
+  final String? settlementMode;
+  final String? settlementAmount;
+  final bool isPaid;
+  final DateTime? returnDate;
+}
+
+class LedgerPayment {
+  const LedgerPayment({
+    required this.id,
+    required this.voucherNumber,
+    required this.paymentType,
+    required this.amount,
+    required this.currency,
+    required this.paymentDate,
+    this.exchangeRate = '1',
+    this.journalEntryNumber,
+    this.customerId,
+    this.customerName,
+    this.supplierId,
+    this.supplierName,
+    this.reference,
+    this.notes,
+  });
+
+  final String id;
+  final String voucherNumber;
+  final String paymentType;
+  final String amount;
+  final String currency;
+  final String exchangeRate;
+  final String paymentDate;
+  final String? journalEntryNumber;
+  final String? customerId;
+  final String? customerName;
+  final String? supplierId;
+  final String? supplierName;
+  final String? reference;
+  final String? notes;
+
+  String get partyName => customerName ?? supplierName ?? '';
+}
+
+class PaymentDraft {
+  const PaymentDraft({
+    required this.paymentType,
+    required this.amount,
+    required this.currency,
+    this.exchangeRate = '1',
+    this.customerId,
+    this.supplierId,
+    this.debitAccountId,
+    this.creditAccountId,
+    this.reference,
+    this.notes,
+    this.paymentDate,
+  });
+
+  final String paymentType;
+  final String amount;
+  final String currency;
+  final String exchangeRate;
+  final String? customerId;
+  final String? supplierId;
+  final String? debitAccountId;
+  final String? creditAccountId;
+  final String? reference;
+  final String? notes;
+  final DateTime? paymentDate;
+}
+
+class ExpenseItemDraft {
+  const ExpenseItemDraft({
+    required this.nameAr,
+    required this.nameEn,
+    required this.code,
+    required this.currency,
+    this.id,
+    this.openingBalance = '0',
+    this.debit = '0',
+    this.credit = '0',
+    this.exchangeRate = '1',
+    this.notes,
+  });
+
+  final String? id;
+  final String nameAr;
+  final String nameEn;
+  final String code;
+  final String currency;
+  final String openingBalance;
+  final String debit;
+  final String credit;
+  final String exchangeRate;
+  final String? notes;
 }
 
 class TrialBalanceRow {
@@ -411,6 +689,51 @@ abstract class LedgerGateway {
     required String description,
     required String currency,
   });
+
+  Future<List<LedgerInvoice>> loadInvoices() async => const [];
+
+  Future<LedgerInvoice> createInvoice(
+    InvoiceDraft draft, {
+    bool post = false,
+  }) async => throw UnimplementedError();
+
+  Future<LedgerInvoice> updateInvoice(String id, InvoiceDraft draft) async =>
+      throw UnimplementedError();
+
+  Future<LedgerInvoice> postInvoice(String id) async =>
+      throw UnimplementedError();
+
+  Future<void> deleteInvoice(String id) async => throw UnimplementedError();
+
+  Future<List<LedgerReturn>> loadSalesReturns() async => const [];
+
+  Future<List<LedgerReturn>> loadPurchaseReturns() async => const [];
+
+  Future<LedgerReturn> createSalesReturn(ReturnDraft draft) async =>
+      throw UnimplementedError();
+
+  Future<LedgerReturn> createPurchaseReturn(ReturnDraft draft) async =>
+      throw UnimplementedError();
+
+  Future<List<LedgerPayment>> loadPayments() async => const [];
+
+  Future<LedgerPayment> createPayment(PaymentDraft draft) async =>
+      throw UnimplementedError();
+
+  Future<LedgerPayment> updatePayment(String id, PaymentDraft draft) async =>
+      throw UnimplementedError();
+
+  Future<void> deletePayment(String id) async => throw UnimplementedError();
+
+  Future<List<LedgerAccount>> loadExpenseItems() async => const [];
+
+  Future<void> createExpenseItem(ExpenseItemDraft draft) async =>
+      throw UnimplementedError();
+
+  Future<void> updateExpenseItem(ExpenseItemDraft draft) async =>
+      throw UnimplementedError();
+
+  Future<void> deleteExpenseItem(String id) async => throw UnimplementedError();
 }
 
 class RustLedgerGateway implements LedgerGateway {
@@ -490,21 +813,7 @@ class RustLedgerGateway implements LedgerGateway {
 
     return LedgerSnapshot(
       status: status,
-      accounts: accounts
-          .map(
-            (account) => LedgerAccount(
-              id: account.id,
-              code: account.code,
-              nameAr: account.nameAr,
-              nameEn: account.nameEn,
-              accountType: account.accountType,
-              currency: account.currency,
-              balance: account.balance,
-              isFinal: account.isFinal,
-              isActive: account.isActive,
-            ),
-          )
-          .toList(),
+      accounts: accounts.map(_accountFromBridge).toList(),
       rows: trial.lines
           .map(
             (line) => TrialBalanceRow(
@@ -936,6 +1245,355 @@ class RustLedgerGateway implements LedgerGateway {
 
     await rust.postJournalEntry(entryId: entry.id);
   }
+
+  @override
+  Future<List<LedgerInvoice>> loadInvoices() async {
+    await _ensureReady();
+    final sales = await rust.listInvoices(invoiceType: 'Sales');
+    final purchases = await rust.listInvoices(invoiceType: 'Purchase');
+    return [...sales, ...purchases].map(_invoiceFromBridge).toList();
+  }
+
+  @override
+  Future<LedgerInvoice> createInvoice(
+    InvoiceDraft draft, {
+    bool post = false,
+  }) async {
+    await _ensureReady();
+    final invoice = await rust.createInvoice(
+      input: _invoiceInputFromDraft(draft),
+      post: post,
+    );
+    return _invoiceFromBridge(invoice);
+  }
+
+  @override
+  Future<LedgerInvoice> updateInvoice(String id, InvoiceDraft draft) async {
+    await _ensureReady();
+    final invoice = await rust.updateInvoice(
+      id: id,
+      input: _invoiceInputFromDraft(draft),
+    );
+    return _invoiceFromBridge(invoice);
+  }
+
+  @override
+  Future<LedgerInvoice> postInvoice(String id) async {
+    await _ensureReady();
+    return _invoiceFromBridge(await rust.postInvoice(id: id));
+  }
+
+  @override
+  Future<void> deleteInvoice(String id) async {
+    await _ensureReady();
+    await rust.deleteInvoice(id: id);
+  }
+
+  @override
+  Future<List<LedgerReturn>> loadSalesReturns() async {
+    await _ensureReady();
+    final returns = await rust.listSalesReturns();
+    return returns.map(_salesReturnFromBridge).toList();
+  }
+
+  @override
+  Future<List<LedgerReturn>> loadPurchaseReturns() async {
+    await _ensureReady();
+    final returns = await rust.listPurchaseReturns();
+    return returns.map(_purchaseReturnFromBridge).toList();
+  }
+
+  @override
+  Future<LedgerReturn> createSalesReturn(ReturnDraft draft) async {
+    await _ensureReady();
+    final result = await rust.createSalesReturn(
+      input: _returnInputFromDraft(draft),
+    );
+    return _salesReturnFromBridge(result);
+  }
+
+  @override
+  Future<LedgerReturn> createPurchaseReturn(ReturnDraft draft) async {
+    await _ensureReady();
+    final result = await rust.createPurchaseReturn(
+      input: _returnInputFromDraft(draft),
+    );
+    return _purchaseReturnFromBridge(result);
+  }
+
+  @override
+  Future<List<LedgerPayment>> loadPayments() async {
+    await _ensureReady();
+    final payments = await rust.listPayments();
+    return payments
+        .map(
+          (payment) => LedgerPayment(
+            id: payment.id,
+            voucherNumber: payment.voucherNumber,
+            paymentType: payment.paymentType,
+            amount: payment.amount,
+            currency: payment.currencyCode,
+            exchangeRate: payment.exchangeRate,
+            paymentDate: payment.paymentDate,
+            journalEntryNumber: payment.journalEntryNumber,
+            customerId: payment.customerId,
+            customerName: payment.customerName,
+            supplierId: payment.supplierId,
+            supplierName: payment.supplierName,
+            reference: payment.reference,
+            notes: payment.notes,
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  Future<LedgerPayment> createPayment(PaymentDraft draft) async {
+    await _ensureReady();
+    final payment = await rust.createPayment(
+      input: _paymentInputFromDraft(draft),
+    );
+    return _paymentFromBridge(payment);
+  }
+
+  @override
+  Future<LedgerPayment> updatePayment(String id, PaymentDraft draft) async {
+    await _ensureReady();
+    final payment = await rust.updatePayment(
+      id: id,
+      input: _paymentInputFromDraft(draft),
+    );
+    return _paymentFromBridge(payment);
+  }
+
+  @override
+  Future<void> deletePayment(String id) async {
+    await _ensureReady();
+    await rust.deletePayment(id: id);
+  }
+
+  @override
+  Future<List<LedgerAccount>> loadExpenseItems() async {
+    await _ensureReady();
+    final items = await rust.listExpenseItems();
+    return items.map(_accountFromBridge).toList();
+  }
+
+  @override
+  Future<void> createExpenseItem(ExpenseItemDraft draft) async {
+    await _ensureReady();
+    await rust.createExpenseItem(input: _expenseItemInput(draft));
+  }
+
+  @override
+  Future<void> updateExpenseItem(ExpenseItemDraft draft) async {
+    await _ensureReady();
+    await rust.updateExpenseItem(input: _expenseItemInput(draft));
+  }
+
+  @override
+  Future<void> deleteExpenseItem(String id) async {
+    await _ensureReady();
+    await rust.deleteExpenseItem(id: id);
+  }
+}
+
+LedgerAccount _accountFromBridge(rust.AccountItem account) {
+  return LedgerAccount(
+    id: account.id,
+    code: account.code,
+    nameAr: account.nameAr,
+    nameEn: account.nameEn,
+    accountType: account.accountType,
+    currency: account.currency,
+    balance: account.balance,
+    isFinal: account.isFinal,
+    isActive: account.isActive,
+    purpose: account.purpose,
+    parentId: account.parentId,
+    category: account.category,
+    level: account.level,
+    openingBalance: account.openingBalance,
+    debit: account.debit,
+    credit: account.credit,
+    notes: account.notes,
+    isDefault: account.isDefault,
+  );
+}
+
+LedgerInvoice _invoiceFromBridge(rust.InvoiceView invoice) {
+  return LedgerInvoice(
+    id: invoice.id,
+    number: invoice.invoiceNumber,
+    invoiceType: invoice.invoiceType,
+    partyName: invoice.partyName,
+    partyId: invoice.partyId,
+    status: invoice.status,
+    lines: invoice.lines
+        .map(
+          (line) => LedgerInvoiceLine(
+            materialId: line.materialId,
+            materialName: line.materialName,
+            quantity: line.quantity,
+            unitPrice: line.unitPrice,
+            unitId: line.unitId,
+            conversionFactor: line.conversionFactor,
+            discountPercent: line.discountPercent,
+            lineTotal: line.lineTotal,
+            code: line.code,
+            barcode: line.barcode,
+            categoryName: line.categoryName,
+            notes: line.notes,
+          ),
+        )
+        .toList(),
+    taxAmount: invoice.taxAmount,
+    discountAmount: invoice.discountAmount,
+    extraCosts: invoice.extraCosts,
+    subtotal: invoice.subtotalAmount,
+    total: invoice.totalAmount,
+    amountPaid: invoice.amountPaid,
+    remaining: invoice.remainingAmount,
+    paymentMethod: invoice.paymentMethod,
+    issuedAt: invoice.issuedAt,
+    currency: invoice.currencyCode,
+    notes: invoice.notes,
+  );
+}
+
+LedgerReturn _salesReturnFromBridge(rust.ReturnView value) {
+  return LedgerReturn(
+    id: value.id,
+    number: value.returnNumber,
+    partyId: value.partyId,
+    partyName: value.partyName,
+    returnDate: value.returnDate,
+    total: value.totalAmount,
+    notes: value.notes,
+    lines: value.lines
+        .map(
+          (line) => LedgerReturnLine(
+            materialId: line.materialId,
+            materialName: line.materialName,
+            quantity: line.quantity,
+            unitPrice: line.unitPrice,
+            unitId: line.unitId,
+            lineTotal: line.lineTotal,
+          ),
+        )
+        .toList(),
+  );
+}
+
+LedgerReturn _purchaseReturnFromBridge(rust.ReturnView value) {
+  return _salesReturnFromBridge(value);
+}
+
+LedgerPayment _paymentFromBridge(rust.PaymentView payment) {
+  return LedgerPayment(
+    id: payment.id,
+    voucherNumber: payment.voucherNumber,
+    paymentType: payment.paymentType,
+    amount: payment.amount,
+    currency: payment.currencyCode,
+    exchangeRate: payment.exchangeRate,
+    paymentDate: payment.paymentDate,
+    journalEntryNumber: payment.journalEntryNumber,
+    customerId: payment.customerId,
+    customerName: payment.customerName,
+    supplierId: payment.supplierId,
+    supplierName: payment.supplierName,
+    reference: payment.reference,
+    notes: payment.notes,
+  );
+}
+
+rust.InvoiceInput _invoiceInputFromDraft(InvoiceDraft draft) {
+  final isSales = draft.invoiceType == 'Sales';
+  return rust.InvoiceInput(
+    invoiceType: draft.invoiceType,
+    customerId: isSales ? draft.partyId : null,
+    customerName: isSales && draft.partyId.isEmpty ? draft.partyName : null,
+    supplierId: isSales ? null : draft.partyId,
+    supplierName: !isSales && draft.partyId.isEmpty ? draft.partyName : null,
+    lines: draft.lines
+        .map(
+          (line) => rust.InvoiceLineInput(
+            materialId: line.materialId,
+            quantity: line.quantity,
+            unitPrice: line.unitPrice,
+            discountPercent: line.discountPercent,
+            unitId: line.unitId,
+            conversionFactor: line.conversionFactor,
+            notes: line.notes,
+          ),
+        )
+        .toList(),
+    taxAmount: draft.taxAmount,
+    discountAmount: draft.discountAmount,
+    extraCosts: draft.extraCosts,
+    paymentMethod: draft.paymentMethod,
+    amountPaid: draft.amountPaid,
+    issuedAt: (draft.issuedAt ?? DateTime.now()).toUtc().toIso8601String(),
+    currencyCode: draft.currency,
+    exchangeRate: '1',
+    notes: draft.notes,
+  );
+}
+
+rust.ReturnInput _returnInputFromDraft(ReturnDraft draft) {
+  return rust.ReturnInput(
+    partyId: draft.partyId,
+    returnDate: (draft.returnDate ?? DateTime.now()).toUtc().toIso8601String(),
+    lines: draft.lines
+        .map(
+          (line) => rust.ReturnLineInput(
+            materialId: line.materialId,
+            quantity: line.quantity,
+            unitPrice: line.unitPrice,
+            unitId: line.unitId,
+            notes: line.notes,
+          ),
+        )
+        .toList(),
+    notes: draft.notes,
+    settlementMode: draft.settlementMode,
+    settlementAmount: draft.settlementAmount,
+    isPaid: draft.isPaid,
+  );
+}
+
+rust.PaymentInput _paymentInputFromDraft(PaymentDraft draft) {
+  return rust.PaymentInput(
+    paymentType: draft.paymentType,
+    amount: draft.amount,
+    currencyCode: draft.currency,
+    exchangeRate: draft.exchangeRate,
+    paymentDate: (draft.paymentDate ?? DateTime.now())
+        .toUtc()
+        .toIso8601String(),
+    debitAccountId: draft.debitAccountId,
+    creditAccountId: draft.creditAccountId,
+    customerId: draft.customerId,
+    supplierId: draft.supplierId,
+    reference: draft.reference,
+    notes: draft.notes,
+  );
+}
+
+rust.ExpenseItemInput _expenseItemInput(ExpenseItemDraft draft) {
+  return rust.ExpenseItemInput(
+    id: draft.id,
+    code: draft.code,
+    nameAr: draft.nameAr,
+    nameEn: draft.nameEn,
+    openingBalance: draft.openingBalance,
+    debit: draft.debit,
+    credit: draft.credit,
+    currency: draft.currency,
+    exchangeRate: draft.exchangeRate,
+    notes: draft.notes,
+  );
 }
 
 LedgerMaterialUnit _materialUnitFromBridge(rust.MaterialUnitItem unit) {

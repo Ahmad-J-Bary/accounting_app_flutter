@@ -333,6 +333,66 @@ class _FakeGateway implements LedgerGateway {
     required String description,
     required String currency,
   }) async {}
+
+  @override
+  Future<List<LedgerInvoice>> loadInvoices() async => const [];
+
+  @override
+  Future<LedgerInvoice> createInvoice(
+    InvoiceDraft draft, {
+    bool post = false,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<LedgerInvoice> updateInvoice(String id, InvoiceDraft draft) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<LedgerInvoice> postInvoice(String id) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> deleteInvoice(String id) async {}
+
+  @override
+  Future<List<LedgerReturn>> loadSalesReturns() async => const [];
+
+  @override
+  Future<List<LedgerReturn>> loadPurchaseReturns() async => const [];
+
+  @override
+  Future<LedgerReturn> createSalesReturn(ReturnDraft draft) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<LedgerReturn> createPurchaseReturn(ReturnDraft draft) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<List<LedgerPayment>> loadPayments() async => const [];
+
+  @override
+  Future<LedgerPayment> createPayment(PaymentDraft draft) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<LedgerPayment> updatePayment(String id, PaymentDraft draft) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> deletePayment(String id) async {}
+
+  @override
+  Future<List<LedgerAccount>> loadExpenseItems() async => const [];
+
+  @override
+  Future<void> createExpenseItem(ExpenseItemDraft draft) async {}
+
+  @override
+  Future<void> updateExpenseItem(ExpenseItemDraft draft) async {}
+
+  @override
+  Future<void> deleteExpenseItem(String id) async {}
 }
 
 Future<void> _pumpWorkspace(
@@ -423,6 +483,28 @@ void main() {
 
     expect(find.text('قمح'), findsOneWidget);
     expect(find.textContaining('متاح: 50'), findsOneWidget);
+  });
+
+  testWidgets('opens trade documents and expense items from the sidebar', (
+    tester,
+  ) async {
+    await _pumpWorkspace(tester);
+
+    await tester.tap(find.text('فواتير البيع').first);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('إصدار فواتير البيع وترحيلها إلى المخزون والقيود.'),
+      findsOneWidget,
+    );
+    expect(find.text('لا توجد فواتير بعد'), findsOneWidget);
+
+    await tester.tap(find.text('بنود المصاريف').first);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('إدارة بنود المصاريف وإصدار سندات الصرف.'),
+      findsOneWidget,
+    );
+    expect(find.text('لا توجد بنود مصاريف'), findsOneWidget);
   });
 
   testWidgets('opens category management from master data', (tester) async {

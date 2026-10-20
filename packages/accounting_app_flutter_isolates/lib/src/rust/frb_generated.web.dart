@@ -7,6 +7,8 @@
 // ignore_for_file: argument_type_not_assignable
 
 import 'api/accounting.dart';
+import 'api/accounts.dart';
+import 'api/documents.dart';
 import 'api/error.dart';
 import 'api/simple.dart';
 import 'dart:async';
@@ -52,6 +54,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CustomerUpdateInput dco_decode_box_autoadd_customer_update_input(dynamic raw);
 
   @protected
+  ExpenseItemInput dco_decode_box_autoadd_expense_item_input(dynamic raw);
+
+  @protected
+  InvoiceInput dco_decode_box_autoadd_invoice_input(dynamic raw);
+
+  @protected
   MaterialCreateInput dco_decode_box_autoadd_material_create_input(dynamic raw);
 
   @protected
@@ -61,6 +69,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MaterialUpdateInput dco_decode_box_autoadd_material_update_input(dynamic raw);
+
+  @protected
+  PaymentInput dco_decode_box_autoadd_payment_input(dynamic raw);
+
+  @protected
+  ReturnInput dco_decode_box_autoadd_return_input(dynamic raw);
 
   @protected
   SetupCompanyInput dco_decode_box_autoadd_setup_company_input(dynamic raw);
@@ -99,7 +113,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CustomerUpdateInput dco_decode_customer_update_input(dynamic raw);
 
   @protected
+  ExpenseItemInput dco_decode_expense_item_input(dynamic raw);
+
+  @protected
   int dco_decode_i_32(dynamic raw);
+
+  @protected
+  InvoiceInput dco_decode_invoice_input(dynamic raw);
+
+  @protected
+  InvoiceLineInput dco_decode_invoice_line_input(dynamic raw);
+
+  @protected
+  InvoiceLineView dco_decode_invoice_line_view(dynamic raw);
+
+  @protected
+  InvoiceView dco_decode_invoice_view(dynamic raw);
 
   @protected
   JournalEntryView dco_decode_journal_entry_view(dynamic raw);
@@ -120,6 +149,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CustomerItem> dco_decode_list_customer_item(dynamic raw);
 
   @protected
+  List<InvoiceLineInput> dco_decode_list_invoice_line_input(dynamic raw);
+
+  @protected
+  List<InvoiceLineView> dco_decode_list_invoice_line_view(dynamic raw);
+
+  @protected
+  List<InvoiceView> dco_decode_list_invoice_view(dynamic raw);
+
+  @protected
   List<JournalLineInput> dco_decode_list_journal_line_input(dynamic raw);
 
   @protected
@@ -132,7 +170,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<MaterialUnitItem> dco_decode_list_material_unit_item(dynamic raw);
 
   @protected
+  List<PaymentView> dco_decode_list_payment_view(dynamic raw);
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  List<ReturnLineInput> dco_decode_list_return_line_input(dynamic raw);
+
+  @protected
+  List<ReturnLineView> dco_decode_list_return_line_view(dynamic raw);
+
+  @protected
+  List<ReturnView> dco_decode_list_return_view(dynamic raw);
 
   @protected
   List<SupplierItem> dco_decode_list_supplier_item(dynamic raw);
@@ -165,6 +215,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
+
+  @protected
+  PaymentInput dco_decode_payment_input(dynamic raw);
+
+  @protected
+  PaymentView dco_decode_payment_view(dynamic raw);
+
+  @protected
+  ReturnInput dco_decode_return_input(dynamic raw);
+
+  @protected
+  ReturnLineInput dco_decode_return_line_input(dynamic raw);
+
+  @protected
+  ReturnLineView dco_decode_return_line_view(dynamic raw);
+
+  @protected
+  ReturnView dco_decode_return_view(dynamic raw);
 
   @protected
   SetupCompanyInput dco_decode_setup_company_input(dynamic raw);
@@ -234,6 +302,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  ExpenseItemInput sse_decode_box_autoadd_expense_item_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  InvoiceInput sse_decode_box_autoadd_invoice_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   MaterialCreateInput sse_decode_box_autoadd_material_create_input(
     SseDeserializer deserializer,
   );
@@ -247,6 +325,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   MaterialUpdateInput sse_decode_box_autoadd_material_update_input(
     SseDeserializer deserializer,
   );
+
+  @protected
+  PaymentInput sse_decode_box_autoadd_payment_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ReturnInput sse_decode_box_autoadd_return_input(SseDeserializer deserializer);
 
   @protected
   SetupCompanyInput sse_decode_box_autoadd_setup_company_input(
@@ -303,7 +389,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  ExpenseItemInput sse_decode_expense_item_input(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_i_32(SseDeserializer deserializer);
+
+  @protected
+  InvoiceInput sse_decode_invoice_input(SseDeserializer deserializer);
+
+  @protected
+  InvoiceLineInput sse_decode_invoice_line_input(SseDeserializer deserializer);
+
+  @protected
+  InvoiceLineView sse_decode_invoice_line_view(SseDeserializer deserializer);
+
+  @protected
+  InvoiceView sse_decode_invoice_view(SseDeserializer deserializer);
 
   @protected
   JournalEntryView sse_decode_journal_entry_view(SseDeserializer deserializer);
@@ -328,6 +429,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<InvoiceLineInput> sse_decode_list_invoice_line_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<InvoiceLineView> sse_decode_list_invoice_line_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<InvoiceView> sse_decode_list_invoice_view(SseDeserializer deserializer);
+
+  @protected
   List<JournalLineInput> sse_decode_list_journal_line_input(
     SseDeserializer deserializer,
   );
@@ -348,7 +462,23 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<PaymentView> sse_decode_list_payment_view(SseDeserializer deserializer);
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  List<ReturnLineInput> sse_decode_list_return_line_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<ReturnLineView> sse_decode_list_return_line_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<ReturnView> sse_decode_list_return_view(SseDeserializer deserializer);
 
   @protected
   List<SupplierItem> sse_decode_list_supplier_item(
@@ -393,6 +523,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
+
+  @protected
+  PaymentInput sse_decode_payment_input(SseDeserializer deserializer);
+
+  @protected
+  PaymentView sse_decode_payment_view(SseDeserializer deserializer);
+
+  @protected
+  ReturnInput sse_decode_return_input(SseDeserializer deserializer);
+
+  @protected
+  ReturnLineInput sse_decode_return_line_input(SseDeserializer deserializer);
+
+  @protected
+  ReturnLineView sse_decode_return_line_view(SseDeserializer deserializer);
+
+  @protected
+  ReturnView sse_decode_return_view(SseDeserializer deserializer);
 
   @protected
   SetupCompanyInput sse_decode_setup_company_input(
@@ -477,6 +625,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_expense_item_input(
+    ExpenseItemInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_invoice_input(
+    InvoiceInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_material_create_input(
     MaterialCreateInput self,
     SseSerializer serializer,
@@ -491,6 +651,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_material_update_input(
     MaterialUpdateInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_payment_input(
+    PaymentInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_return_input(
+    ReturnInput self,
     SseSerializer serializer,
   );
 
@@ -561,7 +733,31 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_expense_item_input(
+    ExpenseItemInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_invoice_input(InvoiceInput self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_invoice_line_input(
+    InvoiceLineInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_invoice_line_view(
+    InvoiceLineView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_invoice_view(InvoiceView self, SseSerializer serializer);
 
   @protected
   void sse_encode_journal_entry_view(
@@ -597,6 +793,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_invoice_line_input(
+    List<InvoiceLineInput> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_invoice_line_view(
+    List<InvoiceLineView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_invoice_view(
+    List<InvoiceView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_journal_line_input(
     List<JournalLineInput> self,
     SseSerializer serializer,
@@ -621,8 +835,32 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_payment_view(
+    List<PaymentView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_return_line_input(
+    List<ReturnLineInput> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_return_line_view(
+    List<ReturnLineView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_return_view(
+    List<ReturnView> self,
     SseSerializer serializer,
   );
 
@@ -679,6 +917,30 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_payment_input(PaymentInput self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_payment_view(PaymentView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_return_input(ReturnInput self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_return_line_input(
+    ReturnLineInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_return_line_view(
+    ReturnLineView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_return_view(ReturnView self, SseSerializer serializer);
 
   @protected
   void sse_encode_setup_company_input(

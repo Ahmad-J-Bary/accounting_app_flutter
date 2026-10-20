@@ -7,7 +7,7 @@ import '../frb_generated.dart';
 import 'error.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `category_item`, `customer_item`, `entry_view`, `material_item`, `material_queries`, `material_unit_item`, `material_units_for`, `normalize_price`, `parse_non_negative`, `parse_positive`, `resolve_currency`, `state`, `supplier_item`
+// These functions are ignored because they are not marked as `pub`: `account_item`, `category_item`, `customer_item`, `entry_view`, `material_item`, `material_queries`, `material_unit_item`, `material_units_for`, `normalize_price`, `parse_non_negative`, `parse_positive`, `resolve_currency`, `state`, `supplier_item`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Open (or create) the SQLite ledger, run all migrations and wire the core.
@@ -129,10 +129,19 @@ class AccountItem {
   final String nameEn;
   final String accountType;
   final String purpose;
+  final String? parentId;
+  final String category;
+  final int level;
+  final String openingBalance;
   final String currency;
+  final String exchangeRate;
+  final String debit;
+  final String credit;
   final String balance;
+  final String? notes;
   final bool isActive;
   final bool isFinal;
+  final bool isDefault;
 
   const AccountItem({
     required this.id,
@@ -141,10 +150,19 @@ class AccountItem {
     required this.nameEn,
     required this.accountType,
     required this.purpose,
+    this.parentId,
+    required this.category,
+    required this.level,
+    required this.openingBalance,
     required this.currency,
+    required this.exchangeRate,
+    required this.debit,
+    required this.credit,
     required this.balance,
+    this.notes,
     required this.isActive,
     required this.isFinal,
+    required this.isDefault,
   });
 
   @override
@@ -155,10 +173,19 @@ class AccountItem {
       nameEn.hashCode ^
       accountType.hashCode ^
       purpose.hashCode ^
+      parentId.hashCode ^
+      category.hashCode ^
+      level.hashCode ^
+      openingBalance.hashCode ^
       currency.hashCode ^
+      exchangeRate.hashCode ^
+      debit.hashCode ^
+      credit.hashCode ^
       balance.hashCode ^
+      notes.hashCode ^
       isActive.hashCode ^
-      isFinal.hashCode;
+      isFinal.hashCode ^
+      isDefault.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -171,10 +198,19 @@ class AccountItem {
           nameEn == other.nameEn &&
           accountType == other.accountType &&
           purpose == other.purpose &&
+          parentId == other.parentId &&
+          category == other.category &&
+          level == other.level &&
+          openingBalance == other.openingBalance &&
           currency == other.currency &&
+          exchangeRate == other.exchangeRate &&
+          debit == other.debit &&
+          credit == other.credit &&
           balance == other.balance &&
+          notes == other.notes &&
           isActive == other.isActive &&
-          isFinal == other.isFinal;
+          isFinal == other.isFinal &&
+          isDefault == other.isDefault;
 }
 
 class CategoryCreateInput {

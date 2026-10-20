@@ -4,6 +4,8 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api/accounting.dart';
+import 'api/accounts.dart';
+import 'api/documents.dart';
 import 'api/error.dart';
 import 'api/simple.dart';
 import 'dart:async';
@@ -68,7 +70,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 876332350;
+  int get rustContentHash => -622370843;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -92,12 +94,33 @@ abstract class RustLibApi extends BaseApi {
     required CustomerCreateInput input,
   });
 
+  Future<AccountItem> crateApiAccountsCreateExpenseItem({
+    required ExpenseItemInput input,
+  });
+
+  Future<InvoiceView> crateApiDocumentsCreateInvoice({
+    required InvoiceInput input,
+    required bool post,
+  });
+
   Future<JournalEntryView> crateApiAccountingCreateJournalEntry({
     required CreateJournalEntryInput input,
   });
 
   Future<MaterialItem> crateApiAccountingCreateMaterial({
     required MaterialCreateInput input,
+  });
+
+  Future<PaymentView> crateApiDocumentsCreatePayment({
+    required PaymentInput input,
+  });
+
+  Future<ReturnView> crateApiDocumentsCreatePurchaseReturn({
+    required ReturnInput input,
+  });
+
+  Future<ReturnView> crateApiDocumentsCreateSalesReturn({
+    required ReturnInput input,
   });
 
   Future<SupplierItem> crateApiAccountingCreateSupplier({
@@ -110,6 +133,10 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiAccountingDeleteCustomer({required String id});
 
+  Future<void> crateApiAccountsDeleteExpenseItem({required String id});
+
+  Future<void> crateApiDocumentsDeleteInvoice({required String id});
+
   Future<void> crateApiAccountingDeleteMaterial({required String id});
 
   Future<List<MaterialUnitItem>> crateApiAccountingDeleteMaterialUnit({
@@ -117,7 +144,11 @@ abstract class RustLibApi extends BaseApi {
     required String unitId,
   });
 
+  Future<void> crateApiDocumentsDeletePayment({required String id});
+
   Future<void> crateApiAccountingDeleteSupplier({required String id});
+
+  Future<InvoiceView> crateApiDocumentsGetInvoice({required String id});
 
   Future<SetupStatusView> crateApiAccountingGetSetupStatus();
 
@@ -133,13 +164,33 @@ abstract class RustLibApi extends BaseApi {
 
   Future<List<CustomerItem>> crateApiAccountingListCustomers();
 
+  Future<List<AccountItem>> crateApiAccountsListExpenseItems();
+
+  Future<List<InvoiceView>> crateApiDocumentsListInvoices({
+    required String invoiceType,
+  });
+
   Future<List<MaterialUnitItem>> crateApiAccountingListMaterialUnits({
     required String materialId,
   });
 
   Future<List<MaterialItem>> crateApiAccountingListMaterials();
 
+  Future<List<PaymentView>> crateApiDocumentsListPayments();
+
+  Future<List<ReturnView>> crateApiDocumentsListPurchaseReturns();
+
+  Future<List<ReturnView>> crateApiDocumentsListSalesReturns();
+
   Future<List<SupplierItem>> crateApiAccountingListSuppliers();
+
+  Future<String> crateApiDocumentsNextInvoiceNumber({
+    required String invoiceType,
+  });
+
+  Future<String> crateApiDocumentsNextReturnNumber({required String kind});
+
+  Future<InvoiceView> crateApiDocumentsPostInvoice({required String id});
 
   Future<JournalEntryView> crateApiAccountingPostJournalEntry({
     required String entryId,
@@ -164,8 +215,22 @@ abstract class RustLibApi extends BaseApi {
     required CustomerUpdateInput input,
   });
 
+  Future<AccountItem> crateApiAccountsUpdateExpenseItem({
+    required ExpenseItemInput input,
+  });
+
+  Future<InvoiceView> crateApiDocumentsUpdateInvoice({
+    required String id,
+    required InvoiceInput input,
+  });
+
   Future<MaterialItem> crateApiAccountingUpdateMaterial({
     required MaterialUpdateInput input,
+  });
+
+  Future<PaymentView> crateApiDocumentsUpdatePayment({
+    required String id,
+    required PaymentInput input,
   });
 
   Future<SupplierItem> crateApiAccountingUpdateSupplier({
@@ -274,6 +339,74 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "create_customer", argNames: ["input"]);
 
   @override
+  Future<AccountItem> crateApiAccountsCreateExpenseItem({
+    required ExpenseItemInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_expense_item_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 4,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_account_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountsCreateExpenseItemConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountsCreateExpenseItemConstMeta =>
+      const TaskConstMeta(
+        debugName: "create_expense_item",
+        argNames: ["input"],
+      );
+
+  @override
+  Future<InvoiceView> crateApiDocumentsCreateInvoice({
+    required InvoiceInput input,
+    required bool post,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_invoice_input(input, serializer);
+          sse_encode_bool(post, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 5,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_invoice_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsCreateInvoiceConstMeta,
+        argValues: [input, post],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsCreateInvoiceConstMeta =>
+      const TaskConstMeta(
+        debugName: "create_invoice",
+        argNames: ["input", "post"],
+      );
+
+  @override
   Future<JournalEntryView> crateApiAccountingCreateJournalEntry({
     required CreateJournalEntryInput input,
   }) {
@@ -285,7 +418,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 6,
             port: port_,
           );
         },
@@ -318,7 +451,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 5,
+            funcId: 7,
             port: port_,
           );
         },
@@ -337,6 +470,102 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "create_material", argNames: ["input"]);
 
   @override
+  Future<PaymentView> crateApiDocumentsCreatePayment({
+    required PaymentInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_payment_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 8,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_payment_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsCreatePaymentConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsCreatePaymentConstMeta =>
+      const TaskConstMeta(debugName: "create_payment", argNames: ["input"]);
+
+  @override
+  Future<ReturnView> crateApiDocumentsCreatePurchaseReturn({
+    required ReturnInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_return_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 9,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_return_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsCreatePurchaseReturnConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsCreatePurchaseReturnConstMeta =>
+      const TaskConstMeta(
+        debugName: "create_purchase_return",
+        argNames: ["input"],
+      );
+
+  @override
+  Future<ReturnView> crateApiDocumentsCreateSalesReturn({
+    required ReturnInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_return_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 10,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_return_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsCreateSalesReturnConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsCreateSalesReturnConstMeta =>
+      const TaskConstMeta(
+        debugName: "create_sales_return",
+        argNames: ["input"],
+      );
+
+  @override
   Future<SupplierItem> crateApiAccountingCreateSupplier({
     required SupplierCreateInput input,
   }) {
@@ -348,7 +577,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 6,
+            funcId: 11,
             port: port_,
           );
         },
@@ -378,7 +607,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 12,
             port: port_,
           );
         },
@@ -406,7 +635,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 13,
             port: port_,
           );
         },
@@ -425,6 +654,62 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "delete_customer", argNames: ["id"]);
 
   @override
+  Future<void> crateApiAccountsDeleteExpenseItem({required String id}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 14,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountsDeleteExpenseItemConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountsDeleteExpenseItemConstMeta =>
+      const TaskConstMeta(debugName: "delete_expense_item", argNames: ["id"]);
+
+  @override
+  Future<void> crateApiDocumentsDeleteInvoice({required String id}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 15,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsDeleteInvoiceConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsDeleteInvoiceConstMeta =>
+      const TaskConstMeta(debugName: "delete_invoice", argNames: ["id"]);
+
+  @override
   Future<void> crateApiAccountingDeleteMaterial({required String id}) {
     return handler.executeNormal(
       NormalTask(
@@ -434,7 +719,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 16,
             port: port_,
           );
         },
@@ -466,7 +751,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 10,
+            funcId: 17,
             port: port_,
           );
         },
@@ -488,6 +773,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<void> crateApiDocumentsDeletePayment({required String id}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 18,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsDeletePaymentConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsDeletePaymentConstMeta =>
+      const TaskConstMeta(debugName: "delete_payment", argNames: ["id"]);
+
+  @override
   Future<void> crateApiAccountingDeleteSupplier({required String id}) {
     return handler.executeNormal(
       NormalTask(
@@ -497,7 +810,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 19,
             port: port_,
           );
         },
@@ -516,6 +829,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "delete_supplier", argNames: ["id"]);
 
   @override
+  Future<InvoiceView> crateApiDocumentsGetInvoice({required String id}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 20,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_invoice_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsGetInvoiceConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsGetInvoiceConstMeta =>
+      const TaskConstMeta(debugName: "get_invoice", argNames: ["id"]);
+
+  @override
   Future<SetupStatusView> crateApiAccountingGetSetupStatus() {
     return handler.executeNormal(
       NormalTask(
@@ -524,7 +865,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 12,
+            funcId: 21,
             port: port_,
           );
         },
@@ -549,7 +890,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(name, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 22)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -575,7 +916,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 23,
             port: port_,
           );
         },
@@ -602,7 +943,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 15,
+            funcId: 24,
             port: port_,
           );
         },
@@ -629,7 +970,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 16,
+            funcId: 25,
             port: port_,
           );
         },
@@ -656,7 +997,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 17,
+            funcId: 26,
             port: port_,
           );
         },
@@ -683,7 +1024,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 18,
+            funcId: 27,
             port: port_,
           );
         },
@@ -702,6 +1043,66 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "list_customers", argNames: []);
 
   @override
+  Future<List<AccountItem>> crateApiAccountsListExpenseItems() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 28,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_account_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountsListExpenseItemsConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountsListExpenseItemsConstMeta =>
+      const TaskConstMeta(debugName: "list_expense_items", argNames: []);
+
+  @override
+  Future<List<InvoiceView>> crateApiDocumentsListInvoices({
+    required String invoiceType,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(invoiceType, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 29,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_invoice_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsListInvoicesConstMeta,
+        argValues: [invoiceType],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsListInvoicesConstMeta =>
+      const TaskConstMeta(
+        debugName: "list_invoices",
+        argNames: ["invoiceType"],
+      );
+
+  @override
   Future<List<MaterialUnitItem>> crateApiAccountingListMaterialUnits({
     required String materialId,
   }) {
@@ -713,7 +1114,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 19,
+            funcId: 30,
             port: port_,
           );
         },
@@ -743,7 +1144,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 20,
+            funcId: 31,
             port: port_,
           );
         },
@@ -762,6 +1163,87 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "list_materials", argNames: []);
 
   @override
+  Future<List<PaymentView>> crateApiDocumentsListPayments() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 32,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_payment_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsListPaymentsConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsListPaymentsConstMeta =>
+      const TaskConstMeta(debugName: "list_payments", argNames: []);
+
+  @override
+  Future<List<ReturnView>> crateApiDocumentsListPurchaseReturns() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 33,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_return_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsListPurchaseReturnsConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsListPurchaseReturnsConstMeta =>
+      const TaskConstMeta(debugName: "list_purchase_returns", argNames: []);
+
+  @override
+  Future<List<ReturnView>> crateApiDocumentsListSalesReturns() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 34,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_return_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsListSalesReturnsConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsListSalesReturnsConstMeta =>
+      const TaskConstMeta(debugName: "list_sales_returns", argNames: []);
+
+  @override
   Future<List<SupplierItem>> crateApiAccountingListSuppliers() {
     return handler.executeNormal(
       NormalTask(
@@ -770,7 +1252,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 21,
+            funcId: 35,
             port: port_,
           );
         },
@@ -789,6 +1271,95 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "list_suppliers", argNames: []);
 
   @override
+  Future<String> crateApiDocumentsNextInvoiceNumber({
+    required String invoiceType,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(invoiceType, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 36,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsNextInvoiceNumberConstMeta,
+        argValues: [invoiceType],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsNextInvoiceNumberConstMeta =>
+      const TaskConstMeta(
+        debugName: "next_invoice_number",
+        argNames: ["invoiceType"],
+      );
+
+  @override
+  Future<String> crateApiDocumentsNextReturnNumber({required String kind}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(kind, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 37,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsNextReturnNumberConstMeta,
+        argValues: [kind],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsNextReturnNumberConstMeta =>
+      const TaskConstMeta(debugName: "next_return_number", argNames: ["kind"]);
+
+  @override
+  Future<InvoiceView> crateApiDocumentsPostInvoice({required String id}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 38,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_invoice_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsPostInvoiceConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsPostInvoiceConstMeta =>
+      const TaskConstMeta(debugName: "post_invoice", argNames: ["id"]);
+
+  @override
   Future<JournalEntryView> crateApiAccountingPostJournalEntry({
     required String entryId,
   }) {
@@ -800,7 +1371,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 22,
+            funcId: 39,
             port: port_,
           );
         },
@@ -830,7 +1401,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 23,
+            funcId: 40,
             port: port_,
           );
         },
@@ -860,7 +1431,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 24,
+            funcId: 41,
             port: port_,
           );
         },
@@ -892,7 +1463,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 25,
+            funcId: 42,
             port: port_,
           );
         },
@@ -925,7 +1496,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 26,
+            funcId: 43,
             port: port_,
           );
         },
@@ -955,7 +1526,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 27,
+            funcId: 44,
             port: port_,
           );
         },
@@ -974,6 +1545,74 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "update_customer", argNames: ["input"]);
 
   @override
+  Future<AccountItem> crateApiAccountsUpdateExpenseItem({
+    required ExpenseItemInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_expense_item_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 45,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_account_item,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiAccountsUpdateExpenseItemConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiAccountsUpdateExpenseItemConstMeta =>
+      const TaskConstMeta(
+        debugName: "update_expense_item",
+        argNames: ["input"],
+      );
+
+  @override
+  Future<InvoiceView> crateApiDocumentsUpdateInvoice({
+    required String id,
+    required InvoiceInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          sse_encode_box_autoadd_invoice_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 46,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_invoice_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsUpdateInvoiceConstMeta,
+        argValues: [id, input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsUpdateInvoiceConstMeta =>
+      const TaskConstMeta(
+        debugName: "update_invoice",
+        argNames: ["id", "input"],
+      );
+
+  @override
   Future<MaterialItem> crateApiAccountingUpdateMaterial({
     required MaterialUpdateInput input,
   }) {
@@ -985,7 +1624,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 28,
+            funcId: 47,
             port: port_,
           );
         },
@@ -1004,6 +1643,41 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "update_material", argNames: ["input"]);
 
   @override
+  Future<PaymentView> crateApiDocumentsUpdatePayment({
+    required String id,
+    required PaymentInput input,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(id, serializer);
+          sse_encode_box_autoadd_payment_input(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 48,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_payment_view,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kCrateApiDocumentsUpdatePaymentConstMeta,
+        argValues: [id, input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDocumentsUpdatePaymentConstMeta =>
+      const TaskConstMeta(
+        debugName: "update_payment",
+        argNames: ["id", "input"],
+      );
+
+  @override
   Future<SupplierItem> crateApiAccountingUpdateSupplier({
     required SupplierUpdateInput input,
   }) {
@@ -1015,7 +1689,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 29,
+            funcId: 49,
             port: port_,
           );
         },
@@ -1042,7 +1716,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 30,
+            funcId: 50,
             port: port_,
           );
         },
@@ -1070,8 +1744,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AccountItem dco_decode_account_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 10)
-      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    if (arr.length != 19)
+      throw Exception('unexpected arr length: expect 19 but see ${arr.length}');
     return AccountItem(
       id: dco_decode_String(arr[0]),
       code: dco_decode_String(arr[1]),
@@ -1079,10 +1753,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       nameEn: dco_decode_String(arr[3]),
       accountType: dco_decode_String(arr[4]),
       purpose: dco_decode_String(arr[5]),
-      currency: dco_decode_String(arr[6]),
-      balance: dco_decode_String(arr[7]),
-      isActive: dco_decode_bool(arr[8]),
-      isFinal: dco_decode_bool(arr[9]),
+      parentId: dco_decode_opt_String(arr[6]),
+      category: dco_decode_String(arr[7]),
+      level: dco_decode_i_32(arr[8]),
+      openingBalance: dco_decode_String(arr[9]),
+      currency: dco_decode_String(arr[10]),
+      exchangeRate: dco_decode_String(arr[11]),
+      debit: dco_decode_String(arr[12]),
+      credit: dco_decode_String(arr[13]),
+      balance: dco_decode_String(arr[14]),
+      notes: dco_decode_opt_String(arr[15]),
+      isActive: dco_decode_bool(arr[16]),
+      isFinal: dco_decode_bool(arr[17]),
+      isDefault: dco_decode_bool(arr[18]),
     );
   }
 
@@ -1146,6 +1829,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ExpenseItemInput dco_decode_box_autoadd_expense_item_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_expense_item_input(raw);
+  }
+
+  @protected
+  InvoiceInput dco_decode_box_autoadd_invoice_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_invoice_input(raw);
+  }
+
+  @protected
   MaterialCreateInput dco_decode_box_autoadd_material_create_input(
     dynamic raw,
   ) {
@@ -1167,6 +1862,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_material_update_input(raw);
+  }
+
+  @protected
+  PaymentInput dco_decode_box_autoadd_payment_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_payment_input(raw);
+  }
+
+  @protected
+  ReturnInput dco_decode_box_autoadd_return_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_return_input(raw);
   }
 
   @protected
@@ -1338,9 +2045,125 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ExpenseItemInput dco_decode_expense_item_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    return ExpenseItemInput(
+      id: dco_decode_opt_String(arr[0]),
+      code: dco_decode_String(arr[1]),
+      nameAr: dco_decode_String(arr[2]),
+      nameEn: dco_decode_String(arr[3]),
+      openingBalance: dco_decode_String(arr[4]),
+      debit: dco_decode_String(arr[5]),
+      credit: dco_decode_String(arr[6]),
+      currency: dco_decode_String(arr[7]),
+      exchangeRate: dco_decode_String(arr[8]),
+      notes: dco_decode_opt_String(arr[9]),
+    );
+  }
+
+  @protected
   int dco_decode_i_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
+  }
+
+  @protected
+  InvoiceInput dco_decode_invoice_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 15)
+      throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
+    return InvoiceInput(
+      invoiceType: dco_decode_String(arr[0]),
+      customerId: dco_decode_opt_String(arr[1]),
+      customerName: dco_decode_opt_String(arr[2]),
+      supplierId: dco_decode_opt_String(arr[3]),
+      supplierName: dco_decode_opt_String(arr[4]),
+      lines: dco_decode_list_invoice_line_input(arr[5]),
+      taxAmount: dco_decode_String(arr[6]),
+      discountAmount: dco_decode_String(arr[7]),
+      extraCosts: dco_decode_String(arr[8]),
+      paymentMethod: dco_decode_String(arr[9]),
+      amountPaid: dco_decode_String(arr[10]),
+      issuedAt: dco_decode_String(arr[11]),
+      currencyCode: dco_decode_String(arr[12]),
+      exchangeRate: dco_decode_String(arr[13]),
+      notes: dco_decode_opt_String(arr[14]),
+    );
+  }
+
+  @protected
+  InvoiceLineInput dco_decode_invoice_line_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return InvoiceLineInput(
+      materialId: dco_decode_String(arr[0]),
+      quantity: dco_decode_String(arr[1]),
+      unitPrice: dco_decode_String(arr[2]),
+      discountPercent: dco_decode_String(arr[3]),
+      unitId: dco_decode_opt_String(arr[4]),
+      conversionFactor: dco_decode_opt_String(arr[5]),
+      warehouseId: dco_decode_opt_String(arr[6]),
+      notes: dco_decode_opt_String(arr[7]),
+    );
+  }
+
+  @protected
+  InvoiceLineView dco_decode_invoice_line_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 14)
+      throw Exception('unexpected arr length: expect 14 but see ${arr.length}');
+    return InvoiceLineView(
+      id: dco_decode_String(arr[0]),
+      materialId: dco_decode_String(arr[1]),
+      materialName: dco_decode_String(arr[2]),
+      code: dco_decode_String(arr[3]),
+      barcode: dco_decode_String(arr[4]),
+      categoryName: dco_decode_String(arr[5]),
+      quantity: dco_decode_String(arr[6]),
+      unitId: dco_decode_opt_String(arr[7]),
+      conversionFactor: dco_decode_opt_String(arr[8]),
+      unitPrice: dco_decode_String(arr[9]),
+      purchasePrice: dco_decode_String(arr[10]),
+      discountPercent: dco_decode_String(arr[11]),
+      lineTotal: dco_decode_String(arr[12]),
+      notes: dco_decode_opt_String(arr[13]),
+    );
+  }
+
+  @protected
+  InvoiceView dco_decode_invoice_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 19)
+      throw Exception('unexpected arr length: expect 19 but see ${arr.length}');
+    return InvoiceView(
+      id: dco_decode_String(arr[0]),
+      invoiceNumber: dco_decode_String(arr[1]),
+      invoiceType: dco_decode_String(arr[2]),
+      partyId: dco_decode_opt_String(arr[3]),
+      partyName: dco_decode_String(arr[4]),
+      status: dco_decode_String(arr[5]),
+      lines: dco_decode_list_invoice_line_view(arr[6]),
+      taxAmount: dco_decode_String(arr[7]),
+      discountAmount: dco_decode_String(arr[8]),
+      extraCosts: dco_decode_String(arr[9]),
+      subtotalAmount: dco_decode_String(arr[10]),
+      totalAmount: dco_decode_String(arr[11]),
+      amountPaid: dco_decode_String(arr[12]),
+      remainingAmount: dco_decode_String(arr[13]),
+      paymentMethod: dco_decode_String(arr[14]),
+      issuedAt: dco_decode_String(arr[15]),
+      currencyCode: dco_decode_String(arr[16]),
+      exchangeRate: dco_decode_String(arr[17]),
+      notes: dco_decode_opt_String(arr[18]),
+    );
   }
 
   @protected
@@ -1403,6 +2226,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<InvoiceLineInput> dco_decode_list_invoice_line_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_invoice_line_input).toList();
+  }
+
+  @protected
+  List<InvoiceLineView> dco_decode_list_invoice_line_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_invoice_line_view).toList();
+  }
+
+  @protected
+  List<InvoiceView> dco_decode_list_invoice_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_invoice_view).toList();
+  }
+
+  @protected
   List<JournalLineInput> dco_decode_list_journal_line_input(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_journal_line_input).toList();
@@ -1427,9 +2268,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<PaymentView> dco_decode_list_payment_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_payment_view).toList();
+  }
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
+  }
+
+  @protected
+  List<ReturnLineInput> dco_decode_list_return_line_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_return_line_input).toList();
+  }
+
+  @protected
+  List<ReturnLineView> dco_decode_list_return_line_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_return_line_view).toList();
+  }
+
+  @protected
+  List<ReturnView> dco_decode_list_return_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_return_view).toList();
   }
 
   @protected
@@ -1584,6 +2449,122 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   String? dco_decode_opt_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_String(raw);
+  }
+
+  @protected
+  PaymentInput dco_decode_payment_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    return PaymentInput(
+      paymentType: dco_decode_String(arr[0]),
+      amount: dco_decode_String(arr[1]),
+      currencyCode: dco_decode_String(arr[2]),
+      exchangeRate: dco_decode_String(arr[3]),
+      paymentDate: dco_decode_String(arr[4]),
+      debitAccountId: dco_decode_opt_String(arr[5]),
+      creditAccountId: dco_decode_opt_String(arr[6]),
+      customerId: dco_decode_opt_String(arr[7]),
+      supplierId: dco_decode_opt_String(arr[8]),
+      reference: dco_decode_opt_String(arr[9]),
+      notes: dco_decode_opt_String(arr[10]),
+    );
+  }
+
+  @protected
+  PaymentView dco_decode_payment_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 15)
+      throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
+    return PaymentView(
+      id: dco_decode_String(arr[0]),
+      voucherNumber: dco_decode_String(arr[1]),
+      paymentType: dco_decode_String(arr[2]),
+      amount: dco_decode_String(arr[3]),
+      currencyCode: dco_decode_String(arr[4]),
+      exchangeRate: dco_decode_String(arr[5]),
+      paymentDate: dco_decode_String(arr[6]),
+      journalEntryNumber: dco_decode_opt_String(arr[7]),
+      customerId: dco_decode_opt_String(arr[8]),
+      customerName: dco_decode_opt_String(arr[9]),
+      supplierId: dco_decode_opt_String(arr[10]),
+      supplierName: dco_decode_opt_String(arr[11]),
+      reference: dco_decode_opt_String(arr[12]),
+      notes: dco_decode_opt_String(arr[13]),
+      createdAt: dco_decode_String(arr[14]),
+    );
+  }
+
+  @protected
+  ReturnInput dco_decode_return_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return ReturnInput(
+      partyId: dco_decode_String(arr[0]),
+      returnDate: dco_decode_String(arr[1]),
+      lines: dco_decode_list_return_line_input(arr[2]),
+      notes: dco_decode_opt_String(arr[3]),
+      settlementMode: dco_decode_opt_String(arr[4]),
+      settlementAmount: dco_decode_opt_String(arr[5]),
+      isPaid: dco_decode_bool(arr[6]),
+    );
+  }
+
+  @protected
+  ReturnLineInput dco_decode_return_line_input(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return ReturnLineInput(
+      materialId: dco_decode_String(arr[0]),
+      quantity: dco_decode_String(arr[1]),
+      unitPrice: dco_decode_String(arr[2]),
+      unitId: dco_decode_opt_String(arr[3]),
+      notes: dco_decode_opt_String(arr[4]),
+      invoiceLineId: dco_decode_opt_String(arr[5]),
+    );
+  }
+
+  @protected
+  ReturnLineView dco_decode_return_line_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return ReturnLineView(
+      id: dco_decode_String(arr[0]),
+      materialId: dco_decode_String(arr[1]),
+      materialName: dco_decode_String(arr[2]),
+      quantity: dco_decode_String(arr[3]),
+      unitPrice: dco_decode_String(arr[4]),
+      unitId: dco_decode_opt_String(arr[5]),
+      lineTotal: dco_decode_String(arr[6]),
+      notes: dco_decode_opt_String(arr[7]),
+    );
+  }
+
+  @protected
+  ReturnView dco_decode_return_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    return ReturnView(
+      id: dco_decode_String(arr[0]),
+      returnNumber: dco_decode_String(arr[1]),
+      partyId: dco_decode_String(arr[2]),
+      partyName: dco_decode_String(arr[3]),
+      returnDate: dco_decode_String(arr[4]),
+      lines: dco_decode_list_return_line_view(arr[5]),
+      totalAmount: dco_decode_String(arr[6]),
+      notes: dco_decode_opt_String(arr[7]),
+      createdAt: dco_decode_String(arr[8]),
+    );
   }
 
   @protected
@@ -1748,10 +2729,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_nameEn = sse_decode_String(deserializer);
     var var_accountType = sse_decode_String(deserializer);
     var var_purpose = sse_decode_String(deserializer);
+    var var_parentId = sse_decode_opt_String(deserializer);
+    var var_category = sse_decode_String(deserializer);
+    var var_level = sse_decode_i_32(deserializer);
+    var var_openingBalance = sse_decode_String(deserializer);
     var var_currency = sse_decode_String(deserializer);
+    var var_exchangeRate = sse_decode_String(deserializer);
+    var var_debit = sse_decode_String(deserializer);
+    var var_credit = sse_decode_String(deserializer);
     var var_balance = sse_decode_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
     var var_isActive = sse_decode_bool(deserializer);
     var var_isFinal = sse_decode_bool(deserializer);
+    var var_isDefault = sse_decode_bool(deserializer);
     return AccountItem(
       id: var_id,
       code: var_code,
@@ -1759,10 +2749,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       nameEn: var_nameEn,
       accountType: var_accountType,
       purpose: var_purpose,
+      parentId: var_parentId,
+      category: var_category,
+      level: var_level,
+      openingBalance: var_openingBalance,
       currency: var_currency,
+      exchangeRate: var_exchangeRate,
+      debit: var_debit,
+      credit: var_credit,
       balance: var_balance,
+      notes: var_notes,
       isActive: var_isActive,
       isFinal: var_isFinal,
+      isDefault: var_isDefault,
     );
   }
 
@@ -1822,6 +2821,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ExpenseItemInput sse_decode_box_autoadd_expense_item_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_expense_item_input(deserializer));
+  }
+
+  @protected
+  InvoiceInput sse_decode_box_autoadd_invoice_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_invoice_input(deserializer));
+  }
+
+  @protected
   MaterialCreateInput sse_decode_box_autoadd_material_create_input(
     SseDeserializer deserializer,
   ) {
@@ -1843,6 +2858,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_material_update_input(deserializer));
+  }
+
+  @protected
+  PaymentInput sse_decode_box_autoadd_payment_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_payment_input(deserializer));
+  }
+
+  @protected
+  ReturnInput sse_decode_box_autoadd_return_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_return_input(deserializer));
   }
 
   @protected
@@ -2057,9 +3088,176 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ExpenseItemInput sse_decode_expense_item_input(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_opt_String(deserializer);
+    var var_code = sse_decode_String(deserializer);
+    var var_nameAr = sse_decode_String(deserializer);
+    var var_nameEn = sse_decode_String(deserializer);
+    var var_openingBalance = sse_decode_String(deserializer);
+    var var_debit = sse_decode_String(deserializer);
+    var var_credit = sse_decode_String(deserializer);
+    var var_currency = sse_decode_String(deserializer);
+    var var_exchangeRate = sse_decode_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    return ExpenseItemInput(
+      id: var_id,
+      code: var_code,
+      nameAr: var_nameAr,
+      nameEn: var_nameEn,
+      openingBalance: var_openingBalance,
+      debit: var_debit,
+      credit: var_credit,
+      currency: var_currency,
+      exchangeRate: var_exchangeRate,
+      notes: var_notes,
+    );
+  }
+
+  @protected
   int sse_decode_i_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getInt32();
+  }
+
+  @protected
+  InvoiceInput sse_decode_invoice_input(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_invoiceType = sse_decode_String(deserializer);
+    var var_customerId = sse_decode_opt_String(deserializer);
+    var var_customerName = sse_decode_opt_String(deserializer);
+    var var_supplierId = sse_decode_opt_String(deserializer);
+    var var_supplierName = sse_decode_opt_String(deserializer);
+    var var_lines = sse_decode_list_invoice_line_input(deserializer);
+    var var_taxAmount = sse_decode_String(deserializer);
+    var var_discountAmount = sse_decode_String(deserializer);
+    var var_extraCosts = sse_decode_String(deserializer);
+    var var_paymentMethod = sse_decode_String(deserializer);
+    var var_amountPaid = sse_decode_String(deserializer);
+    var var_issuedAt = sse_decode_String(deserializer);
+    var var_currencyCode = sse_decode_String(deserializer);
+    var var_exchangeRate = sse_decode_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    return InvoiceInput(
+      invoiceType: var_invoiceType,
+      customerId: var_customerId,
+      customerName: var_customerName,
+      supplierId: var_supplierId,
+      supplierName: var_supplierName,
+      lines: var_lines,
+      taxAmount: var_taxAmount,
+      discountAmount: var_discountAmount,
+      extraCosts: var_extraCosts,
+      paymentMethod: var_paymentMethod,
+      amountPaid: var_amountPaid,
+      issuedAt: var_issuedAt,
+      currencyCode: var_currencyCode,
+      exchangeRate: var_exchangeRate,
+      notes: var_notes,
+    );
+  }
+
+  @protected
+  InvoiceLineInput sse_decode_invoice_line_input(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_materialId = sse_decode_String(deserializer);
+    var var_quantity = sse_decode_String(deserializer);
+    var var_unitPrice = sse_decode_String(deserializer);
+    var var_discountPercent = sse_decode_String(deserializer);
+    var var_unitId = sse_decode_opt_String(deserializer);
+    var var_conversionFactor = sse_decode_opt_String(deserializer);
+    var var_warehouseId = sse_decode_opt_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    return InvoiceLineInput(
+      materialId: var_materialId,
+      quantity: var_quantity,
+      unitPrice: var_unitPrice,
+      discountPercent: var_discountPercent,
+      unitId: var_unitId,
+      conversionFactor: var_conversionFactor,
+      warehouseId: var_warehouseId,
+      notes: var_notes,
+    );
+  }
+
+  @protected
+  InvoiceLineView sse_decode_invoice_line_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_materialId = sse_decode_String(deserializer);
+    var var_materialName = sse_decode_String(deserializer);
+    var var_code = sse_decode_String(deserializer);
+    var var_barcode = sse_decode_String(deserializer);
+    var var_categoryName = sse_decode_String(deserializer);
+    var var_quantity = sse_decode_String(deserializer);
+    var var_unitId = sse_decode_opt_String(deserializer);
+    var var_conversionFactor = sse_decode_opt_String(deserializer);
+    var var_unitPrice = sse_decode_String(deserializer);
+    var var_purchasePrice = sse_decode_String(deserializer);
+    var var_discountPercent = sse_decode_String(deserializer);
+    var var_lineTotal = sse_decode_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    return InvoiceLineView(
+      id: var_id,
+      materialId: var_materialId,
+      materialName: var_materialName,
+      code: var_code,
+      barcode: var_barcode,
+      categoryName: var_categoryName,
+      quantity: var_quantity,
+      unitId: var_unitId,
+      conversionFactor: var_conversionFactor,
+      unitPrice: var_unitPrice,
+      purchasePrice: var_purchasePrice,
+      discountPercent: var_discountPercent,
+      lineTotal: var_lineTotal,
+      notes: var_notes,
+    );
+  }
+
+  @protected
+  InvoiceView sse_decode_invoice_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_invoiceNumber = sse_decode_String(deserializer);
+    var var_invoiceType = sse_decode_String(deserializer);
+    var var_partyId = sse_decode_opt_String(deserializer);
+    var var_partyName = sse_decode_String(deserializer);
+    var var_status = sse_decode_String(deserializer);
+    var var_lines = sse_decode_list_invoice_line_view(deserializer);
+    var var_taxAmount = sse_decode_String(deserializer);
+    var var_discountAmount = sse_decode_String(deserializer);
+    var var_extraCosts = sse_decode_String(deserializer);
+    var var_subtotalAmount = sse_decode_String(deserializer);
+    var var_totalAmount = sse_decode_String(deserializer);
+    var var_amountPaid = sse_decode_String(deserializer);
+    var var_remainingAmount = sse_decode_String(deserializer);
+    var var_paymentMethod = sse_decode_String(deserializer);
+    var var_issuedAt = sse_decode_String(deserializer);
+    var var_currencyCode = sse_decode_String(deserializer);
+    var var_exchangeRate = sse_decode_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    return InvoiceView(
+      id: var_id,
+      invoiceNumber: var_invoiceNumber,
+      invoiceType: var_invoiceType,
+      partyId: var_partyId,
+      partyName: var_partyName,
+      status: var_status,
+      lines: var_lines,
+      taxAmount: var_taxAmount,
+      discountAmount: var_discountAmount,
+      extraCosts: var_extraCosts,
+      subtotalAmount: var_subtotalAmount,
+      totalAmount: var_totalAmount,
+      amountPaid: var_amountPaid,
+      remainingAmount: var_remainingAmount,
+      paymentMethod: var_paymentMethod,
+      issuedAt: var_issuedAt,
+      currencyCode: var_currencyCode,
+      exchangeRate: var_exchangeRate,
+      notes: var_notes,
+    );
   }
 
   @protected
@@ -2159,6 +3357,46 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<InvoiceLineInput> sse_decode_list_invoice_line_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <InvoiceLineInput>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_invoice_line_input(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<InvoiceLineView> sse_decode_list_invoice_line_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <InvoiceLineView>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_invoice_line_view(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<InvoiceView> sse_decode_list_invoice_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <InvoiceView>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_invoice_view(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<JournalLineInput> sse_decode_list_journal_line_input(
     SseDeserializer deserializer,
   ) {
@@ -2215,10 +3453,62 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<PaymentView> sse_decode_list_payment_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <PaymentView>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_payment_view(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint8List(len_);
+  }
+
+  @protected
+  List<ReturnLineInput> sse_decode_list_return_line_input(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <ReturnLineInput>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_return_line_input(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<ReturnLineView> sse_decode_list_return_line_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <ReturnLineView>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_return_line_view(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<ReturnView> sse_decode_list_return_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <ReturnView>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_return_view(deserializer));
+    }
+    return ans_;
   }
 
   @protected
@@ -2457,6 +3747,160 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PaymentInput sse_decode_payment_input(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_paymentType = sse_decode_String(deserializer);
+    var var_amount = sse_decode_String(deserializer);
+    var var_currencyCode = sse_decode_String(deserializer);
+    var var_exchangeRate = sse_decode_String(deserializer);
+    var var_paymentDate = sse_decode_String(deserializer);
+    var var_debitAccountId = sse_decode_opt_String(deserializer);
+    var var_creditAccountId = sse_decode_opt_String(deserializer);
+    var var_customerId = sse_decode_opt_String(deserializer);
+    var var_supplierId = sse_decode_opt_String(deserializer);
+    var var_reference = sse_decode_opt_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    return PaymentInput(
+      paymentType: var_paymentType,
+      amount: var_amount,
+      currencyCode: var_currencyCode,
+      exchangeRate: var_exchangeRate,
+      paymentDate: var_paymentDate,
+      debitAccountId: var_debitAccountId,
+      creditAccountId: var_creditAccountId,
+      customerId: var_customerId,
+      supplierId: var_supplierId,
+      reference: var_reference,
+      notes: var_notes,
+    );
+  }
+
+  @protected
+  PaymentView sse_decode_payment_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_voucherNumber = sse_decode_String(deserializer);
+    var var_paymentType = sse_decode_String(deserializer);
+    var var_amount = sse_decode_String(deserializer);
+    var var_currencyCode = sse_decode_String(deserializer);
+    var var_exchangeRate = sse_decode_String(deserializer);
+    var var_paymentDate = sse_decode_String(deserializer);
+    var var_journalEntryNumber = sse_decode_opt_String(deserializer);
+    var var_customerId = sse_decode_opt_String(deserializer);
+    var var_customerName = sse_decode_opt_String(deserializer);
+    var var_supplierId = sse_decode_opt_String(deserializer);
+    var var_supplierName = sse_decode_opt_String(deserializer);
+    var var_reference = sse_decode_opt_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_createdAt = sse_decode_String(deserializer);
+    return PaymentView(
+      id: var_id,
+      voucherNumber: var_voucherNumber,
+      paymentType: var_paymentType,
+      amount: var_amount,
+      currencyCode: var_currencyCode,
+      exchangeRate: var_exchangeRate,
+      paymentDate: var_paymentDate,
+      journalEntryNumber: var_journalEntryNumber,
+      customerId: var_customerId,
+      customerName: var_customerName,
+      supplierId: var_supplierId,
+      supplierName: var_supplierName,
+      reference: var_reference,
+      notes: var_notes,
+      createdAt: var_createdAt,
+    );
+  }
+
+  @protected
+  ReturnInput sse_decode_return_input(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_partyId = sse_decode_String(deserializer);
+    var var_returnDate = sse_decode_String(deserializer);
+    var var_lines = sse_decode_list_return_line_input(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_settlementMode = sse_decode_opt_String(deserializer);
+    var var_settlementAmount = sse_decode_opt_String(deserializer);
+    var var_isPaid = sse_decode_bool(deserializer);
+    return ReturnInput(
+      partyId: var_partyId,
+      returnDate: var_returnDate,
+      lines: var_lines,
+      notes: var_notes,
+      settlementMode: var_settlementMode,
+      settlementAmount: var_settlementAmount,
+      isPaid: var_isPaid,
+    );
+  }
+
+  @protected
+  ReturnLineInput sse_decode_return_line_input(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_materialId = sse_decode_String(deserializer);
+    var var_quantity = sse_decode_String(deserializer);
+    var var_unitPrice = sse_decode_String(deserializer);
+    var var_unitId = sse_decode_opt_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_invoiceLineId = sse_decode_opt_String(deserializer);
+    return ReturnLineInput(
+      materialId: var_materialId,
+      quantity: var_quantity,
+      unitPrice: var_unitPrice,
+      unitId: var_unitId,
+      notes: var_notes,
+      invoiceLineId: var_invoiceLineId,
+    );
+  }
+
+  @protected
+  ReturnLineView sse_decode_return_line_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_materialId = sse_decode_String(deserializer);
+    var var_materialName = sse_decode_String(deserializer);
+    var var_quantity = sse_decode_String(deserializer);
+    var var_unitPrice = sse_decode_String(deserializer);
+    var var_unitId = sse_decode_opt_String(deserializer);
+    var var_lineTotal = sse_decode_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    return ReturnLineView(
+      id: var_id,
+      materialId: var_materialId,
+      materialName: var_materialName,
+      quantity: var_quantity,
+      unitPrice: var_unitPrice,
+      unitId: var_unitId,
+      lineTotal: var_lineTotal,
+      notes: var_notes,
+    );
+  }
+
+  @protected
+  ReturnView sse_decode_return_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_returnNumber = sse_decode_String(deserializer);
+    var var_partyId = sse_decode_String(deserializer);
+    var var_partyName = sse_decode_String(deserializer);
+    var var_returnDate = sse_decode_String(deserializer);
+    var var_lines = sse_decode_list_return_line_view(deserializer);
+    var var_totalAmount = sse_decode_String(deserializer);
+    var var_notes = sse_decode_opt_String(deserializer);
+    var var_createdAt = sse_decode_String(deserializer);
+    return ReturnView(
+      id: var_id,
+      returnNumber: var_returnNumber,
+      partyId: var_partyId,
+      partyName: var_partyName,
+      returnDate: var_returnDate,
+      lines: var_lines,
+      totalAmount: var_totalAmount,
+      notes: var_notes,
+      createdAt: var_createdAt,
+    );
+  }
+
+  @protected
   SetupCompanyInput sse_decode_setup_company_input(
     SseDeserializer deserializer,
   ) {
@@ -2656,10 +4100,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.nameEn, serializer);
     sse_encode_String(self.accountType, serializer);
     sse_encode_String(self.purpose, serializer);
+    sse_encode_opt_String(self.parentId, serializer);
+    sse_encode_String(self.category, serializer);
+    sse_encode_i_32(self.level, serializer);
+    sse_encode_String(self.openingBalance, serializer);
     sse_encode_String(self.currency, serializer);
+    sse_encode_String(self.exchangeRate, serializer);
+    sse_encode_String(self.debit, serializer);
+    sse_encode_String(self.credit, serializer);
     sse_encode_String(self.balance, serializer);
+    sse_encode_opt_String(self.notes, serializer);
     sse_encode_bool(self.isActive, serializer);
     sse_encode_bool(self.isFinal, serializer);
+    sse_encode_bool(self.isDefault, serializer);
   }
 
   @protected
@@ -2722,6 +4175,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_expense_item_input(
+    ExpenseItemInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_expense_item_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_invoice_input(
+    InvoiceInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_invoice_input(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_material_create_input(
     MaterialCreateInput self,
     SseSerializer serializer,
@@ -2746,6 +4217,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_material_update_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_payment_input(
+    PaymentInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_payment_input(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_return_input(
+    ReturnInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_return_input(self, serializer);
   }
 
   @protected
@@ -2898,9 +4387,109 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_expense_item_input(
+    ExpenseItemInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.id, serializer);
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.nameAr, serializer);
+    sse_encode_String(self.nameEn, serializer);
+    sse_encode_String(self.openingBalance, serializer);
+    sse_encode_String(self.debit, serializer);
+    sse_encode_String(self.credit, serializer);
+    sse_encode_String(self.currency, serializer);
+    sse_encode_String(self.exchangeRate, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+  }
+
+  @protected
   void sse_encode_i_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putInt32(self);
+  }
+
+  @protected
+  void sse_encode_invoice_input(InvoiceInput self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.invoiceType, serializer);
+    sse_encode_opt_String(self.customerId, serializer);
+    sse_encode_opt_String(self.customerName, serializer);
+    sse_encode_opt_String(self.supplierId, serializer);
+    sse_encode_opt_String(self.supplierName, serializer);
+    sse_encode_list_invoice_line_input(self.lines, serializer);
+    sse_encode_String(self.taxAmount, serializer);
+    sse_encode_String(self.discountAmount, serializer);
+    sse_encode_String(self.extraCosts, serializer);
+    sse_encode_String(self.paymentMethod, serializer);
+    sse_encode_String(self.amountPaid, serializer);
+    sse_encode_String(self.issuedAt, serializer);
+    sse_encode_String(self.currencyCode, serializer);
+    sse_encode_String(self.exchangeRate, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+  }
+
+  @protected
+  void sse_encode_invoice_line_input(
+    InvoiceLineInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.materialId, serializer);
+    sse_encode_String(self.quantity, serializer);
+    sse_encode_String(self.unitPrice, serializer);
+    sse_encode_String(self.discountPercent, serializer);
+    sse_encode_opt_String(self.unitId, serializer);
+    sse_encode_opt_String(self.conversionFactor, serializer);
+    sse_encode_opt_String(self.warehouseId, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+  }
+
+  @protected
+  void sse_encode_invoice_line_view(
+    InvoiceLineView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.materialId, serializer);
+    sse_encode_String(self.materialName, serializer);
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.barcode, serializer);
+    sse_encode_String(self.categoryName, serializer);
+    sse_encode_String(self.quantity, serializer);
+    sse_encode_opt_String(self.unitId, serializer);
+    sse_encode_opt_String(self.conversionFactor, serializer);
+    sse_encode_String(self.unitPrice, serializer);
+    sse_encode_String(self.purchasePrice, serializer);
+    sse_encode_String(self.discountPercent, serializer);
+    sse_encode_String(self.lineTotal, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+  }
+
+  @protected
+  void sse_encode_invoice_view(InvoiceView self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.invoiceNumber, serializer);
+    sse_encode_String(self.invoiceType, serializer);
+    sse_encode_opt_String(self.partyId, serializer);
+    sse_encode_String(self.partyName, serializer);
+    sse_encode_String(self.status, serializer);
+    sse_encode_list_invoice_line_view(self.lines, serializer);
+    sse_encode_String(self.taxAmount, serializer);
+    sse_encode_String(self.discountAmount, serializer);
+    sse_encode_String(self.extraCosts, serializer);
+    sse_encode_String(self.subtotalAmount, serializer);
+    sse_encode_String(self.totalAmount, serializer);
+    sse_encode_String(self.amountPaid, serializer);
+    sse_encode_String(self.remainingAmount, serializer);
+    sse_encode_String(self.paymentMethod, serializer);
+    sse_encode_String(self.issuedAt, serializer);
+    sse_encode_String(self.currencyCode, serializer);
+    sse_encode_String(self.exchangeRate, serializer);
+    sse_encode_opt_String(self.notes, serializer);
   }
 
   @protected
@@ -2980,6 +4569,42 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_invoice_line_input(
+    List<InvoiceLineInput> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_invoice_line_input(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_invoice_line_view(
+    List<InvoiceLineView> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_invoice_line_view(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_invoice_view(
+    List<InvoiceView> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_invoice_view(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_journal_line_input(
     List<JournalLineInput> self,
     SseSerializer serializer,
@@ -3028,6 +4653,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_payment_view(
+    List<PaymentView> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_payment_view(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
     SseSerializer serializer,
@@ -3035,6 +4672,42 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint8List(self);
+  }
+
+  @protected
+  void sse_encode_list_return_line_input(
+    List<ReturnLineInput> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_return_line_input(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_return_line_view(
+    List<ReturnLineView> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_return_line_view(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_return_view(
+    List<ReturnView> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_return_view(item, serializer);
+    }
   }
 
   @protected
@@ -3192,6 +4865,98 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     if (self != null) {
       sse_encode_String(self, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_payment_input(PaymentInput self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.paymentType, serializer);
+    sse_encode_String(self.amount, serializer);
+    sse_encode_String(self.currencyCode, serializer);
+    sse_encode_String(self.exchangeRate, serializer);
+    sse_encode_String(self.paymentDate, serializer);
+    sse_encode_opt_String(self.debitAccountId, serializer);
+    sse_encode_opt_String(self.creditAccountId, serializer);
+    sse_encode_opt_String(self.customerId, serializer);
+    sse_encode_opt_String(self.supplierId, serializer);
+    sse_encode_opt_String(self.reference, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+  }
+
+  @protected
+  void sse_encode_payment_view(PaymentView self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.voucherNumber, serializer);
+    sse_encode_String(self.paymentType, serializer);
+    sse_encode_String(self.amount, serializer);
+    sse_encode_String(self.currencyCode, serializer);
+    sse_encode_String(self.exchangeRate, serializer);
+    sse_encode_String(self.paymentDate, serializer);
+    sse_encode_opt_String(self.journalEntryNumber, serializer);
+    sse_encode_opt_String(self.customerId, serializer);
+    sse_encode_opt_String(self.customerName, serializer);
+    sse_encode_opt_String(self.supplierId, serializer);
+    sse_encode_opt_String(self.supplierName, serializer);
+    sse_encode_opt_String(self.reference, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_String(self.createdAt, serializer);
+  }
+
+  @protected
+  void sse_encode_return_input(ReturnInput self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.partyId, serializer);
+    sse_encode_String(self.returnDate, serializer);
+    sse_encode_list_return_line_input(self.lines, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_opt_String(self.settlementMode, serializer);
+    sse_encode_opt_String(self.settlementAmount, serializer);
+    sse_encode_bool(self.isPaid, serializer);
+  }
+
+  @protected
+  void sse_encode_return_line_input(
+    ReturnLineInput self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.materialId, serializer);
+    sse_encode_String(self.quantity, serializer);
+    sse_encode_String(self.unitPrice, serializer);
+    sse_encode_opt_String(self.unitId, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_opt_String(self.invoiceLineId, serializer);
+  }
+
+  @protected
+  void sse_encode_return_line_view(
+    ReturnLineView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.materialId, serializer);
+    sse_encode_String(self.materialName, serializer);
+    sse_encode_String(self.quantity, serializer);
+    sse_encode_String(self.unitPrice, serializer);
+    sse_encode_opt_String(self.unitId, serializer);
+    sse_encode_String(self.lineTotal, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+  }
+
+  @protected
+  void sse_encode_return_view(ReturnView self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.returnNumber, serializer);
+    sse_encode_String(self.partyId, serializer);
+    sse_encode_String(self.partyName, serializer);
+    sse_encode_String(self.returnDate, serializer);
+    sse_encode_list_return_line_view(self.lines, serializer);
+    sse_encode_String(self.totalAmount, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_String(self.createdAt, serializer);
   }
 
   @protected

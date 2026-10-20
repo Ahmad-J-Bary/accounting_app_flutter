@@ -39,9 +39,10 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace -- --test-threads=1
 
 Set-Location app
-fvm dart format --output=none --set-exit-if-changed lib test
+fvm dart format --output=none --set-exit-if-changed lib test integration_test
 fvm flutter analyze
-fvm flutter test
+fvm flutter test test
+fvm flutter test integration_test/bridge_test.dart -d windows
 fvm flutter build windows --release
 fvm flutter build apk --release --split-per-abi
 
@@ -56,27 +57,53 @@ GitHub Actions runs the same Rust and Flutter gates in
 `.github/workflows/quality.yml`. That workflow also checks that the generated
 FRB bindings are fresh, then calls the reusable
 `.github/workflows/build-windows.yml` and `.github/workflows/build-android.yml`
-workflows. Each build uploads a checksummed artifact:
+workflows. Each build uploads checksummed artifacts:
 
-- Windows: `accounting-app-<version>-windows-x64.zip` plus a `.sha256` file.
+- Windows portable: `accounting-app-<version>-windows-x64.zip` plus `.sha256`.
+- Windows installers: `accounting-app-<version>-windows-x64-setup.exe` (Inno
+  Setup) and `accounting-app-<version>-windows-x64.msi` (WiX), each with a
+  `.sha256` file.
 - Android: split `app-<abi>-release.apk` files plus `sha256sums.txt`.
+
+The Windows installers are per-user installs, so they do not require
+administrator privileges. The EXE and MSI both install the same Flutter runner,
+Rust bridge DLL and `data/flutter_assets` payload as the portable ZIP.
+
+A real FFI integration test runs on Windows and covers the bridge end to end:
+
+```powershell
+Set-Location app
+fvm flutter test integration_test/bridge_test.dart -d windows
+```
+
+It opens a temporary SQLite database, runs migrations, creates a company, posts
+journal entries, exercises master-data CRUD, and creates/posts sales and purchase
+invoices, sales and purchase returns, receipts, an expense item and an expense
+voucher. Posted vouchers must reject direct deletion, proving the audit trail is
+enforced by the Rust core.
 
 `.github/workflows/release.yml` can be started manually or by pushing a `v*` tag
 to build both platforms and create or update a draft GitHub release with those
-assets. Dependabot keeps Cargo, pub and GitHub Actions dependencies current;
-semver-major updates are ignored for Cargo and pub until they have a dedicated
-impact and rollback plan.
+assets. The `1.x` line is intentionally marked **pre-release** until financial
+year closing and partner-capital management are complete. Dependabot keeps
+Cargo, pub and GitHub Actions dependencies current; semver-major updates are
+ignored for Cargo and pub until they have a dedicated impact and rollback plan.
 
 ## Current status
 
-The Phase 1 vertical slice is complete: Rust owns the accounting rules, the
-SQLite migrations and the FRB bridge; Flutter provides company setup, journal
-entries, a trial balance, and full master-data management for customers,
-suppliers, materials, categories, units and opening balances.
+Version `1.0.1` is the current desktop/handheld build. The Phase 1 vertical
+slice is complete: Rust owns the accounting rules, the SQLite migrations and the
+FRB bridge; Flutter provides company setup, journal entries, a trial balance,
+and full master-data management for customers, suppliers, materials, categories,
+units and opening balances. The same bridge now exposes sales and purchase
+invoices (draft, post, delete), sales and purchase returns, receipts, supplier
+payments, expense items and expense vouchers.
 
-The Flutter app now uses a React-derived design system with the bundled Cairo
-font, light/dark themes, a persistent RTL workspace shell, a dashboard, a
-dedicated journal page, ERP-style tables, a `Ctrl+K` command palette and
-inventory notifications. Remaining work includes i18n switching, RBAC, tabs,
-form side panels, financial-year closing UI, and the Axum/PostgreSQL sync layer.
+The Flutter app uses a React-derived design system with the bundled Cairo font,
+light/dark themes, a persistent RTL workspace shell, a dashboard, a dedicated
+journal page, ERP-style tables, a `Ctrl+K` command palette and inventory
+notifications. Remaining work includes i18n switching, RBAC, tabs, financial-year
+closing, partner/capital management, form side panels, and the Axum/PostgreSQL
+sync layer. Returns currently support creation and posting only; editing or
+reversing a posted return needs a dedicated use case before the UI can expose it.
 

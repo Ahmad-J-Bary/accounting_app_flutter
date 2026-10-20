@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  WiX 3 authoring for the per-user MSI.
+  AppVersion is supplied on the candle command line; FileSourceDir is used by
+  the heat-generated Files.wxs file.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product
+    Id="*"
+    Name="Accounting App"
+    Language="1033"
+    Version="$(var.AppVersion)"
+    Manufacturer="Accounting App"
+    UpgradeCode="A3D7E2B4-0C58-4F1A-8E63-2B9D5C7F4A21">
+
+    <Package
+      InstallerVersion="500"
+      Compressed="yes"
+      InstallScope="perUser"
+      Platform="x64"
+      Description="Accounting App"
+      Comments="Accounting App for Windows" />
+
+    <MajorUpgrade
+      DowngradeErrorMessage="A newer version of Accounting App is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <UIRef Id="WixUI_InstallDir" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="LocalAppDataFolder">
+        <Directory Id="ProgramsFolder" Name="Programs">
+          <Directory Id="INSTALLFOLDER" Name="AccountingApp" />
+        </Directory>
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="Accounting App" />
+      </Directory>
+      <Directory Id="DesktopFolder" />
+    </Directory>
+
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="StartMenuShortcut" Guid="C4E8F1A2-9B63-4D7E-A0F5-6C2D8E1B7A34">
+        <Shortcut
+          Id="StartMenuShortcut"
+          Name="Accounting App"
+          Description="Accounting App"
+          Target="[INSTALLFOLDER]accounting_app_flutter.exe"
+          WorkingDirectory="INSTALLFOLDER" />
+        <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
+        <RegistryValue
+          Root="HKCU"
+          Key="Software\AccountingApp"
+          Name="StartMenuShortcut"
+          Type="integer"
+          Value="1"
+          KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="DesktopFolder">
+      <Component Id="DesktopShortcut" Guid="E7A1D4C8-2F59-4B3A-91C6-8D5E0F2A7B46">
+        <Shortcut
+          Id="DesktopShortcut"
+          Name="Accounting App"
+          Description="Accounting App"
+          Target="[INSTALLFOLDER]accounting_app_flutter.exe"
+          WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue
+          Root="HKCU"
+          Key="Software\AccountingApp"
+          Name="DesktopShortcut"
+          Type="integer"
+          Value="1"
+          KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="Complete" Title="Accounting App" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="DesktopShortcut" />
+    </Feature>
+  </Product>
+</Wix>
