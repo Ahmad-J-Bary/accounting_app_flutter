@@ -15,12 +15,19 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # Runtime upgrades need a dedicated impact and rollback plan.
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "chore"
       include: scope
 
+  # The app and the FRB package are members of the root Dart workspace, so
+  # Dependabot must run from the workspace root (it rejects member directories).
   - package-ecosystem: pub
-    directory: /app
+    directory: /
     schedule:
       interval: weekly
       day: monday
@@ -34,27 +41,12 @@ updates:
         update-types:
           - minor
           - patch
-    commit-message:
-      prefix: "chore(deps)"
-      include: scope
-
-  - package-ecosystem: pub
-    directory: /packages/accounting_app_flutter_isolates
-    schedule:
-      interval: weekly
-      day: monday
-      time: "05:15"
-      timezone: UTC
-    open-pull-requests-limit: 5
-    groups:
-      pub-minor-patch:
-        patterns:
-          - "*"
+    ignore:
+      - dependency-name: "*"
         update-types:
-          - minor
-          - patch
+          - version-update:semver-major
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "chore"
       include: scope
 
   - package-ecosystem: github-actions
@@ -70,5 +62,5 @@ updates:
         patterns:
           - "*"
     commit-message:
-      prefix: "chore(ci)"
+      prefix: "chore"
       include: scope

@@ -61,9 +61,11 @@ workflows. Each build uploads a checksummed artifact:
 - Windows: `accounting-app-<version>-windows-x64.zip` plus a `.sha256` file.
 - Android: split `app-<abi>-release.apk` files plus `sha256sums.txt`.
 
-`.github/workflows/release.yml` can be started manually to build both platforms
-and create or update a draft GitHub release with those assets. Dependabot and a
-dependency-review workflow keep the dependency surface current and reviewed.
+`.github/workflows/release.yml` can be started manually or by pushing a `v*` tag
+to build both platforms and create or update a draft GitHub release with those
+assets. Dependabot keeps Cargo, pub and GitHub Actions dependencies current;
+semver-major updates are ignored for Cargo and pub until they have a dedicated
+impact and rollback plan.
 
 ## Current status
 

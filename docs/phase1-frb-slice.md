@@ -211,17 +211,20 @@
 وتأكيدات DLL و`.so`:
 
 - `quality.yml`: يشغّل Rust (fmt/check/clippy/505 اختبار)، وFlutter
-  (تنسيق/تحليل/11 اختبار)، وفحص **نضارة توليد FRB**، ثم يستدعي بناء
+  (تنسيق/تحليل/14 اختبار)، وفحص **نضارة توليد FRB**، ثم يستدعي بناء
   Windows وAndroid كـworkflows قابلة لإعادة الاستخدام.
 - `build-windows.yml`: يقرأ الإصدار من `app/pubspec.yaml`، يبني Windows
   `--release`، يتحقق من DLL، ويحوّله إلى ZIP مع SHA-256.
 - `build-android.yml`: يبني APK مقسّماً حسب ABI، يتحقق من `.so` لكل بنية،
   ويكتب `sha256sums.txt`.
 - `release.yml`: يستدعي البنّائين، يتحقق من البصمات، وينشئ/يحدّث **مسودة
-  إصدار** عبر `release-drafter` ثم يرفع الملفات بـ`gh release upload`.
-- `dependabot.yml`: تحديثات أسبوعية لـCargo وPub وGitHub Actions مع تجميع
-  التحديثات الصغيرة/الرقمية.
-- `dependency-review.yml`: منع الاعتماديات عالية الخطورة في طلبات السحب.
+  إصدار** عبر `release-drafter` ثم يرفع الملفات بـ`gh release upload`. يعمل
+  يدوياً أو عند دفع وسم `v*`.
+- `dependabot.yml`: تحديثات أسبوعية لـCargo وPub من جذر الـworkspace
+  وGitHub Actions، مع تجميع التحديثات الصغيرة/الرقمية وتجاهل
+  `semver-major` في Cargo وPub.
+- لم يُضف `dependency-review.yml`: GitHub يرفضه ما دام Dependency Graph
+  معطّلاً في إعدادات المستودع، وكان سيفشل في كل طلب سحب.
 
 ## ما تم إثباته فعلياً
 
@@ -234,13 +237,14 @@
 | `cargo clippy --workspace --all-targets -- -D warnings` | نجح |
 | `cargo fmt --all -- --check` | نجح |
 | `fvm flutter analyze` | `No issues found` (Flutter 3.41.9 / Dart 3.11.5) |
-| `fvm flutter test` | نجح: **13/13** |
+| `fvm flutter test` | نجح: **14/14** |
 | `fvm flutter test integration_test/bridge_test.dart -d windows` | نجح: Dart→Rust حقيقي، SQLite، migrations، `isSetupComplete=false`، `setupCompany`، `isSetupComplete=true`، قراءة العملاء/الموردين/المواد/التصنيفات، **التقاط `ApiError` مكتوب**، إنشاء وترحيل قيد، ميزان متوازن، CRUD كامل للعميل والمورد والمادة، تصنيف مادة، وحدتان عند الإنشاء مع منع تكرار الوحدة وحذف الأساسية، حالة نشاط المورد، وتحديث الرصيد الافتتاحي للعميل والمورد |
 | بناء Windows DLL | نجح: `app/build/windows/x64/runner/Release/accounting_app_flutter_isolates.dll` مع خط Cairo داخل `data/flutter_assets` |
 | ترجمة Rust لأندرويد | نجحت سابقاً للبنى الثلاث: arm64-v8a، armeabi-v7a، x86_64 |
 | CI run `39398551875` | **أخضر بالكامل**: Rust + Windows (`7m32s`، تحقق من DLL) + Android (`9m31s`، تحقق من `.so` للبنى الثلاث) |
+| CI run `39408319026` (الـworkflows الجديدة) | **أخضر بالكامل**: Rust (`38m41s`) + Flutter (`1m50s`) + codegen (`3m19s`) + Windows (`8m1s`، DLL وZIP بحجم `16.7MB` مع SHA-256) + Android (`10m36s`: `app-arm64-v8a-release.apk` 25.8MB، `app-armeabi-v7a-release.apk` 21.3MB، `app-x86_64-release.apk` 27.9MB، وكل APK يحتوي `.so` الخاص ببنيته) |
 | `flutter_rust_bridge_codegen` | أُعيد التوليد بـ`2.13.0` ثم `cargo fmt`؛ لا فرق في الملفات المولّدة (فحص النضارة قابل للتكرار) |
-| اختبارات الواجهة بعد التصميم الجديد | نجح: **13/13** على مقاس مكتبي `1440×1024` |
+| اختبارات الواجهة بعد التصميم الجديد | نجح: **14/14** على مقاس مكتبي `1440×1024`، منها اختبار Drawer على `430×900` |
 | `dart format --set-exit-if-changed lib test` | نجح بعد تنسيق الملفات الثمانية الجديدة/المعدّلة |
 
 اختبار Windows هو الدليل الحاسم: لم يكن اختبار واجهة فقط، بل حمّل مكتبة Rust
@@ -254,17 +258,18 @@
 | `cargo fmt` / clippy / 505 اختبار | نجح |
 | `flutter analyze` / `flutter test` | نجح |
 | CI لـPhase 0 (run `39334342514`) | أخضر سابقاً: Windows + Android + فحص DLL/`.so` |
-| APK جديد بعد تغييرات Phase 1 | **غير مُثبت محلياً**؛ يحتاج CI بسبب 404 من `dl.google.com` |
-| CI المعتمد على `main` | run `39398551875` — **أخضر**: Rust + Windows + Android |
-| CI `39397266271` | مهجور ومُستبدل بالـrun أعلاه |
+| APK جديد بعد تغييرات Phase 1 | **مُثبت عبر CI**: ثلاثة APKs مقسّمة حسب ABI، كل واحد يحوي `.so` الصحيح |
+| CI المعتمد على `main` | run `39408319026` — **أخضر**: Rust + Flutter + codegen + Windows + Android |
+| CI `39398551875` | أخضر سابقاً قبل إعادة هيكلة الـworkflows (مرجع تاريخي) |
+| CI `39397266271` | مهجور ومُستبدل بـ`39398551875` ثم `39408319026` |
 
 ## ما لم يُثبت بعد
 
-1. **حزمة APK بعد تغييرات الجسر**: ترجمة Rust لأندرويد نجحت للبنى الثلاث،
-   لكن تجميع APK محلياً توقف عند تحميل AndroidX من `dl.google.com` (404 في
-   هذه البيئة: `lifecycle-common:2.7.0`، `fragment:1.7.1`، وغيرها). الـAPK
-   الموجود حالياً عمره من Phase 0 ولا يحتوي المكتبة الجديدة. يحتاج CI إلى
-   إكمال التغليف والتحقق من `.so` داخل APK.
+1. **التغليف المحلي لأندرويد**: لا يزال محلياً متوقفاً عند تحميل AndroidX من
+   `dl.google.com` (404 في هذه البيئة: `lifecycle-common:2.7.0`،
+   `fragment:1.7.1`، وغيرها). لكن CI أكمل التغليف والتحقق: ثلاثة APKs مقسّمة
+   حسب ABI، وكل واحد يحوي `lib/<abi>/libaccounting_app_flutter_isolates.so`.
+   الـAPK القديم `app-release.apk` عمره من Phase 0 ولا يُعد دليلاً.
 2. **حدود CRUD المنقول**: يمكن الآن اختيار تصنيفات المادة وإدارة الوحدات
    وتعديل الرصيد الافتتاحي وحالة نشاط المورد. تبقى القيود التالية:
    - رمز المادة ما زال يُولَّد من بادئة التصنيف الافتراضي حتى لو اختير تصنيف
@@ -294,14 +299,13 @@
 9. **CI بعد إعادة هيكلة الـworkflows**: أُضيفت workflows قابلة لإعادة
    الاستخدام (`build-windows.yml`، `build-android.yml`)، و`release.yml`
    لمسودة الإصدار مع بصمات SHA-256، ومهمة `codegen` داخل Quality، و
-   `dependabot.yml`، و`dependency-review.yml`. لم تُشغَّل هذه النسخة الجديدة
-   على GitHub بعد؛ الدليل الأخضر هو run `39398551875` قبل إعادة الهيكلة.
+   `dependabot.yml`. شُغّلت النسخة الجديدة في run `39408319026` ونجحت جميع
+   المهام. تبقّى التحقق من `release.yml` نفسها عبر تشغيل يدوي لمسودة إصدار.
 
 ## الخطوة التالية
 
-1. دفع تغييرات التصميم والـworkflows إلى `main` ومتابعة run جديد والتأكد من
-   نجاح مهام Rust وFlutter وcodegen وWindows وAndroid مع بناء APK مقسّم
-   حسب ABI وبصمات SHA-256.
+1. تشغيل `release.yml` يدوياً والتحقق من إنشاء مسودة `v1.0.0`، ومن رفع ZIP
+   وAPKs وملفات SHA-256 بعد نجاح البنّائين.
 2. مراجعة الأوامر الـ68 غير المستخدمة والأوامر الأربعة المفقودة.
 3. إضافة فلاتر التاريخ إلى شاشة ميزان المراجعة.
 4. تحسين توليد رمز المادة ليستخدم بادئة التصنيف المختار عندما تكون صالحة،

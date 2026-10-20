@@ -1,6 +1,9 @@
 name: Release Draft
 
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
     inputs:
       draft:
@@ -34,6 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: read
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
