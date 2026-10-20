@@ -77,6 +77,7 @@ jobs:
           tag: v${{ steps.version.outputs.version }}
           name: v${{ steps.version.outputs.version }}
           version: ${{ steps.version.outputs.version }}
+          commitish: ${{ github.sha }}
           publish: ${{ github.event.inputs.draft == 'false' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
