@@ -18,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
       - name: Install pinned Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1.16.1
+        uses: actions-rust-lang/setup-rust-toolchain@v2.0.0
       - name: Read application version
         id: version
         shell: pwsh
@@ -58,7 +58,7 @@ jobs:
           "$hash  $artifact" | Out-File -FilePath "$artifact.sha256" -Encoding ascii
           "artifact=$artifact" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: windows-x64-${{ steps.version.outputs.version }}
           path: |

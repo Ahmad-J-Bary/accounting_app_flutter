@@ -55,12 +55,12 @@ jobs:
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Download the Windows artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: windows-x64-${{ steps.version.outputs.version }}
           path: dist/windows
       - name: Download the Android artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: android-release
           path: dist/android
@@ -72,7 +72,7 @@ jobs:
           sha256sum -c sha256sums.txt
       - name: Create or update the release draft
         id: draft
-        uses: release-drafter/release-drafter@v6
+        uses: release-drafter/release-drafter@v7
         with:
           tag: v${{ steps.version.outputs.version }}
           name: v${{ steps.version.outputs.version }}
