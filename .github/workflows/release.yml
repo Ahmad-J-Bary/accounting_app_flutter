@@ -78,7 +78,11 @@ jobs:
           name: v${{ steps.version.outputs.version }}
           version: ${{ steps.version.outputs.version }}
           commitish: ${{ github.sha }}
-          publish: ${{ github.event.inputs.draft == 'false' }}
+          # release-drafter treats the `publish` input as a truthy string:
+          # any non-empty value publishes the release, and an empty value
+          # keeps it as a draft. Only publish when the operator explicitly
+          # asks for it with draft=false; tag pushes stay as drafts.
+          publish: ${{ github.event.inputs.draft == 'false' && 'true' || '' }}
           # The 1.x desktop/handheld line ships as a pre-release until the
           # financial-year closing and partner-capital modules are complete.
           prerelease: true

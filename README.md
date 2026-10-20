@@ -92,7 +92,9 @@ ignored for Cargo and pub until they have a dedicated impact and rollback plan.
 
 ## Current status
 
-Version `1.0.1` is the current desktop/handheld build. The Phase 1 vertical
+Version `1.0.1` is the current desktop/handheld build and is published as a
+GitHub **pre-release** (tag `v1.0.1`) with a portable ZIP, an Inno Setup
+installer, a WiX MSI and three split Android APKs. The Phase 1 vertical
 slice is complete: Rust owns the accounting rules, the SQLite migrations and the
 FRB bridge; Flutter provides company setup, journal entries, a trial balance,
 and full master-data management for customers, suppliers, materials, categories,
