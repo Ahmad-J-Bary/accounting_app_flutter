@@ -5,24 +5,11 @@ import 'ledger.dart';
 import 'master_data_forms.dart';
 import 'material_units.dart';
 import 'opening_balances.dart';
+import 'theme/app_theme.dart';
+import 'ui/app_ui.dart';
+import 'workspace_data.dart';
 
-class _DirectoryData {
-  const _DirectoryData({
-    required this.customers,
-    required this.suppliers,
-    required this.materials,
-    required this.categories,
-    required this.currencies,
-    required this.baseCurrency,
-  });
-
-  final List<LedgerCustomer> customers;
-  final List<LedgerSupplier> suppliers;
-  final List<LedgerMaterial> materials;
-  final List<LedgerCategory> categories;
-  final List<CurrencyOption> currencies;
-  final String baseCurrency;
-}
+enum DirectoryTab { customers, suppliers, materials }
 
 enum _RowAction { edit, delete, units }
 
@@ -30,9 +17,22 @@ enum _RowAction { edit, delete, units }
 /// and materials. Every write goes through the Rust core; the page only
 /// refreshes after the bridge confirms success.
 class DirectoryPage extends StatefulWidget {
-  const DirectoryPage({super.key, required this.gateway});
+  const DirectoryPage({
+    super.key,
+    required this.gateway,
+    required this.data,
+    this.initialTab = DirectoryTab.customers,
+    this.onChanged,
+    this.onOpenCategories,
+    this.onOpenOpeningBalances,
+  });
 
   final LedgerGateway gateway;
+  final WorkspaceData data;
+  final DirectoryTab initialTab;
+  final Future<void> Function()? onChanged;
+  final Future<void> Function()? onOpenCategories;
+  final Future<void> Function()? onOpenOpeningBalances;
 
   @override
   State<DirectoryPage> createState() => _DirectoryPageState();
@@ -42,15 +42,17 @@ class _DirectoryPageState extends State<DirectoryPage>
     with SingleTickerProviderStateMixin {
   final _searchController = TextEditingController();
   late final TabController _tabController;
-  late Future<_DirectoryData> _future;
   String _query = '';
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTab.index,
+    );
     _tabController.addListener(_onTabChanged);
-    _future = _load();
   }
 
   @override
@@ -63,31 +65,9 @@ class _DirectoryPageState extends State<DirectoryPage>
 
   void _onTabChanged() {
     if (!_tabController.indexIsChanging) {
-      setState(() {});
+      setState(() => _query = '');
+      _searchController.clear();
     }
-  }
-
-  Future<_DirectoryData> _load() async {
-    final status = await widget.gateway.loadStatus();
-    final currencies = await widget.gateway.availableCurrencies();
-    final customers = await widget.gateway.loadCustomers();
-    final suppliers = await widget.gateway.loadSuppliers();
-    final materials = await widget.gateway.loadMaterials();
-    final categories = await widget.gateway.loadCategories();
-    return _DirectoryData(
-      customers: customers,
-      suppliers: suppliers,
-      materials: materials,
-      categories: categories,
-      currencies: currencies,
-      baseCurrency: status.baseCurrencyCode,
-    );
-  }
-
-  void _refresh() {
-    setState(() {
-      _future = _load();
-    });
   }
 
   bool _matches(String value) {
@@ -120,6 +100,10 @@ class _DirectoryPageState extends State<DirectoryPage>
       );
   }
 
+  Future<void> _notifyChanged() async {
+    await widget.onChanged?.call();
+  }
+
   Future<bool> _confirmDelete({
     required String title,
     required String message,
@@ -144,83 +128,84 @@ class _DirectoryPageState extends State<DirectoryPage>
     return confirmed == true;
   }
 
-  Future<void> _openCustomerForm(
-    _DirectoryData data, {
-    LedgerCustomer? customer,
-  }) async {
+  Future<void> _openCustomerForm({LedgerCustomer? customer}) async {
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => CustomerFormPage(
           gateway: widget.gateway,
-          currencies: data.currencies,
-          baseCurrency: data.baseCurrency,
+          currencies: widget.data.currencies,
+          baseCurrency: widget.data.baseCurrency,
           customer: customer,
         ),
       ),
     );
     if (saved == true) {
       _showMessage(customer == null ? 'تمت إضافة العميل.' : 'تم تحديث العميل.');
-      _refresh();
+      await _notifyChanged();
     }
   }
 
-  Future<void> _openSupplierForm(
-    _DirectoryData data, {
-    LedgerSupplier? supplier,
-  }) async {
+  Future<void> _openSupplierForm({LedgerSupplier? supplier}) async {
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => SupplierFormPage(
           gateway: widget.gateway,
-          currencies: data.currencies,
-          baseCurrency: data.baseCurrency,
+          currencies: widget.data.currencies,
+          baseCurrency: widget.data.baseCurrency,
           supplier: supplier,
         ),
       ),
     );
     if (saved == true) {
       _showMessage(supplier == null ? 'تمت إضافة المورد.' : 'تم تحديث المورد.');
-      _refresh();
+      await _notifyChanged();
     }
   }
 
-  Future<void> _openMaterialForm(
-    _DirectoryData data, {
-    LedgerMaterial? material,
-  }) async {
+  Future<void> _openMaterialForm({LedgerMaterial? material}) async {
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => MaterialFormPage(
           gateway: widget.gateway,
-          currencies: data.currencies,
-          baseCurrency: data.baseCurrency,
-          categories: data.categories,
+          currencies: widget.data.currencies,
+          baseCurrency: widget.data.baseCurrency,
+          categories: widget.data.categories,
           material: material,
         ),
       ),
     );
     if (saved == true) {
       _showMessage(material == null ? 'تمت إضافة المادة.' : 'تم تحديث المادة.');
-      _refresh();
+      await _notifyChanged();
     }
   }
 
   Future<void> _openCategories() async {
+    final callback = widget.onOpenCategories;
+    if (callback != null) {
+      await callback();
+      return;
+    }
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (_) => CategoriesPage(gateway: widget.gateway),
       ),
     );
-    _refresh();
+    await _notifyChanged();
   }
 
   Future<void> _openOpeningBalances() async {
+    final callback = widget.onOpenOpeningBalances;
+    if (callback != null) {
+      await callback();
+      return;
+    }
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (_) => OpeningBalancesPage(gateway: widget.gateway),
       ),
     );
-    _refresh();
+    await _notifyChanged();
   }
 
   Future<void> _openMaterialUnits(LedgerMaterial material) async {
@@ -230,7 +215,7 @@ class _DirectoryPageState extends State<DirectoryPage>
             MaterialUnitsPage(gateway: widget.gateway, material: material),
       ),
     );
-    _refresh();
+    await _notifyChanged();
   }
 
   Future<void> _deleteCustomer(LedgerCustomer customer) async {
@@ -246,7 +231,7 @@ class _DirectoryPageState extends State<DirectoryPage>
     try {
       await widget.gateway.deleteCustomer(customer.id);
       _showMessage('تم حذف العميل.');
-      _refresh();
+      await _notifyChanged();
     } catch (error) {
       _showError(error);
     }
@@ -265,7 +250,7 @@ class _DirectoryPageState extends State<DirectoryPage>
     try {
       await widget.gateway.deleteSupplier(supplier.id);
       _showMessage('تم حذف المورد.');
-      _refresh();
+      await _notifyChanged();
     } catch (error) {
       _showError(error);
     }
@@ -284,7 +269,7 @@ class _DirectoryPageState extends State<DirectoryPage>
     try {
       await widget.gateway.deleteMaterial(material.id);
       _showMessage('تم حذف المادة.');
-      _refresh();
+      await _notifyChanged();
     } catch (error) {
       _showError(error);
     }
@@ -292,142 +277,122 @@ class _DirectoryPageState extends State<DirectoryPage>
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<_DirectoryData>(
-      future: _future,
-      builder: (context, snapshot) {
-        final data = snapshot.data;
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('البيانات الأساسية'),
-            actions: [
-              IconButton(
-                tooltip: 'تصنيفات المواد',
-                onPressed: _openCategories,
-                icon: const Icon(Icons.category_outlined),
-              ),
-              IconButton(
-                tooltip: 'الأرصدة الافتتاحية',
-                onPressed: _openOpeningBalances,
-                icon: const Icon(Icons.account_balance_wallet_outlined),
-              ),
-              IconButton(
-                tooltip: 'تحديث',
-                onPressed: _refresh,
-                icon: const Icon(Icons.refresh),
-              ),
-            ],
-          ),
-          body: _buildBody(snapshot),
-          floatingActionButton: data == null ? null : _buildFab(data),
-        );
-      },
-    );
-  }
-
-  Widget _buildBody(AsyncSnapshot<_DirectoryData> snapshot) {
-    if (snapshot.connectionState != ConnectionState.done) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (snapshot.hasError) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 12),
-              Text(
-                'تعذّر تحميل البيانات الأساسية.\n${describeError(snapshot.error!)}',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: _refresh,
-                child: const Text('إعادة المحاولة'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final data = snapshot.data!;
-    final customers = data.customers
+    final customers = widget.data.customers
         .where((c) => _matches('${c.code} ${c.name} ${c.phone ?? ''}'))
-        .toList();
-    final suppliers = data.suppliers
+        .toList(growable: false);
+    final suppliers = widget.data.suppliers
         .where((s) => _matches('${s.code} ${s.name} ${s.phone ?? ''}'))
-        .toList();
-    final materials = data.materials
+        .toList(growable: false);
+    final materials = widget.data.materials
         .where((m) => _matches('${m.code} ${m.name} ${m.nameEn} ${m.barcode}'))
-        .toList();
+        .toList(growable: false);
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.search),
-              hintText: 'بحث بالاسم أو الرمز أو الباركود',
-              border: const OutlineInputBorder(),
-              suffixIcon: _query.isEmpty
-                  ? null
-                  : IconButton(
-                      tooltip: 'مسح البحث',
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() => _query = '');
-                      },
-                      icon: const Icon(Icons.clear),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.xl,
+            AppSpacing.xl,
+            AppSpacing.md,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppPageHeader(
+                title: 'البيانات الأساسية',
+                subtitle:
+                    'إدارة العملاء والموردين والمواد مع بحث فوري وإجراءات سريعة.',
+                icon: Icons.folder_shared_outlined,
+                actions: [
+                  IconButton(
+                    tooltip: 'تصنيفات المواد',
+                    onPressed: _openCategories,
+                    icon: const Icon(Icons.category_outlined, size: 20),
+                  ),
+                  IconButton(
+                    tooltip: 'الأرصدة الافتتاحية',
+                    onPressed: _openOpeningBalances,
+                    icon: const Icon(
+                      Icons.account_balance_wallet_outlined,
+                      size: 20,
                     ),
-            ),
-            onChanged: (value) {
-              setState(() => _query = value.trim().toLowerCase());
-            },
+                  ),
+                  FilledButton.icon(
+                    onPressed: _createCurrent,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: Text(_createLabel),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              AppCard(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final search = AppSearchField(
+                      controller: _searchController,
+                      hintText: 'بحث بالاسم أو الرمز أو الباركود…',
+                      onChanged: (value) {
+                        setState(() => _query = value.trim().toLowerCase());
+                      },
+                    );
+                    final count = AppBadge(
+                      label:
+                          '${customers.length + suppliers.length + materials.length} نتيجة',
+                      tone: AppBadgeTone.neutral,
+                      icon: Icons.filter_alt_outlined,
+                    );
+                    if (constraints.maxWidth < 480) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          search,
+                          const SizedBox(height: AppSpacing.sm),
+                          Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: count,
+                          ),
+                        ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Expanded(child: search),
+                        const SizedBox(width: AppSpacing.md),
+                        count,
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
-        TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: 'العملاء (${customers.length})'),
-            Tab(text: 'الموردون (${suppliers.length})'),
-            Tab(text: 'المواد (${materials.length})'),
-          ],
+        Container(
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: Theme.of(context).colorScheme.outline),
+            ),
+          ),
+          child: TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            tabs: [
+              Tab(text: 'العملاء (${customers.length})'),
+              Tab(text: 'الموردون (${suppliers.length})'),
+              Tab(text: 'المواد (${materials.length})'),
+            ],
+          ),
         ),
         Expanded(
           child: TabBarView(
             controller: _tabController,
             children: [
-              _CustomerList(
-                customers: customers,
-                onEdit: (customer) =>
-                    _openCustomerForm(data, customer: customer),
-                onDelete: _deleteCustomer,
-                onCreate: () => _openCustomerForm(data),
-              ),
-              _SupplierList(
-                suppliers: suppliers,
-                onEdit: (supplier) =>
-                    _openSupplierForm(data, supplier: supplier),
-                onDelete: _deleteSupplier,
-                onCreate: () => _openSupplierForm(data),
-              ),
-              _MaterialList(
-                materials: materials,
-                categoryNames: {
-                  for (final category in data.categories)
-                    category.id: categoryLabel(category, data.categories),
-                },
-                onEdit: (material) =>
-                    _openMaterialForm(data, material: material),
-                onDelete: _deleteMaterial,
-                onUnits: _openMaterialUnits,
-                onCreate: () => _openMaterialForm(data),
-              ),
+              _customerTable(customers),
+              _supplierTable(suppliers),
+              _materialTable(materials),
             ],
           ),
         ),
@@ -435,244 +400,326 @@ class _DirectoryPageState extends State<DirectoryPage>
     );
   }
 
-  Widget _buildFab(_DirectoryData data) {
+  String get _createLabel {
+    return switch (_tabController.index) {
+      1 => 'إضافة مورد',
+      2 => 'إضافة مادة',
+      _ => 'إضافة عميل',
+    };
+  }
+
+  void _createCurrent() {
     switch (_tabController.index) {
-      case 0:
-        return FloatingActionButton.extended(
-          onPressed: () => _openCustomerForm(data),
-          icon: const Icon(Icons.person_add_alt_1_outlined),
-          label: const Text('إضافة عميل'),
-        );
       case 1:
-        return FloatingActionButton.extended(
-          onPressed: () => _openSupplierForm(data),
-          icon: const Icon(Icons.local_shipping_outlined),
-          label: const Text('إضافة مورد'),
-        );
+        _openSupplierForm();
+        break;
+      case 2:
+        _openMaterialForm();
+        break;
       default:
-        return FloatingActionButton.extended(
-          onPressed: () => _openMaterialForm(data),
-          icon: const Icon(Icons.add_box_outlined),
-          label: const Text('إضافة مادة'),
-        );
+        _openCustomerForm();
     }
   }
-}
 
-class _CustomerList extends StatelessWidget {
-  const _CustomerList({
-    required this.customers,
-    required this.onEdit,
-    required this.onDelete,
-    required this.onCreate,
-  });
-
-  final List<LedgerCustomer> customers;
-  final ValueChanged<LedgerCustomer> onEdit;
-  final ValueChanged<LedgerCustomer> onDelete;
-  final VoidCallback onCreate;
-
-  @override
-  Widget build(BuildContext context) {
-    if (customers.isEmpty) {
-      return _EmptyList(
-        message: 'لا يوجد عملاء مطابقون.',
-        onCreate: onCreate,
-        createLabel: 'إضافة عميل',
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
-      itemCount: customers.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
-      itemBuilder: (context, index) {
-        final customer = customers[index];
-        return ListTile(
-          onTap: () => onEdit(customer),
-          leading: CircleAvatar(
-            child: Text(customer.code.isEmpty ? '?' : customer.code),
+  Widget _customerTable(List<LedgerCustomer> customers) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: AppDataTable<LedgerCustomer>(
+        minWidth: 720,
+        columns: [
+          AppTableColumn(
+            label: 'الرمز',
+            flex: 2,
+            builder: (context, customer) =>
+                Text(customer.code, style: theme.textTheme.labelMedium),
           ),
-          title: Text(customer.name),
-          subtitle: Text(
-            [
-              customer.code,
-              if (customer.phone != null && customer.phone!.isNotEmpty)
-                customer.phone!,
-              if (!customer.isActive) 'غير نشط',
-            ].join(' • '),
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 110),
-                child: Text(
-                  '${customer.balance} ${customer.currency}',
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
-              ),
-              _RowActions(
-                onEdit: () => onEdit(customer),
-                onDelete: () => onDelete(customer),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _SupplierList extends StatelessWidget {
-  const _SupplierList({
-    required this.suppliers,
-    required this.onEdit,
-    required this.onDelete,
-    required this.onCreate,
-  });
-
-  final List<LedgerSupplier> suppliers;
-  final ValueChanged<LedgerSupplier> onEdit;
-  final ValueChanged<LedgerSupplier> onDelete;
-  final VoidCallback onCreate;
-
-  @override
-  Widget build(BuildContext context) {
-    if (suppliers.isEmpty) {
-      return _EmptyList(
-        message: 'لا يوجد موردون مطابقون.',
-        onCreate: onCreate,
-        createLabel: 'إضافة مورد',
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
-      itemCount: suppliers.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
-      itemBuilder: (context, index) {
-        final supplier = suppliers[index];
-        return ListTile(
-          onTap: () => onEdit(supplier),
-          leading: CircleAvatar(
-            child: Text(supplier.code.isEmpty ? '?' : supplier.code),
-          ),
-          title: Text(supplier.name),
-          subtitle: Text(
-            [
-              supplier.code,
-              if (supplier.phone != null && supplier.phone!.isNotEmpty)
-                supplier.phone!,
-              if (!supplier.isActive) 'غير نشط',
-            ].join(' • '),
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 110),
-                child: Text(
-                  '${supplier.balance} ${supplier.currency}',
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
-              ),
-              _RowActions(
-                onEdit: () => onEdit(supplier),
-                onDelete: () => onDelete(supplier),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _MaterialList extends StatelessWidget {
-  const _MaterialList({
-    required this.materials,
-    required this.categoryNames,
-    required this.onEdit,
-    required this.onDelete,
-    required this.onUnits,
-    required this.onCreate,
-  });
-
-  final List<LedgerMaterial> materials;
-  final Map<String, String> categoryNames;
-  final ValueChanged<LedgerMaterial> onEdit;
-  final ValueChanged<LedgerMaterial> onDelete;
-  final ValueChanged<LedgerMaterial> onUnits;
-  final VoidCallback onCreate;
-
-  @override
-  Widget build(BuildContext context) {
-    if (materials.isEmpty) {
-      return _EmptyList(
-        message: 'لا توجد مواد مطابقة.',
-        onCreate: onCreate,
-        createLabel: 'إضافة مادة',
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
-      itemCount: materials.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
-      itemBuilder: (context, index) {
-        final material = materials[index];
-        final labels = material.categoryIds
-            .map((id) => categoryNames[id])
-            .whereType<String>()
-            .toList();
-        return ListTile(
-          onTap: () => onEdit(material),
-          leading: Icon(
-            material.hasExpiry
-                ? Icons.event_available_outlined
-                : Icons.inventory_2_outlined,
-          ),
-          title: Text(material.name),
-          subtitle: Text(
-            [
-              material.code,
-              if (material.barcode.isNotEmpty) 'باركود: ${material.barcode}',
-              if (labels.isNotEmpty) 'التصنيف: ${labels.join('، ')}',
-              if (material.unitName.isNotEmpty) 'الوحدة: ${material.unitName}',
-              if (material.unitsCount > 1) 'الوحدات: ${material.unitsCount}',
-              'متاح: ${material.totalAvailable}',
-              'حد أدنى: ${material.minimumStock}',
-            ].join(' • '),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (material.purchasePrice.isNotEmpty ||
-                  material.salePrice.isNotEmpty)
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 110),
-                  child: Text(
-                    'شراء ${material.purchasePrice} • بيع ${material.salePrice}',
-                    textAlign: TextAlign.end,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelSmall,
+          AppTableColumn(
+            label: 'العميل',
+            flex: 5,
+            builder: (context, customer) => Row(
+              children: [
+                AppAvatar(name: customer.name, size: 34),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        customer.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      Text(
+                        customer.phone?.isNotEmpty == true
+                            ? customer.phone!
+                            : 'لا يوجد هاتف',
+                        style: theme.textTheme.labelSmall,
+                      ),
+                    ],
                   ),
                 ),
-              _RowActions(
-                onEdit: () => onEdit(material),
-                onDelete: () => onDelete(material),
-                onUnits: () => onUnits(material),
-              ),
-            ],
+              ],
+            ),
           ),
-        );
-      },
+          AppTableColumn(
+            label: 'الحالة',
+            flex: 2,
+            builder: (context, customer) => AppBadge(
+              label: customer.isActive ? 'نشط' : 'غير نشط',
+              tone: customer.isActive
+                  ? AppBadgeTone.success
+                  : AppBadgeTone.neutral,
+              compact: true,
+            ),
+          ),
+          AppTableColumn(
+            label: 'الرصيد',
+            flex: 3,
+            alignment: AlignmentDirectional.centerEnd,
+            headerAlignment: AlignmentDirectional.centerEnd,
+            builder: (context, customer) => Text(
+              formatMoney(customer.balance, currency: customer.currency),
+              style: theme.textTheme.labelLarge,
+            ),
+          ),
+          AppTableColumn(
+            label: '',
+            width: 56,
+            alignment: AlignmentDirectional.center,
+            builder: (context, customer) => _RowActions(
+              onEdit: () => _openCustomerForm(customer: customer),
+              onDelete: () => _deleteCustomer(customer),
+            ),
+          ),
+        ],
+        rows: customers,
+        onRowTap: (customer) => _openCustomerForm(customer: customer),
+        emptyTitle: 'لا يوجد عملاء مطابقون',
+        emptyMessage: 'أضف عميلاً جديداً أو عدّل كلمة البحث.',
+        emptyIcon: Icons.people_alt_outlined,
+        emptyAction: FilledButton.icon(
+          onPressed: _openCustomerForm,
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('إضافة عميل'),
+        ),
+      ),
+    );
+  }
+
+  Widget _supplierTable(List<LedgerSupplier> suppliers) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: AppDataTable<LedgerSupplier>(
+        minWidth: 720,
+        columns: [
+          AppTableColumn(
+            label: 'الرمز',
+            flex: 2,
+            builder: (context, supplier) =>
+                Text(supplier.code, style: theme.textTheme.labelMedium),
+          ),
+          AppTableColumn(
+            label: 'المورد',
+            flex: 5,
+            builder: (context, supplier) => Row(
+              children: [
+                AppAvatar(
+                  name: supplier.name,
+                  size: 34,
+                  color: context.semanticColors.info,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        supplier.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      Text(
+                        supplier.phone?.isNotEmpty == true
+                            ? supplier.phone!
+                            : 'لا يوجد هاتف',
+                        style: theme.textTheme.labelSmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          AppTableColumn(
+            label: 'الحالة',
+            flex: 2,
+            builder: (context, supplier) => AppBadge(
+              label: supplier.isActive ? 'نشط' : 'غير نشط',
+              tone: supplier.isActive
+                  ? AppBadgeTone.success
+                  : AppBadgeTone.neutral,
+              compact: true,
+            ),
+          ),
+          AppTableColumn(
+            label: 'الرصيد',
+            flex: 3,
+            alignment: AlignmentDirectional.centerEnd,
+            headerAlignment: AlignmentDirectional.centerEnd,
+            builder: (context, supplier) => Text(
+              formatMoney(supplier.balance, currency: supplier.currency),
+              style: theme.textTheme.labelLarge,
+            ),
+          ),
+          AppTableColumn(
+            label: '',
+            width: 56,
+            alignment: AlignmentDirectional.center,
+            builder: (context, supplier) => _RowActions(
+              onEdit: () => _openSupplierForm(supplier: supplier),
+              onDelete: () => _deleteSupplier(supplier),
+            ),
+          ),
+        ],
+        rows: suppliers,
+        onRowTap: (supplier) => _openSupplierForm(supplier: supplier),
+        emptyTitle: 'لا يوجد موردون مطابقون',
+        emptyMessage: 'أضف مورداً جديداً أو عدّل كلمة البحث.',
+        emptyIcon: Icons.local_shipping_outlined,
+        emptyAction: FilledButton.icon(
+          onPressed: _openSupplierForm,
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('إضافة مورد'),
+        ),
+      ),
+    );
+  }
+
+  Widget _materialTable(List<LedgerMaterial> materials) {
+    final theme = Theme.of(context);
+    final categoryNames = {
+      for (final category in widget.data.categories)
+        category.id: categoryLabel(category, widget.data.categories),
+    };
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: AppDataTable<LedgerMaterial>(
+        minWidth: 1040,
+        columns: [
+          AppTableColumn(
+            label: 'الرمز',
+            flex: 2,
+            builder: (context, material) =>
+                Text(material.code, style: theme.textTheme.labelMedium),
+          ),
+          AppTableColumn(
+            label: 'المادة',
+            flex: 4,
+            builder: (context, material) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  material.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall,
+                ),
+                Text(
+                  material.barcode.isNotEmpty
+                      ? 'باركود: ${material.barcode} • متاح: ${material.totalAvailable}'
+                      : 'متاح: ${material.totalAvailable}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall,
+                ),
+              ],
+            ),
+          ),
+          AppTableColumn(
+            label: 'التصنيف',
+            flex: 3,
+            builder: (context, material) {
+              final labels = material.categoryIds
+                  .map((id) => categoryNames[id])
+                  .whereType<String>()
+                  .toList();
+              return AppBadge(
+                label: labels.isEmpty ? 'غير مصنف' : labels.join('، '),
+                tone: labels.isEmpty
+                    ? AppBadgeTone.neutral
+                    : AppBadgeTone.primary,
+                compact: true,
+              );
+            },
+          ),
+          AppTableColumn(
+            label: 'الوحدة',
+            flex: 2,
+            builder: (context, material) => Text(
+              material.unitName.isEmpty ? '—' : material.unitName,
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+          AppTableColumn(
+            label: 'المتاح',
+            flex: 2,
+            alignment: AlignmentDirectional.centerEnd,
+            headerAlignment: AlignmentDirectional.centerEnd,
+            builder: (context, material) => Text(
+              '${material.totalAvailable} ${material.unitName}',
+              style: theme.textTheme.labelMedium,
+            ),
+          ),
+          AppTableColumn(
+            label: 'الحد الأدنى',
+            flex: 2,
+            alignment: AlignmentDirectional.centerEnd,
+            headerAlignment: AlignmentDirectional.centerEnd,
+            builder: (context, material) => Text(
+              material.minimumStock,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: context.semanticColors.warning,
+              ),
+            ),
+          ),
+          AppTableColumn(
+            label: 'الأسعار',
+            flex: 3,
+            builder: (context, material) => Text(
+              'شراء ${material.purchasePrice.isEmpty ? '—' : material.purchasePrice} • بيع ${material.salePrice.isEmpty ? '—' : material.salePrice}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall,
+            ),
+          ),
+          AppTableColumn(
+            label: '',
+            width: 56,
+            alignment: AlignmentDirectional.center,
+            builder: (context, material) => _RowActions(
+              onEdit: () => _openMaterialForm(material: material),
+              onDelete: () => _deleteMaterial(material),
+              onUnits: () => _openMaterialUnits(material),
+            ),
+          ),
+        ],
+        rows: materials,
+        rowHeight: 64,
+        onRowTap: (material) => _openMaterialForm(material: material),
+        emptyTitle: 'لا توجد مواد مطابقة',
+        emptyMessage: 'أضف مادة جديدة أو عدّل كلمة البحث.',
+        emptyIcon: Icons.inventory_2_outlined,
+        emptyAction: FilledButton.icon(
+          onPressed: _openMaterialForm,
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('إضافة مادة'),
+        ),
+      ),
     );
   }
 }
@@ -692,81 +739,49 @@ class _RowActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopupMenuButton<_RowAction>(
       tooltip: 'إجراءات',
+      icon: const Icon(Icons.more_horiz, size: 19),
       onSelected: (action) {
         switch (action) {
           case _RowAction.edit:
             onEdit();
+            break;
           case _RowAction.delete:
             onDelete();
+            break;
           case _RowAction.units:
             onUnits?.call();
+            break;
         }
       },
       itemBuilder: (context) => [
         const PopupMenuItem(
           value: _RowAction.edit,
-          child: Row(
-            children: [
-              Icon(Icons.edit_outlined),
-              SizedBox(width: 8),
-              Text('تعديل'),
-            ],
-          ),
+          child: _ActionRow(icon: Icons.edit_outlined, label: 'تعديل'),
         ),
         if (onUnits != null)
           const PopupMenuItem(
             value: _RowAction.units,
-            child: Row(
-              children: [
-                Icon(Icons.straighten),
-                SizedBox(width: 8),
-                Text('الوحدات'),
-              ],
-            ),
+            child: _ActionRow(icon: Icons.straighten, label: 'الوحدات'),
           ),
         const PopupMenuItem(
           value: _RowAction.delete,
-          child: Row(
-            children: [
-              Icon(Icons.delete_outline),
-              SizedBox(width: 8),
-              Text('حذف'),
-            ],
-          ),
+          child: _ActionRow(icon: Icons.delete_outline, label: 'حذف'),
         ),
       ],
     );
   }
 }
 
-class _EmptyList extends StatelessWidget {
-  const _EmptyList({
-    required this.message,
-    required this.onCreate,
-    required this.createLabel,
-  });
+class _ActionRow extends StatelessWidget {
+  const _ActionRow({required this.icon, required this.label});
 
-  final String message;
-  final VoidCallback onCreate;
-  final String createLabel;
+  final IconData icon;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.inbox_outlined, size: 48),
-          const SizedBox(height: 8),
-          Text(message),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: onCreate,
-            icon: const Icon(Icons.add),
-            label: Text(createLabel),
-          ),
-        ],
-      ),
+    return Row(
+      children: [Icon(icon, size: 17), const SizedBox(width: 8), Text(label)],
     );
   }
 }

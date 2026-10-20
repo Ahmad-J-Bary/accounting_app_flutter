@@ -335,21 +335,48 @@ class _FakeGateway implements LedgerGateway {
   }) async {}
 }
 
+Future<void> _pumpWorkspace(
+  WidgetTester tester, {
+  bool setupComplete = true,
+}) async {
+  tester.view.physicalSize = const Size(1440, 1024);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  await tester.pumpWidget(
+    AccountingApp(gateway: _FakeGateway(setupComplete: setupComplete)),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _openCustomers(WidgetTester tester) async {
+  await tester.tap(find.text('العملاء').first);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _openMaterialsTab(WidgetTester tester) async {
+  await tester.tap(find.textContaining('المواد (1)'));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _openJournal(WidgetTester tester) async {
+  await tester.tap(find.text('قيود اليومية'));
+  await tester.pumpAndSettle();
+}
+
 void main() {
-  testWidgets('shows the ready banner and trial balance from the gateway', (
+  testWidgets('shows the dashboard metrics and journal from the gateway', (
     tester,
   ) async {
-    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
-    await tester.pumpAndSettle();
+    await _pumpWorkspace(tester);
 
     expect(find.text('جاهز'), findsOneWidget);
-    expect(find.textContaining('شركة الاختبار'), findsOneWidget);
+    expect(find.textContaining('شركة الاختبار'), findsWidgets);
     expect(find.text('إجمالي المدين'), findsOneWidget);
     expect(find.text('إجمالي الدائن'), findsOneWidget);
-    expect(find.text('100.00'), findsWidgets);
+    expect(find.textContaining('100.00'), findsWidgets);
 
-    await tester.drag(find.byType(ListView), const Offset(0, -700));
-    await tester.pumpAndSettle();
+    await _openJournal(tester);
 
     expect(find.text('ميزان المراجعة'), findsOneWidget);
     expect(find.text('الصندوق'), findsWidgets);
@@ -371,15 +398,11 @@ void main() {
   });
 
   testWidgets('validates that both accounts are selected', (tester) async {
-    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
-    await tester.pumpAndSettle();
+    await _pumpWorkspace(tester);
+    await _openJournal(tester);
 
     final saveButton = find.widgetWithText(FilledButton, 'حفظ القيد');
-    await tester.dragUntilVisible(
-      saveButton,
-      find.byType(ListView),
-      const Offset(0, -300),
-    );
+    await tester.ensureVisible(saveButton);
     await tester.pumpAndSettle();
     await tester.tap(saveButton);
     await tester.pumpAndSettle();
@@ -388,32 +411,23 @@ void main() {
     expect(find.byType(SnackBar), findsOneWidget);
   });
 
-  testWidgets('opens the master-data tabs from the ready screen', (
-    tester,
-  ) async {
-    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
-    await tester.pumpAndSettle();
+  testWidgets('opens the master-data tabs from the sidebar', (tester) async {
+    await _pumpWorkspace(tester);
+    await _openCustomers(tester);
 
-    await tester.tap(find.byTooltip('البيانات الأساسية'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('البيانات الأساسية'), findsOneWidget);
+    expect(find.text('البيانات الأساسية'), findsWidgets);
     expect(find.text('أحمد محمد'), findsOneWidget);
     expect(find.textContaining('العملاء (1)'), findsOneWidget);
 
-    await tester.tap(find.textContaining('المواد (1)'));
-    await tester.pumpAndSettle();
+    await _openMaterialsTab(tester);
 
     expect(find.text('قمح'), findsOneWidget);
     expect(find.textContaining('متاح: 50'), findsOneWidget);
   });
 
   testWidgets('opens category management from master data', (tester) async {
-    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byTooltip('البيانات الأساسية'));
-    await tester.pumpAndSettle();
+    await _pumpWorkspace(tester);
+    await _openCustomers(tester);
     await tester.tap(find.byTooltip('تصنيفات المواد'));
     await tester.pumpAndSettle();
 
@@ -432,11 +446,8 @@ void main() {
   testWidgets('opens the opening-balance screen and edits a customer', (
     tester,
   ) async {
-    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byTooltip('البيانات الأساسية'));
-    await tester.pumpAndSettle();
+    await _pumpWorkspace(tester);
+    await _openCustomers(tester);
     await tester.tap(find.byTooltip('الأرصدة الافتتاحية'));
     await tester.pumpAndSettle();
 
@@ -455,13 +466,9 @@ void main() {
   testWidgets('opens material units from the material row actions', (
     tester,
   ) async {
-    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byTooltip('البيانات الأساسية'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('المواد (1)'));
-    await tester.pumpAndSettle();
+    await _pumpWorkspace(tester);
+    await _openCustomers(tester);
+    await _openMaterialsTab(tester);
 
     await tester.tap(find.byTooltip('إجراءات').last);
     await tester.pumpAndSettle();
@@ -477,14 +484,10 @@ void main() {
   testWidgets('shows categories and extra units in the material form', (
     tester,
   ) async {
-    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byTooltip('البيانات الأساسية'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('المواد (1)'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FloatingActionButton, 'إضافة مادة'));
+    await _pumpWorkspace(tester);
+    await _openCustomers(tester);
+    await _openMaterialsTab(tester);
+    await tester.tap(find.widgetWithText(FilledButton, 'إضافة مادة'));
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
@@ -503,13 +506,10 @@ void main() {
   });
 
   testWidgets('opens the customer form and validates the name', (tester) async {
-    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
-    await tester.pumpAndSettle();
+    await _pumpWorkspace(tester);
+    await _openCustomers(tester);
 
-    await tester.tap(find.byTooltip('البيانات الأساسية'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.widgetWithText(FloatingActionButton, 'إضافة عميل'));
+    await tester.tap(find.widgetWithText(FilledButton, 'إضافة عميل'));
     await tester.pumpAndSettle();
 
     expect(find.text('اسم العميل'), findsOneWidget);
@@ -524,11 +524,8 @@ void main() {
   testWidgets('opens the customer editor with the opening-balance hint', (
     tester,
   ) async {
-    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byTooltip('البيانات الأساسية'));
-    await tester.pumpAndSettle();
+    await _pumpWorkspace(tester);
+    await _openCustomers(tester);
 
     await tester.tap(find.text('أحمد محمد'));
     await tester.pumpAndSettle();
@@ -544,11 +541,8 @@ void main() {
   testWidgets('asks for confirmation before deleting a customer', (
     tester,
   ) async {
-    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byTooltip('البيانات الأساسية'));
-    await tester.pumpAndSettle();
+    await _pumpWorkspace(tester);
+    await _openCustomers(tester);
 
     await tester.tap(find.byTooltip('إجراءات').first);
     await tester.pumpAndSettle();
@@ -561,5 +555,61 @@ void main() {
     await tester.tap(find.text('إلغاء'));
     await tester.pumpAndSettle();
     expect(find.text('حذف العميل'), findsNothing);
+  });
+
+  testWidgets('toggles the dark theme from the top bar', (tester) async {
+    await _pumpWorkspace(tester);
+
+    expect(find.byTooltip('الوضع الداكن'), findsOneWidget);
+    await tester.tap(find.byTooltip('الوضع الداكن'));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('الوضع الفاتح'), findsOneWidget);
+    final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
+    expect(app.themeMode, ThemeMode.dark);
+  });
+
+  testWidgets('opens the command palette and runs a command', (tester) async {
+    await _pumpWorkspace(tester);
+
+    await tester.tap(find.text('بحث شامل…'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ابحث عن صفحة أو إجراء…'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).last, 'تحديث');
+    await tester.pumpAndSettle();
+
+    expect(find.text('تحديث البيانات'), findsOneWidget);
+    await tester.tap(find.text('تحديث البيانات'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ابحث عن صفحة أو إجراء…'), findsNothing);
+    expect(find.text('لوحة التحكم'), findsWidgets);
+  });
+
+  testWidgets('uses a drawer and keeps pages usable on narrow screens', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('القائمة'), findsOneWidget);
+    expect(find.text('لوحة التحكم'), findsWidgets);
+
+    await tester.tap(find.byTooltip('القائمة'));
+    await tester.pumpAndSettle();
+    expect(find.text('البيانات الأساسية'), findsWidgets);
+
+    await tester.tap(find.text('قيود اليومية').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('ميزان المراجعة'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
