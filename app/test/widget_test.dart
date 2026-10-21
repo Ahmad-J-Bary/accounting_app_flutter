@@ -1,5 +1,8 @@
-import 'package:accounting_app_flutter/ledger.dart';
+﻿import 'package:accounting_app_flutter/ledger.dart';
 import 'package:accounting_app_flutter/main.dart';
+import 'package:accounting_app_flutter/theme/app_theme.dart';
+import 'package:accounting_app_flutter/trade_documents.dart';
+import 'package:accounting_app_flutter/workspace_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -880,6 +883,40 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('ميزان المراجعة'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps the invoice editor usable on a narrow screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final gateway = _FakeGateway();
+    final data = await WorkspaceData.load(gateway);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InvoiceEditorPage(
+            gateway: gateway,
+            data: data,
+            kind: InvoiceListKind.sales,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The narrow layout keeps the stacked line card with its labels, and no
+    // grid header.
+    expect(find.text('المادة 1'), findsOneWidget);
+    expect(find.text('اختر مادة'), findsOneWidget);
+    expect(find.text('خصم %'), findsOneWidget);
+    expect(find.text('المادة'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

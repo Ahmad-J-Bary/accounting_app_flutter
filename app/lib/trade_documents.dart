@@ -709,22 +709,37 @@ class _InvoiceEditorPageState extends State<InvoiceEditorPage> {
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: _saving ? null : () => _save(post: false),
-              child: const Text('حفظ كمسودة'),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            FilledButton.icon(
-              onPressed: _saving ? null : () => _save(post: true),
-              icon: _saving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.play_circle_outline, size: 18),
-              label: const Text('حفظ وترحيل'),
-            ),
+            // Two labelled buttons do not fit on a phone, so the editor falls
+            // back to icon buttons with tooltips.
+            if (MediaQuery.sizeOf(context).width < 600) ...[
+              IconButton(
+                tooltip: 'حفظ كمسودة',
+                onPressed: _saving ? null : () => _save(post: false),
+                icon: const Icon(Icons.save_outlined),
+              ),
+              IconButton(
+                tooltip: 'حفظ وترحيل',
+                onPressed: _saving ? null : () => _save(post: true),
+                icon: const Icon(Icons.play_circle_outline),
+              ),
+            ] else ...[
+              TextButton(
+                onPressed: _saving ? null : () => _save(post: false),
+                child: const Text('حفظ كمسودة'),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              FilledButton.icon(
+                onPressed: _saving ? null : () => _save(post: true),
+                icon: _saving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.play_circle_outline, size: 18),
+                label: const Text('حفظ وترحيل'),
+              ),
+            ],
             const SizedBox(width: AppSpacing.lg),
           ],
         ),
