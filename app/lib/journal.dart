@@ -520,20 +520,22 @@ class _TrialBalanceCard extends StatelessWidget {
               AppTableColumn(
                 label: 'الرمز',
                 flex: 2,
-                builder: (context, row) =>
-                    Text(row.accountCode, style: theme.textTheme.labelMedium),
+                builder: (context, row) => AppTableText(
+                  row.accountCode,
+                  style: theme.textTheme.labelMedium,
+                ),
               ),
               AppTableColumn(
                 label: 'الحساب',
                 flex: 5,
-                builder: (context, row) => Text(row.accountName),
+                builder: (context, row) => AppTableText(row.accountName),
               ),
               AppTableColumn(
                 label: 'مدين',
                 flex: 2,
                 alignment: AlignmentDirectional.centerEnd,
                 headerAlignment: AlignmentDirectional.centerEnd,
-                builder: (context, row) => Text(
+                builder: (context, row) => AppTableText(
                   formatMoney(row.debit, currency: data.baseCurrency),
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: context.semanticColors.success,
@@ -545,7 +547,7 @@ class _TrialBalanceCard extends StatelessWidget {
                 flex: 2,
                 alignment: AlignmentDirectional.centerEnd,
                 headerAlignment: AlignmentDirectional.centerEnd,
-                builder: (context, row) => Text(
+                builder: (context, row) => AppTableText(
                   formatMoney(row.credit, currency: data.baseCurrency),
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: context.semanticColors.info,

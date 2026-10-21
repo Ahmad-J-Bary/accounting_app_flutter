@@ -3,6 +3,7 @@ import 'package:accounting_app_flutter/ui/app_ui.dart';
 import 'package:accounting_app_flutter/ui/table/table_preferences.dart';
 import 'package:accounting_app_flutter/ui/table/table_preferences_store_stub.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _Row {
@@ -63,6 +64,7 @@ AppDataTable<_Row> _table({
   VoidCallback? onRetry,
   bool enableSelection = false,
   ValueChanged<Set<Object>>? onSelectionChanged,
+  ValueChanged<_Row>? onRowTap,
   String emptyTitle = 'لا توجد بيانات',
 }) {
   return AppDataTable<_Row>(
@@ -71,6 +73,7 @@ AppDataTable<_Row> _table({
     columns: _columns(),
     rows: rows,
     rowId: (row) => row.id,
+    onRowTap: onRowTap,
     paginate: paginate,
     pageSize: pageSize,
     loading: loading,
@@ -153,6 +156,94 @@ void main() {
 
     expect(find.text('الاسم'), findsOneWidget);
     expect(headerWidth('الرمز'), closeTo(fullWidth, 1));
+  });
+
+  testWidgets('restores every hidden column with show all', (tester) async {
+    final store = MemoryTablePreferencesStore({
+      'show-all': {
+        'order': ['id', 'name', 'score'],
+        'hidden': ['name', 'score'],
+      },
+    });
+    await tester.pumpWidget(
+      _wrap(_table(rows: rows, tableId: 'show-all', store: store)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('الاسم'), findsNothing);
+    await tester.tap(find.byTooltip('إعدادات الأعمدة'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('إظهار الكل'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('تم'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('الاسم'), findsOneWidget);
+    expect(find.text('الدرجة'), findsOneWidget);
+  });
+
+  testWidgets('navigates and activates rows with the keyboard', (tester) async {
+    final tapped = <String>[];
+    Set<Object>? selected;
+    await tester.pumpWidget(
+      _wrap(
+        _table(
+          rows: rows,
+          enableSelection: true,
+          onSelectionChanged: (value) => selected = value,
+          onRowTap: (row) => tapped.add(row.id),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('الرمز'));
+    await tester.pumpAndSettle();
+    // Sorting by code puts A, B, C in this order.
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(tapped, ['A']);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.pumpAndSettle();
+    expect(selected, contains('B'));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.end);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    expect(tapped, ['A', 'C']);
+    expect(find.byType(Scrollbar), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('ellipsises long cell values instead of overflowing', (
+    tester,
+  ) async {
+    final long = _Row('A', 'اسم طويل جداً ' * 20, 1);
+    await tester.pumpWidget(
+      _wrap(
+        AppDataTable<_Row>(
+          columns: [
+            AppTableColumn<_Row>(
+              id: 'name',
+              label: 'الاسم',
+              builder: (context, row) => AppTableText(row.name),
+            ),
+          ],
+          rows: [long],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('اسم طويل'), findsOneWidget);
   });
 
   testWidgets('adopts saved preferences when the table id changes', (

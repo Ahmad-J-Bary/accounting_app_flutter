@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
 import 'table/table_preferences.dart';
@@ -736,6 +737,30 @@ class AppErrorState extends StatelessWidget {
   }
 }
 
+/// A single-line table cell value.
+///
+/// Cells live in fixed-height rows, so every plain text value must be clamped
+/// to one line. Long values are ellipsised instead of wrapping into a vertical
+/// overflow; the full value stays available through the row detail/form.
+class AppTableText extends StatelessWidget {
+  const AppTableText(this.value, {super.key, this.style, this.textAlign});
+
+  final String value;
+  final TextStyle? style;
+  final TextAlign? textAlign;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      value,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: textAlign,
+      style: style,
+    );
+  }
+}
+
 class AppTableColumn<T> {
   const AppTableColumn({
     this.id,
@@ -858,11 +883,15 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
   TablePreferencesController? _preferences;
   final Set<Object> _selected = <Object>{};
   final Map<String, double> _localWidths = <String, double>{};
+  final FocusNode _tableFocus = FocusNode(debugLabel: 'AppDataTable');
+  final ScrollController _verticalScroll = ScrollController();
+  final ScrollController _horizontalScroll = ScrollController();
   String? _sortColumnId;
   bool _sortAscending = true;
   bool _adoptedPreferences = false;
   int _page = 0;
   int _localPageSize = 25;
+  int? _focusedRow;
   List<String> _columnIds = const <String>[];
 
   @override
@@ -899,6 +928,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     if (oldWidget.rows.length != widget.rows.length ||
         oldWidget.pageSize != widget.pageSize) {
       _page = 0;
+      _focusedRow = null;
     }
   }
 
@@ -906,6 +936,9 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
   void dispose() {
     _preferences?.removeListener(_onPreferencesChanged);
     _preferences?.dispose();
+    _tableFocus.dispose();
+    _verticalScroll.dispose();
+    _horizontalScroll.dispose();
     super.dispose();
   }
 
@@ -982,7 +1015,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     } else {
       setState(() {
         _localPageSize = pageSize;
-        _page = 0;
+        _resetFocus();
       });
     }
   }
@@ -992,7 +1025,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     setState(() {
       _sortColumnId = id;
       _sortAscending = ascending;
-      _page = 0;
+      _resetFocus();
     });
     _preferences?.toggleSort(id, ascending: ascending);
   }
@@ -1096,6 +1129,118 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     _notifySelection();
   }
 
+  int get _keyboardPageStep {
+    if (_verticalScroll.hasClients) {
+      final visible =
+          (_verticalScroll.position.viewportDimension / widget.rowHeight)
+              .floor();
+      if (visible > 2) {
+        return visible - 1;
+      }
+    }
+    return 10;
+  }
+
+  /// Keyboard access for desktop users: arrows move a row cursor, Enter opens
+  /// the row, Space toggles selection and Home/End/PageUp/PageDown jump.
+  KeyEventResult _handleKeyEvent(KeyEvent event, List<T> rows) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    if (rows.isEmpty) {
+      return KeyEventResult.ignored;
+    }
+    final current = _focusedRow?.clamp(0, rows.length - 1);
+    final key = event.logicalKey;
+
+    if (key == LogicalKeyboardKey.arrowDown) {
+      _focusRow(current == null ? 0 : current + 1);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowUp) {
+      _focusRow(current == null ? rows.length - 1 : current - 1);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.home) {
+      _focusRow(0);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.end) {
+      _focusRow(rows.length - 1);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.pageDown) {
+      _focusRow((current ?? 0) + _keyboardPageStep);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.pageUp) {
+      _focusRow((current ?? rows.length - 1) - _keyboardPageStep);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter) {
+      final onRowTap = widget.onRowTap;
+      if (current == null || onRowTap == null) {
+        return KeyEventResult.ignored;
+      }
+      onRowTap(rows[current]);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.space && widget.enableSelection) {
+      final rowId = widget.rowId;
+      if (current == null || rowId == null) {
+        return KeyEventResult.ignored;
+      }
+      final id = rowId(rows[current]);
+      _toggleRow(id, !_selected.contains(id));
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  void _focusRow(int index) {
+    final rows = _currentRowCount;
+    if (rows == 0) {
+      return;
+    }
+    final next = index.clamp(0, rows - 1);
+    setState(() => _focusedRow = next);
+    _tableFocus.requestFocus();
+    final controller = _verticalScroll;
+    if (!controller.hasClients) {
+      return;
+    }
+    final position = controller.position;
+    final top = next * widget.rowHeight;
+    final bottom = top + widget.rowHeight;
+    final offset = position.pixels;
+    final viewport = position.viewportDimension;
+    double? target;
+    if (top < offset) {
+      target = top;
+    } else if (bottom > offset + viewport) {
+      target = bottom - viewport;
+    }
+    if (target == null) {
+      return;
+    }
+    controller.animateTo(
+      target.clamp(0.0, position.maxScrollExtent),
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+    );
+  }
+
+  int _currentRowCount = 0;
+
+  void _resetFocus([int page = 0]) {
+    _focusedRow = null;
+    _page = page;
+    if (_verticalScroll.hasClients) {
+      _verticalScroll.jumpTo(0);
+    }
+  }
+
   void _resetPreferences() {
     final preferences = _preferences;
     if (preferences == null) {
@@ -1155,6 +1300,15 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
                 ),
               ),
               actions: [
+                if (value.hidden.isNotEmpty)
+                  TextButton(
+                    onPressed: () {
+                      for (final id in value.hidden.toList()) {
+                        preferences.setVisible(id, true);
+                      }
+                    },
+                    child: const Text('إظهار الكل'),
+                  ),
                 TextButton(
                   onPressed: _resetPreferences,
                   child: const Text('إعادة الضبط'),
@@ -1194,6 +1348,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     final start = page * pageSize;
     final end = math.min(start + pageSize, sorted.length);
     final pageRows = widget.paginate ? sorted.sublist(start, end) : sorted;
+    _currentRowCount = pageRows.length;
     final pageIds = <Object>[
       if (widget.rowId != null)
         for (final row in pageRows) widget.rowId!(row),
@@ -1303,7 +1458,11 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
             IconButton(
               tooltip: 'إعدادات الأعمدة',
               onPressed: _openColumnSettings,
-              icon: const Icon(Icons.view_column_outlined, size: 20),
+              icon: Badge.count(
+                count: _preferences!.value.hidden.length,
+                isLabelVisible: _preferences!.value.hidden.isNotEmpty,
+                child: const Icon(Icons.view_column_outlined, size: 20),
+              ),
             ),
         ],
       ),
@@ -1369,6 +1528,10 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
           widths.values.fold<double>(0, (sum, width) => sum + width),
         );
 
+        final focusedRow = _focusedRow?.clamp(
+          0,
+          rows.isEmpty ? 0 : rows.length - 1,
+        );
         final header = _header(
           context,
           columns: columns,
@@ -1384,12 +1547,14 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
             if (constraints.hasBoundedHeight)
               Expanded(
                 child: ListView.builder(
+                  controller: _verticalScroll,
                   itemCount: rows.length,
                   itemBuilder: (context, index) => _row(
                     context,
                     rows[index],
                     index,
                     isLast: index == rows.length - 1,
+                    focused: index == focusedRow,
                     columns: columns,
                     widths: widths,
                     idByColumn: idByColumn,
@@ -1403,6 +1568,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
                   rows[index],
                   index,
                   isLast: index == rows.length - 1,
+                  focused: index == focusedRow,
                   columns: columns,
                   widths: widths,
                   idByColumn: idByColumn,
@@ -1410,12 +1576,26 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
           ],
         );
 
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: SizedBox(
-            width: tableWidth,
-            height: constraints.hasBoundedHeight ? constraints.maxHeight : null,
-            child: content,
+        return Focus(
+          focusNode: _tableFocus,
+          onKeyEvent: (node, event) => _handleKeyEvent(event, rows),
+          child: Listener(
+            onPointerDown: (_) => _tableFocus.requestFocus(),
+            child: Scrollbar(
+              controller: _horizontalScroll,
+              scrollbarOrientation: ScrollbarOrientation.bottom,
+              child: SingleChildScrollView(
+                controller: _horizontalScroll,
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: tableWidth,
+                  height: constraints.hasBoundedHeight
+                      ? constraints.maxHeight
+                      : null,
+                  child: content,
+                ),
+              ),
+            ),
           ),
         );
       },
@@ -1446,12 +1626,15 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
             SizedBox(
               width: 44,
               child: Center(
-                child: Checkbox(
-                  value: allSelected ? true : (someSelected ? null : false),
-                  tristate: true,
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  onChanged: (value) => _togglePage(pageIds, value ?? false),
+                child: Semantics(
+                  label: 'تحديد كل الصفوف في هذه الصفحة',
+                  child: Checkbox(
+                    value: allSelected ? true : (someSelected ? null : false),
+                    tristate: true,
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    onChanged: (value) => _togglePage(pageIds, value ?? false),
+                  ),
                 ),
               ),
             ),
@@ -1479,36 +1662,39 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
       child: Stack(
         children: [
           Positioned.fill(
-            child: InkWell(
-              onTap: canSort ? () => _toggleSort(id) : null,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Align(
-                  alignment: alignment,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          column.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w700,
+            child: Semantics(
+              button: canSort,
+              child: InkWell(
+                onTap: canSort ? () => _toggleSort(id) : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Align(
+                    alignment: alignment,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            column.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
-                      ),
-                      if (sorted) ...[
-                        const SizedBox(width: 4),
-                        Icon(
-                          _sortAscending
-                              ? Icons.arrow_upward
-                              : Icons.arrow_downward,
-                          size: 13,
-                        ),
+                        if (sorted) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            _sortAscending
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward,
+                            size: 13,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -1549,6 +1735,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     T row,
     int index, {
     required bool isLast,
+    required bool focused,
     required List<AppTableColumn<T>> columns,
     required Map<String, double> widths,
     required Map<AppTableColumn<T>, String> idByColumn,
@@ -1558,6 +1745,11 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     final selected = id != null && _selected.contains(id);
     final content = Container(
       height: widget.rowHeight,
+      foregroundDecoration: focused
+          ? BoxDecoration(
+              border: Border.all(color: theme.colorScheme.primary, width: 1.5),
+            )
+          : null,
       decoration: BoxDecoration(
         color: selected
             ? theme.colorScheme.primary.withValues(alpha: 0.06)
@@ -1643,6 +1835,46 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     final rtl = Directionality.of(context) == TextDirection.rtl;
     final previousIcon = rtl ? Icons.chevron_right : Icons.chevron_left;
     final nextIcon = rtl ? Icons.chevron_left : Icons.chevron_right;
+    final range = Text(
+      'عرض ${start + 1}–$end من $total',
+      style: theme.textTheme.labelSmall,
+    );
+    final pageSizeControl = DropdownButtonHideUnderline(
+      child: DropdownButton<int>(
+        value: _pageSize,
+        isDense: true,
+        items: [
+          for (final size in TablePreferences.allowedPageSizes)
+            DropdownMenuItem<int>(value: size, child: Text('$size / صفحة')),
+        ],
+        onChanged: (value) {
+          if (value != null) {
+            _setPageSize(value);
+            setState(() => _resetFocus());
+          }
+        },
+      ),
+    );
+    final navigation = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          tooltip: 'الصفحة السابقة',
+          onPressed: page > 0
+              ? () => setState(() => _resetFocus(page - 1))
+              : null,
+          icon: Icon(previousIcon, size: 20),
+        ),
+        Text('${page + 1} / $pageCount', style: theme.textTheme.labelSmall),
+        IconButton(
+          tooltip: 'الصفحة التالية',
+          onPressed: page + 1 < pageCount
+              ? () => setState(() => _resetFocus(page + 1))
+              : null,
+          icon: Icon(nextIcon, size: 20),
+        ),
+      ],
+    );
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
@@ -1651,47 +1883,37 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: theme.colorScheme.outline)),
       ),
-      child: Row(
-        children: [
-          Text(
-            'عرض ${start + 1}–$end من $total',
-            style: theme.textTheme.labelSmall,
-          ),
-          const Spacer(),
-          DropdownButtonHideUnderline(
-            child: DropdownButton<int>(
-              value: _pageSize,
-              isDense: true,
-              items: [
-                for (final size in TablePreferences.allowedPageSizes)
-                  DropdownMenuItem<int>(
-                    value: size,
-                    child: Text('$size / صفحة'),
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // The full bar does not fit on phone widths; stack the controls
+          // instead of letting the row overflow.
+          if (constraints.maxWidth < 520) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: range),
+                    pageSizeControl,
+                  ],
+                ),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: navigation,
+                ),
               ],
-              onChanged: (value) {
-                if (value != null) {
-                  _setPageSize(value);
-                  setState(() => _page = 0);
-                }
-              },
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          IconButton(
-            tooltip: 'الصفحة السابقة',
-            onPressed: page > 0 ? () => setState(() => _page = page - 1) : null,
-            icon: Icon(previousIcon, size: 20),
-          ),
-          Text('${page + 1} / $pageCount', style: theme.textTheme.labelSmall),
-          IconButton(
-            tooltip: 'الصفحة التالية',
-            onPressed: page + 1 < pageCount
-                ? () => setState(() => _page = page + 1)
-                : null,
-            icon: Icon(nextIcon, size: 20),
-          ),
-        ],
+            );
+          }
+          return Row(
+            children: [
+              range,
+              const Spacer(),
+              pageSizeControl,
+              const SizedBox(width: AppSpacing.sm),
+              navigation,
+            ],
+          );
+        },
       ),
     );
   }

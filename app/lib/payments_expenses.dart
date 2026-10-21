@@ -200,7 +200,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
             AppTableColumn(
               label: 'رقم السند',
               flex: 2,
-              builder: (context, payment) => Text(
+              builder: (context, payment) => AppTableText(
                 payment.voucherNumber,
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
@@ -208,26 +208,28 @@ class _PaymentsPageState extends State<PaymentsPage> {
             AppTableColumn(
               label: _isReceipt ? 'العميل' : 'المورد',
               flex: 3,
-              builder: (context, payment) =>
-                  Text(payment.partyName.isEmpty ? '—' : payment.partyName),
+              builder: (context, payment) => AppTableText(
+                payment.partyName.isEmpty ? '—' : payment.partyName,
+              ),
             ),
             AppTableColumn(
               label: 'التاريخ',
               flex: 2,
               builder: (context, payment) =>
-                  Text(_formatDate(payment.paymentDate)),
+                  AppTableText(_formatDate(payment.paymentDate)),
             ),
             AppTableColumn(
               label: 'المرجع',
               flex: 2,
-              builder: (context, payment) => Text(payment.reference ?? '—'),
+              builder: (context, payment) =>
+                  AppTableText(payment.reference ?? '—'),
             ),
             AppTableColumn(
               label: 'المبلغ',
               flex: 2,
               alignment: AlignmentDirectional.centerEnd,
               headerAlignment: AlignmentDirectional.centerEnd,
-              builder: (context, payment) => Text(
+              builder: (context, payment) => AppTableText(
                 formatMoney(payment.amount, currency: payment.currency),
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
@@ -236,7 +238,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
               label: 'القيد',
               flex: 2,
               builder: (context, payment) =>
-                  Text(payment.journalEntryNumber ?? '—'),
+                  AppTableText(payment.journalEntryNumber ?? '—'),
             ),
             AppTableColumn(
               label: 'إجراءات',
@@ -781,20 +783,21 @@ class _ExpensesPageState extends State<ExpensesPage> {
             AppTableColumn(
               label: 'الكود',
               flex: 2,
-              builder: (context, item) => Text(item.code),
+              builder: (context, item) => AppTableText(item.code),
             ),
             AppTableColumn(
               label: 'البند',
               flex: 4,
               builder: (context, item) => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
+                  AppTableText(
                     item.displayName,
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   if (item.nameEn.trim().isNotEmpty)
-                    Text(
+                    AppTableText(
                       item.nameEn,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -806,7 +809,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
               flex: 2,
               alignment: AlignmentDirectional.centerEnd,
               headerAlignment: AlignmentDirectional.centerEnd,
-              builder: (context, item) => Text(
+              builder: (context, item) => AppTableText(
                 formatMoney(item.balance, currency: item.currency),
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
