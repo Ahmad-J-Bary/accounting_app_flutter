@@ -352,6 +352,26 @@ class TablePreferencesController extends ChangeNotifier {
     );
   }
 
+  /// Removes a manual width so the column falls back to its automatic share of
+  /// the table width.
+  void clearWidth(String columnId) {
+    if (!_value.widths.containsKey(columnId)) {
+      return;
+    }
+    final widths = Map<String, double>.from(_value.widths)..remove(columnId);
+    _update(
+      TablePreferences(
+        order: _value.order,
+        hidden: _value.hidden,
+        widths: Map<String, double>.unmodifiable(widths),
+        pageSize: _value.pageSize,
+        sortColumnId: _value.sortColumnId,
+        sortAscending: _value.sortAscending,
+        density: _value.density,
+      ),
+    );
+  }
+
   void move(String columnId, int delta) {
     final order = List<String>.from(_value.order);
     final index = order.indexOf(columnId);

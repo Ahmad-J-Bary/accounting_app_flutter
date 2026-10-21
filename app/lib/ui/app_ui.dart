@@ -1095,6 +1095,17 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     }
   }
 
+  /// Drops the manual width of a column so it returns to its automatic share
+  /// of the table width.
+  void _resetColumnWidth(String id) {
+    final preferences = _preferences;
+    if (preferences != null) {
+      preferences.clearWidth(id);
+      return;
+    }
+    setState(() => _localWidths.remove(id));
+  }
+
   List<AppTableColumn<T>> _orderedColumns() {
     final preferences = _preferences;
     if (preferences == null) {
@@ -1869,18 +1880,23 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
               bottom: 0,
               child: MouseRegion(
                 cursor: SystemMouseCursors.resizeLeftRight,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onHorizontalDragUpdate: (details) {
-                    final direction = rtl ? -1 : 1;
-                    _setWidth(id, width + details.delta.dx * direction);
-                  },
-                  child: SizedBox(
-                    width: 8,
-                    child: Center(
-                      child: Container(
-                        width: 1,
-                        color: theme.colorScheme.outline,
+                child: Tooltip(
+                  message: 'اسحب لتغيير العرض، وانقر مرتين لإعادة العرض',
+                  child: GestureDetector(
+                    key: ValueKey<String>('app-table-resize-$id'),
+                    behavior: HitTestBehavior.translucent,
+                    onDoubleTap: () => _resetColumnWidth(id),
+                    onHorizontalDragUpdate: (details) {
+                      final direction = rtl ? -1 : 1;
+                      _setWidth(id, width + details.delta.dx * direction);
+                    },
+                    child: SizedBox(
+                      width: 8,
+                      child: Center(
+                        child: Container(
+                          width: 1,
+                          color: theme.colorScheme.outline,
+                        ),
                       ),
                     ),
                   ),

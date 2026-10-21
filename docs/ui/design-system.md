@@ -77,7 +77,7 @@ A column may declare:
 |---|---|
 | Sorting | Click a sortable header; second click reverses. Sorting is by the column's `sortValue`, never by rendered text. Nulls sort last in both directions and equal values keep their source order (stable sort), so tied rows never jump between pages. The sorted list is memoised until the rows or the sort key change. |
 | Column menu | Show/hide, move left/right, reset widths/order/visibility, or restore every hidden column with «إظهار الكل». Required columns cannot be hidden. Hidden columns stop reserving width, so the remaining columns share the freed space. A badge on the toolbar icon shows how many columns are hidden. |
-| Resize | Drag the handle at the column edge; widths clamp to 56–720 px. |
+| Resize | Drag the handle at the column edge; widths clamp to 56–720 px. A double click on the handle returns the column to its automatic share of the table width, so an accidentally narrow column can be recovered without resetting the whole table. |
 | Pagination | Optional local pagination with page sizes 10/25/50/100. Footer shows the visible range and stacks into two rows below 520 px so it never overflows on phones. |
 | Selection | Optional checkboxes with select-all; `onSelectionChanged` reports stable `rowId` values, not row indices. Space toggles the focused row. |
 | Keyboard | Focus the table (click any part of it), then: ↑/↓ move the row cursor, Home/End jump to the first/last row, PageUp/PageDown move by a viewport, Enter opens the row (`onRowTap`), Space toggles selection. The focused row is outlined and scrolled into view. |

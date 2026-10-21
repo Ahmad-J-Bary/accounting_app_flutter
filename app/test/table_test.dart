@@ -608,4 +608,41 @@ void main() {
       lessThan(tester.getTopLeft(find.text('الإجمالي')).dx),
     );
   });
+
+  testWidgets('resets a resized column on a double click', (tester) async {
+    final store = MemoryTablePreferencesStore();
+    await tester.pumpWidget(
+      _wrap(_table(rows: rows, tableId: 'resize', store: store)),
+    );
+    await tester.pumpAndSettle();
+
+    double headerWidth(String label) => tester
+        .getSize(
+          find
+              .ancestor(of: find.text(label), matching: find.byType(SizedBox))
+              .first,
+        )
+        .width;
+
+    final before = headerWidth('الاسم');
+    final handle = find.byKey(const ValueKey<String>('app-table-resize-name'));
+    expect(handle, findsOneWidget);
+
+    // In RTL the handle sits on the left edge of the column and dragging it
+    // to the left widens the column.
+    await tester.timedDragFrom(
+      tester.getCenter(handle),
+      const Offset(-70, 0),
+      const Duration(milliseconds: 300),
+    );
+    await tester.pumpAndSettle();
+    expect(headerWidth('الاسم'), greaterThan(before));
+
+    await tester.tap(handle);
+    await tester.pump(const Duration(milliseconds: 60));
+    await tester.tap(handle);
+    await tester.pumpAndSettle();
+
+    expect(headerWidth('الاسم'), closeTo(before, 1));
+  });
 }
