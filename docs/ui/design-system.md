@@ -90,6 +90,7 @@ A column may declare:
 | RTL/LTR | Directional alignment and icons; horizontal scrolling works in both directions. |
 | Long lists | Rows are built lazily with `ListView.builder` when height is bounded. Page or sort changes jump the vertical scroll back to the top. |
 | Footer | Horizontally scrollable and at least `minWidth` wide, so totals do not overflow on phones. |
+| Action cells | Use `AppTableActionButton` (a 36 px compact button) and give the column a fixed width that fits the buttons. A row of default-sized `IconButton`s overflows its cell and breaks the layout. The action column is never hidden and never resizable. |
 | Summary row | A column with a `summary` callback gets a totals row pinned under the body and aligned with the columns (the React table aligned its summary with the grid). The first column without a total shows `summaryLabel` (default «الإجمالي»). The callback receives the rows the table displays, so a page may sum them or use its own authoritative totals. |
 
 ### Sizing and scrolling
@@ -134,6 +135,8 @@ materials pages:
    the table beyond the defaults.
 9. Add a `summary` callback to the money columns that need a totals row, and
    prefer the totals the Rust core already reports over summing in Dart.
+10. Build the action cell with `AppTableActionButton` and size the column
+    accordingly; a widget test with a real row catches the overflow.
 
 ## Table preferences
 
