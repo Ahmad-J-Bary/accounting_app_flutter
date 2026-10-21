@@ -111,7 +111,7 @@
 | `cargo clippy --workspace --all-targets -- -D warnings` | ناجح | Windows، 2026-10-21 |
 | `cargo test --workspace -- --test-threads=1` | **505/505** ناجح (81 ملف اختبار) | CI `39462291360` + محلياً |
 | `flutter analyze` | `No issues found` | Windows، 2026-10-21 |
-| `flutter test test` | **36/36** ناجح | Windows، 2026-10-21 |
+| `flutter test test` | **37/37** ناجح | Windows، 2026-10-21 |
 | توليد FRB مرتين متتاليتين (`2.13.0`) | لا فرق في الملفات المولّدة | Windows + CI (PR #6) |
 | بناء MSI والتحقق منه يدوياً عبر `msiexec /a` | ناجح | جلسة سابقة على Windows |
 | إعادة بناء أصول `v1.0.1` من الوسم بعد تحريكه | ناجح (`Release Draft` #39621132521، 10 أصول) | CI على `b95a23c` |
