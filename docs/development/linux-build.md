@@ -93,7 +93,7 @@ It preserves the executable bit. Extract and run:
 
 ```bash
 mkdir accounting-app
-tar -xzf accounting-app-1.0.1-linux-x64.tar.gz -C accounting-app
+tar -xzf accounting-app-1.0.2-linux-x64.tar.gz -C accounting-app
 cd accounting-app
 ./accounting_app_flutter
 ```

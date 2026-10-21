@@ -1,6 +1,6 @@
 ; Inno Setup script for the Accounting App Windows installer.
 ; AppVersion and SourceDir are supplied by the build workflow:
-;   ISCC.exe /DAppVersion=1.0.1 /DSourceDir=<release> /DOutputDir=<dist> accounting_app.iss
+;   ISCC.exe /DAppVersion=1.0.2 /DSourceDir=<release> /DOutputDir=<dist> accounting_app.iss
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif

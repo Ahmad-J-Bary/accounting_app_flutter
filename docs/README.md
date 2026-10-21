@@ -10,5 +10,7 @@
 | `development/linux-build.md` | Linux dependencies, release bundle, tarball, CI |
 | `release-1.0.1.md` | Historical 1.0.1 release record plus the 2026-10-21 verification update |
 | `release-notes-1.0.1.md` | Published 1.0.1 release notes |
+| `release-1.0.2.md` | 1.0.2 release record: scope, verification, remaining risks |
+| `release-notes-1.0.2.md` | Published 1.0.2 release notes |
 | `phase1-frb-slice.md` | Phase 1 FRB vertical slice notes |
 | `frb-android-notes.md` | Android/FRB build notes |

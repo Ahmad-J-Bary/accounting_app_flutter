@@ -104,11 +104,12 @@ ignored for Cargo and pub until they have a dedicated impact and rollback plan.
 
 ## Current status
 
-Version `1.0.1` is the current desktop/handheld build and is published as a
-GitHub **pre-release** (tag `v1.0.1`) with a portable ZIP, an Inno Setup
-installer, a WiX MSI and three split Android APKs. The Phase 1 vertical
-slice is complete: Rust owns the accounting rules, the SQLite migrations and the
-FRB bridge; Flutter provides company setup, journal entries, a trial balance,
+Version `1.0.2` is the current desktop/handheld build and is published as a
+GitHub **pre-release** (tag `v1.0.2`) with a portable ZIP, an Inno Setup
+installer, a WiX MSI, a Linux x64 tarball and three split Android APKs. The
+Phase 1 vertical slice is complete: Rust owns the accounting rules, the SQLite
+migrations and the FRB bridge; Flutter provides company setup, journal entries,
+a trial balance,
 and full master-data management for customers, suppliers, materials, categories,
 units and opening balances. The same bridge now exposes sales and purchase
 invoices (draft, post, delete), sales and purchase returns, receipts, supplier
@@ -120,9 +121,13 @@ journal page, ERP-style tables, a `Ctrl+K` command palette and inventory
 notifications. Customers, suppliers and materials are independent pages rather
 than one combined master-data screen. The shared `AppDataTable` supports stable
 column ids, sorting, column visibility/order/width preferences, pagination,
-selection, loading/error/empty states and RTL/LTR layout. Section history backs
-the top-bar back button, Android system back, `Alt+Left` and `Escape`; forms warn
-before discarding unsaved changes.
+selection, loading/error/empty states and RTL/LTR layout. Tables are
+keyboard-driven (arrows, `Home`/`End`, `PageUp`/`PageDown` move a row cursor,
+`Enter` opens a row, `Space` selects it) and every text cell is clamped to one
+line, so long values never overflow a row. Section history backs the top-bar
+back button, Android system back, `Alt+Left` and `Escape`; forms warn before
+discarding unsaved changes. CI builds Windows (ZIP/EXE/MSI), Android (three
+APKs) and Linux (x64 tarball) from the same tagged commit.
 
 Remaining work includes i18n switching, RBAC, tabs, financial-year closing,
 partner/capital management, form side panels, and the Axum/PostgreSQL sync

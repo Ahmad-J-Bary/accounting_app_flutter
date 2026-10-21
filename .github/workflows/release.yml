@@ -51,6 +51,9 @@ jobs:
           # release-drafter needs the commit history to resolve the next
           # version and collect the changes since the previous release.
           fetch-depth: 0
+          # Check out the exact commit that triggered the run. Fetching by tag
+          # fails when the tag is moved or deleted after the run starts.
+          ref: ${{ github.sha }}
       - name: Read application version
         id: version
         run: |

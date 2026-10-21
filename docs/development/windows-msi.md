@@ -104,10 +104,10 @@ New-Item -ItemType Directory -Path $msiBuild -Force | Out-Null
 
 Push-Location $msiBuild
 try {
-  & "$wix\candle.exe" -arch x64 -dAppVersion=1.0.1 "-dSourceDir=$release" `
+  & "$wix\candle.exe" -arch x64 -dAppVersion=1.0.2 "-dSourceDir=$release" `
     '..\..\..\installer\windows\Product.wxs' 'Files.wxs'
   & "$wix\light.exe" -ext WixUIExtension -cultures:en-us `
-    -out 'accounting-app-1.0.1-windows-x64.msi' 'Product.wixobj' 'Files.wixobj'
+    -out 'accounting-app-1.0.2-windows-x64.msi' 'Product.wixobj' 'Files.wixobj'
 } finally {
   Pop-Location
 }
@@ -116,7 +116,7 @@ try {
 Then verify:
 
 ```powershell
-$msi = 'app\build\msi\accounting-app-1.0.1-windows-x64.msi'
+$msi = 'app\build\msi\accounting-app-1.0.2-windows-x64.msi'
 $extract = Join-Path $env:TEMP 'accounting-msi-check'
 Remove-Item $extract -Recurse -Force -ErrorAction SilentlyContinue
 msiexec /a $msi /qn TARGETDIR=$extract /l*v "$env:TEMP\msi-check.log"
