@@ -77,11 +77,12 @@ A column may declare:
 |---|---|
 | Sorting | Click a sortable header; second click reverses. Sorting is by the column's `sortValue`, never by rendered text. Nulls sort last in both directions and equal values keep their source order (stable sort), so tied rows never jump between pages. The sorted list is memoised until the rows or the sort key change. |
 | Column menu | Show/hide, move left/right, reset widths/order/visibility, or restore every hidden column with «إظهار الكل». Required columns cannot be hidden. Hidden columns stop reserving width, so the remaining columns share the freed space. A badge on the toolbar icon shows how many columns are hidden. |
-| Resize | Drag the handle at the column edge; widths clamp to 56–720 px. |
+| Resize | Drag the handle at the column edge; widths clamp to 56–720 px. A double click on the handle returns the column to its automatic share of the table width, so an accidentally narrow column can be recovered without resetting the whole table. |
 | Pagination | Optional local pagination with page sizes 10/25/50/100. Footer shows the visible range and stacks into two rows below 520 px so it never overflows on phones. |
 | Selection | Optional checkboxes with select-all; `onSelectionChanged` reports stable `rowId` values, not row indices. Space toggles the focused row. |
 | Keyboard | Focus the table (click any part of it), then: ↑/↓ move the row cursor, Home/End jump to the first/last row, PageUp/PageDown move by a viewport, Enter opens the row (`onRowTap`), Space toggles selection. The focused row is outlined and scrolled into view. |
 | Scrolling | Rows scroll vertically; columns scroll horizontally with an interactive scrollbar at the bottom edge. |
+| Density | Three presets: compact (44 px rows), comfortable (58 px) and spacious (72 px). The user picks one from the column settings dialog; the choice is stored per table. `AppDataTable.density` sets the default for tables without a stored preference, and `rowHeight`/`headerHeight` override it. |
 | Long text | Use `AppTableText` for every single-line cell: it clamps to one line with an ellipsis, so a long name never produces a vertical overflow inside the fixed row height. |
 | Loading | Replaces the body with a progress indicator while headers remain available. |
 | Error | Shows the message and an optional retry action. |
@@ -89,6 +90,8 @@ A column may declare:
 | RTL/LTR | Directional alignment and icons; horizontal scrolling works in both directions. |
 | Long lists | Rows are built lazily with `ListView.builder` when height is bounded. Page or sort changes jump the vertical scroll back to the top. |
 | Footer | Horizontally scrollable and at least `minWidth` wide, so totals do not overflow on phones. |
+| Action cells | Use `AppTableActionButton` (a 36 px compact button) and give the column a fixed width that fits the buttons. A row of default-sized `IconButton`s overflows its cell and breaks the layout. The action column is never hidden and never resizable. |
+| Summary row | A column with a `summary` callback gets a totals row pinned under the body and aligned with the columns (the React table aligned its summary with the grid). The first column without a total shows `summaryLabel` (default «الإجمالي»). The callback receives the rows the table displays, so a page may sum them or use its own authoritative totals. |
 
 ### Sizing and scrolling
 
@@ -117,7 +120,12 @@ materials pages:
 ### Page integration checklist
 
 1. Give every column a stable `id`.
-2. Give the table a stable `tableId` if preferences should persist.
+2. Give the table a stable `tableId` if preferences should persist. Every table
+   in the app has one: `customers`, `suppliers`, `materials`, `sales-invoices`,
+   `purchase-invoices`, `sales-returns`, `purchase-returns`, `receipts`,
+   `payments`, `expense-items` and `trial-balance`. A table that shares its
+   widget between two modes (sales and purchase invoices) needs one `tableId`
+   per mode, because the column labels change with the mode.
 3. Provide `rowId` when selection is enabled.
 4. Pass filtered rows and keep the filter state in the page.
 5. Set a realistic `minWidth`.
@@ -125,6 +133,10 @@ materials pages:
 7. Wire `loading`, `error` and `onRetry` to the gateway state.
 8. Add a widget test for sorting/pagination/visibility if the page customises
    the table beyond the defaults.
+9. Add a `summary` callback to the money columns that need a totals row, and
+   prefer the totals the Rust core already reports over summing in Dart.
+10. Build the action cell with `AppTableActionButton` and size the column
+    accordingly; a widget test with a real row catches the overflow.
 
 ## Table preferences
 
@@ -151,7 +163,8 @@ application-support directory as `accounting.db`:
       "widths": {"name": 240},
       "pageSize": 25,
       "sortColumnId": "name",
-      "sortAscending": true
+      "sortAscending": true,
+      "density": "compact"
     }
   }
 }
@@ -171,6 +184,7 @@ Preferences are untrusted input from an older build. On load:
 - Widths are clamped to 56–720 px.
 - Page size must be one of 10/25/50/100.
 - A sort column that no longer exists is cleared.
+- An unknown density id falls back to `comfortable`.
 - If every column would be hidden, the first column is kept visible.
 
 A failed load or save only logs a debug message and keeps the in-memory
@@ -210,12 +224,48 @@ stored entry.
 - Avoid nesting the table inside another vertical `ListView`; use `Expanded` or
   a fixed height.
 
+### What the table already does
+
+| Concern | Behaviour |
+|---|---|
+| Sort keys | `sortValue` is read once per row and cached per (rows list, column). The comparator only compares the extracted keys, so sorting costs `O(n log n)` comparisons instead of `O(n log n)` key reads. Reversing the direction reuses the same keys. |
+| Keyboard cursor | The cursor lives in a `ValueNotifier`, not in `setState`. Moving it rebuilds only the row that loses the highlight and the row that gains it, so holding an arrow key does not rebuild the viewport. |
+| Row layout | Rows have a fixed height, so the row list uses `itemExtent` and the scroll view computes its extents without laying out every child. |
+| Row list | `ListView.builder` builds only the visible rows; the keep-alive wrapper is skipped because rows hold no state worth keeping. |
+| Reuse | The sorted list and the extracted sort keys stay valid while the rows list instance and the sort key stay the same. |
+| Persistence | Preference writes are debounced by 350 ms, so dragging a column edge does not write to disk on every pointer move. |
+
+### Filtering the rows in the page
+
+A page that filters its rows on every build hands the table a new list each
+time, which throws the sort cache away. Cache the filtered list with
+`RowFilterCache` (`app/lib/ui/table/row_filter_cache.dart`) and key it by the
+search text, the active filters and the identity of the source list:
+
+```dart
+final _filteredCustomers = RowFilterCache<LedgerCustomer>();
+
+List<LedgerCustomer> get _customers {
+  final source = widget.data.customers;
+  return _filteredCustomers.resolve((_query, _activeOnly, source), () {
+    /* filter source */
+  });
+}
+```
+
+The key must contain everything that can change the result; a new source list
+instance invalidates the cache automatically.
+
 ## Tests
 
 `app/test/table_test.dart` covers sorting, keyboard navigation (arrows, Enter,
 End, Space), column hiding (including width redistribution, «إظهار الكل» and
 restoring the column), adopting saved preferences when the table id changes,
 pagination, selection, loading/error/empty states, RTL/LTR, single-line cell
-ellipsis, width persistence and stale preference sanitisation. Page-level tests
-live in `app/test/widget_test.dart`, including the 430×900 customers-page
-layout.
+ellipsis, width persistence, stale preference sanitisation, the row densities
+and the column-aligned summary row. It also guards the performance contract:
+one sort-key extraction per row, and a keyboard cursor that rebuilds only the
+rows it touches.
+`app/test/row_filter_cache_test.dart` covers the page-level row filter cache.
+Page-level tests live in `app/test/widget_test.dart`, including the 430×900
+customers-page layout and the trial-balance summary row.

@@ -124,7 +124,10 @@ column ids, sorting, column visibility/order/width preferences, pagination,
 selection, loading/error/empty states and RTL/LTR layout. Tables are
 keyboard-driven (arrows, `Home`/`End`, `PageUp`/`PageDown` move a row cursor,
 `Enter` opens a row, `Space` selects it) and every text cell is clamped to one
-line, so long values never overflow a row. Section history backs the top-bar
+line, so long values never overflow a row. Sorting reads each row's sort key
+once and the keyboard cursor repaints only the rows it touches, so long lists
+stay responsive. Three row densities (compact, comfortable, spacious) are
+persisted per table. Section history backs the top-bar
 back button, Android system back, `Alt+Left` and `Escape`; forms warn before
 discarding unsaved changes. CI builds Windows (ZIP/EXE/MSI), Android (three
 APKs) and Linux (x64 tarball) from the same tagged commit.

@@ -514,27 +514,41 @@ class _TrialBalanceCard extends StatelessWidget {
           ),
           const Divider(height: 1),
           AppDataTable<TrialBalanceRow>(
+            tableId: 'trial-balance',
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             minWidth: 620,
             columns: [
               AppTableColumn(
+                id: 'code',
                 label: 'الرمز',
                 flex: 2,
+                sortable: true,
+                sortValue: (row) => row.accountCode,
                 builder: (context, row) => AppTableText(
                   row.accountCode,
                   style: theme.textTheme.labelMedium,
                 ),
               ),
               AppTableColumn(
+                id: 'account',
                 label: 'الحساب',
                 flex: 5,
+                sortable: true,
+                sortValue: (row) => row.accountName,
                 builder: (context, row) => AppTableText(row.accountName),
               ),
               AppTableColumn(
+                id: 'debit',
                 label: 'مدين',
                 flex: 2,
+                sortable: true,
+                sortValue: (row) => parseAmount(row.debit),
                 alignment: AlignmentDirectional.centerEnd,
                 headerAlignment: AlignmentDirectional.centerEnd,
+                summary: (rows) => formatMoney(
+                  data.snapshot.totalDebit,
+                  currency: data.baseCurrency,
+                ),
                 builder: (context, row) => AppTableText(
                   formatMoney(row.debit, currency: data.baseCurrency),
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -543,10 +557,17 @@ class _TrialBalanceCard extends StatelessWidget {
                 ),
               ),
               AppTableColumn(
+                id: 'credit',
                 label: 'دائن',
                 flex: 2,
+                sortable: true,
+                sortValue: (row) => parseAmount(row.credit),
                 alignment: AlignmentDirectional.centerEnd,
                 headerAlignment: AlignmentDirectional.centerEnd,
+                summary: (rows) => formatMoney(
+                  data.snapshot.totalCredit,
+                  currency: data.baseCurrency,
+                ),
                 builder: (context, row) => AppTableText(
                   formatMoney(row.credit, currency: data.baseCurrency),
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -561,31 +582,6 @@ class _TrialBalanceCard extends StatelessWidget {
                 'أنشئ أول قيد من النموذج المجاور ليظهر ميزان المراجعة.',
             emptyIcon: Icons.receipt_long_outlined,
             rowHeight: 52,
-            footer: Row(
-              children: [
-                Text('الإجمالي', style: theme.textTheme.titleSmall),
-                const Spacer(),
-                Text(
-                  formatMoney(
-                    data.snapshot.totalDebit,
-                    currency: data.baseCurrency,
-                  ),
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: context.semanticColors.success,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.xl),
-                Text(
-                  formatMoney(
-                    data.snapshot.totalCredit,
-                    currency: data.baseCurrency,
-                  ),
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: context.semanticColors.info,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

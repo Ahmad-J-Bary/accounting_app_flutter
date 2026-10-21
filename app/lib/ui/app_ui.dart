@@ -2,11 +2,14 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
 import 'table/table_preferences.dart';
 import 'table/table_preferences_store.dart';
+
+export 'table/table_preferences.dart' show TableDensity;
 
 /// A bordered surface matching the React `Card` primitive.
 class AppCard extends StatelessWidget {
@@ -761,6 +764,46 @@ class AppTableText extends StatelessWidget {
   }
 }
 
+/// A compact icon button for the action cell of a table row.
+///
+/// Table rows have a fixed height and a narrow action column, so the button
+/// uses a smaller tap area than the Material default. Without it a row with
+/// three or four actions overflows its column.
+class AppTableActionButton extends StatelessWidget {
+  const AppTableActionButton({
+    super.key,
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+    this.color,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final Color? color;
+
+  /// Width and height of the button in logical pixels.
+  static const double size = 36;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18, color: color),
+      style: IconButton.styleFrom(
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+        fixedSize: const Size(size, size),
+        minimumSize: const Size(size, size),
+        maximumSize: const Size(size, size),
+        padding: EdgeInsets.zero,
+      ),
+    );
+  }
+}
+
 class AppTableColumn<T> {
   const AppTableColumn({
     this.id,
@@ -774,6 +817,7 @@ class AppTableColumn<T> {
     this.sortable = false,
     this.sortValue,
     this.searchText,
+    this.summary,
     this.visibleByDefault = true,
     this.canHide = true,
     this.canResize = true,
@@ -796,6 +840,13 @@ class AppTableColumn<T> {
 
   /// Value used for search/filter helpers built on top of the table.
   final String Function(T row)? searchText;
+
+  /// Total for this column, shown in the summary row under the body.
+  ///
+  /// The callback receives the rows the table currently displays (the current
+  /// page when [AppDataTable.paginate] is on). A page that already knows the
+  /// authoritative total may ignore the argument.
+  final String? Function(List<T> rows)? summary;
   final bool visibleByDefault;
   final bool canHide;
   final bool canResize;
@@ -822,8 +873,9 @@ class AppDataTable<T> extends StatefulWidget {
     this.footer,
     this.toolbar,
     this.minWidth = 760,
-    this.rowHeight = 58,
-    this.headerHeight = 44,
+    this.rowHeight,
+    this.headerHeight,
+    this.density,
     this.padding = const EdgeInsets.all(AppSpacing.lg),
     this.tableId,
     this.preferencesStore,
@@ -837,6 +889,7 @@ class AppDataTable<T> extends StatefulWidget {
     this.showColumnMenu = true,
     this.initialSortColumnId,
     this.initialSortAscending = true,
+    this.summaryLabel = 'الإجمالي',
   }) : assert(
          !enableSelection || rowId != null,
          'enableSelection requires rowId so selection survives sorting.',
@@ -856,8 +909,17 @@ class AppDataTable<T> extends StatefulWidget {
   final Widget? footer;
   final Widget? toolbar;
   final double minWidth;
-  final double rowHeight;
-  final double headerHeight;
+
+  /// Overrides the row height of the active density when set.
+  final double? rowHeight;
+
+  /// Overrides the header height of the active density when set.
+  final double? headerHeight;
+
+  /// Default row density. A stored preference for the same table wins, so the
+  /// user keeps the density they chose; this value applies to tables without
+  /// stored preferences.
+  final TableDensity? density;
   final EdgeInsetsGeometry padding;
 
   /// Enables persistence of column order, visibility, widths, page size and
@@ -874,6 +936,9 @@ class AppDataTable<T> extends StatefulWidget {
   final bool showColumnMenu;
   final String? initialSortColumnId;
   final bool initialSortAscending;
+
+  /// Label shown in the first column of the summary row.
+  final String summaryLabel;
 
   @override
   State<AppDataTable<T>> createState() => _AppDataTableState<T>();
@@ -892,9 +957,19 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
   int _page = 0;
   int _localPageSize = 25;
   int? _focusedRow;
+
+  /// Drives the row highlight without rebuilding the table.
+  ///
+  /// The cursor lives in a [ValueNotifier] so an arrow key only repaints the
+  /// row that loses the highlight and the row that gains it; calling `setState`
+  /// here would rebuild every visible row on each key repeat.
+  final ValueNotifier<int?> _focusedRowNotifier = ValueNotifier<int?>(null);
   List<T>? _sortedCache;
   List<T>? _sortedSource;
   String? _sortedKey;
+  List<Object?>? _sortKeys;
+  List<T>? _sortKeysSource;
+  String? _sortKeysColumnId;
   List<String> _columnIds = const <String>[];
 
   @override
@@ -932,6 +1007,8 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
         oldWidget.pageSize != widget.pageSize) {
       _page = 0;
       _focusedRow = null;
+      // Deferred while the tree is building; see [_setCursor].
+      _setCursor(null);
     }
   }
 
@@ -940,6 +1017,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     _preferences?.removeListener(_onPreferencesChanged);
     _preferences?.dispose();
     _tableFocus.dispose();
+    _focusedRowNotifier.dispose();
     _verticalScroll.dispose();
     _horizontalScroll.dispose();
     super.dispose();
@@ -984,6 +1062,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
       requiredColumnIds: _requiredColumnIds,
       store: widget.preferencesStore ?? createDefaultTablePreferencesStore(),
       defaultPageSize: widget.pageSize,
+      defaultDensity: widget.density ?? TableDensity.comfortable,
     );
     controller.addListener(_onPreferencesChanged);
     _preferences = controller;
@@ -1009,6 +1088,15 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
   }
 
   String _idAt(int index) => _columnIds[index];
+
+  /// Active row density: the caller's default unless the table has a stored
+  /// preference.
+  TableDensity get _density =>
+      widget.density ?? TableDensity.fromId(_preferences?.value.density);
+
+  double get _rowHeight => widget.rowHeight ?? _density.rowHeight;
+
+  double get _headerHeight => widget.headerHeight ?? _density.headerHeight;
 
   int get _pageSize => _preferences?.value.pageSize ?? _localPageSize;
 
@@ -1047,6 +1135,17 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     }
   }
 
+  /// Drops the manual width of a column so it returns to its automatic share
+  /// of the table width.
+  void _resetColumnWidth(String id) {
+    final preferences = _preferences;
+    if (preferences != null) {
+      preferences.clearWidth(id);
+      return;
+    }
+    setState(() => _localWidths.remove(id));
+  }
+
   List<AppTableColumn<T>> _orderedColumns() {
     final preferences = _preferences;
     if (preferences == null) {
@@ -1069,20 +1168,36 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     if (sortValue == null) {
       return widget.rows;
     }
-    final key = '${id}_$_sortAscending';
-    if (identical(_sortedSource, widget.rows) &&
+    final rows = widget.rows;
+    final ascending = _sortAscending;
+    final key = '${id}_$ascending';
+    if (identical(_sortedSource, rows) &&
         _sortedKey == key &&
         _sortedCache != null) {
       return _sortedCache!;
     }
-    final ascending = _sortAscending;
-    final indexed = <(int, T)>[
-      for (var index = 0; index < widget.rows.length; index++)
-        (index, widget.rows[index]),
-    ];
-    indexed.sort((a, b) {
-      final left = sortValue(a.$2);
-      final right = sortValue(b.$2);
+    // Extract each sort key once instead of once per comparison: a comparator
+    // that calls `sortValue` runs it O(n log n) times, which is visible on long
+    // lists and on sort values that parse or format a value (amounts, dates).
+    List<Object?> keys;
+    if (identical(_sortKeysSource, rows) &&
+        _sortKeysColumnId == id &&
+        _sortKeys != null) {
+      keys = _sortKeys!;
+    } else {
+      keys = List<Object?>.generate(
+        rows.length,
+        (index) => sortValue(rows[index]),
+        growable: false,
+      );
+      _sortKeys = keys;
+      _sortKeysSource = rows;
+      _sortKeysColumnId = id;
+    }
+    final order = List<int>.generate(rows.length, (index) => index);
+    order.sort((a, b) {
+      final left = keys[a];
+      final right = keys[b];
       final int comparison;
       if (left == null && right == null) {
         comparison = 0;
@@ -1097,10 +1212,10 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
       }
       // Equal keys keep their source order: sorting must not reshuffle rows
       // between pages when many rows share a value (same date, same party…).
-      return comparison != 0 ? comparison : a.$1.compareTo(b.$1);
+      return comparison != 0 ? comparison : a.compareTo(b);
     });
-    final sorted = <T>[for (final entry in indexed) entry.$2];
-    _sortedSource = widget.rows;
+    final sorted = <T>[for (final index in order) rows[index]];
+    _sortedSource = rows;
     _sortedKey = key;
     _sortedCache = sorted;
     return sorted;
@@ -1161,9 +1276,8 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
 
   int get _keyboardPageStep {
     if (_verticalScroll.hasClients) {
-      final visible =
-          (_verticalScroll.position.viewportDimension / widget.rowHeight)
-              .floor();
+      final visible = (_verticalScroll.position.viewportDimension / _rowHeight)
+          .floor();
       if (visible > 2) {
         return visible - 1;
       }
@@ -1234,15 +1348,18 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
       return;
     }
     final next = index.clamp(0, count - 1);
-    setState(() => _focusedRow = next);
+    _focusedRow = next;
+    // No `setState`: the rows themselves listen to the cursor, so holding an
+    // arrow key repaints two rows instead of the whole viewport.
+    _setCursor(next);
     _tableFocus.requestFocus();
     final controller = _verticalScroll;
     if (!controller.hasClients) {
       return;
     }
     final position = controller.position;
-    final top = next * widget.rowHeight;
-    final bottom = top + widget.rowHeight;
+    final top = next * _rowHeight;
+    final bottom = top + _rowHeight;
     final offset = position.pixels;
     final viewport = position.viewportDimension;
     double? target;
@@ -1263,10 +1380,33 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
 
   void _resetFocus([int page = 0]) {
     _focusedRow = null;
+    _setCursor(null);
     _page = page;
     if (_verticalScroll.hasClients) {
       _verticalScroll.jumpTo(0);
     }
+  }
+
+  /// Moves the keyboard cursor and notifies the rows that listen to it.
+  ///
+  /// Writing the notifier while the tree is building would rebuild rows that
+  /// are already being built, so the change is deferred to the end of the
+  /// frame in that case.
+  void _setCursor(int? index) {
+    if (_focusedRowNotifier.value == index) {
+      return;
+    }
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.persistentCallbacks ||
+        phase == SchedulerPhase.midFrameMicrotasks) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _focusedRowNotifier.value = index;
+        }
+      });
+      return;
+    }
+    _focusedRowNotifier.value = index;
   }
 
   void _resetPreferences() {
@@ -1288,6 +1428,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     if (preferences == null) {
       return;
     }
+    final theme = Theme.of(context);
     final labels = <String, String>{
       for (var index = 0; index < widget.columns.length; index++)
         _idAt(index): widget.columns[index].label,
@@ -1310,6 +1451,42 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
                 child: ListView(
                   shrinkWrap: true,
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'كثافة العرض',
+                            style: theme.textTheme.labelLarge,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          SegmentedButton<TableDensity>(
+                            segments: const [
+                              ButtonSegment<TableDensity>(
+                                value: TableDensity.compact,
+                                label: Text('مدمج'),
+                              ),
+                              ButtonSegment<TableDensity>(
+                                value: TableDensity.comfortable,
+                                label: Text('مريح'),
+                              ),
+                              ButtonSegment<TableDensity>(
+                                value: TableDensity.spacious,
+                                label: Text('واسع'),
+                              ),
+                            ],
+                            selected: {TableDensity.fromId(value.density)},
+                            showSelectedIcon: false,
+                            style: const ButtonStyle(
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            onSelectionChanged: (selection) =>
+                                preferences.setDensity(selection.first),
+                          ),
+                        ],
+                      ),
+                    ),
                     for (var index = 0; index < value.order.length; index++)
                       _ColumnSettingsRow(
                         label: labels[value.order[index]] ?? value.order[index],
@@ -1555,10 +1732,6 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
           widths.values.fold<double>(0, (sum, width) => sum + width),
         );
 
-        final focusedRow = _focusedRow?.clamp(
-          0,
-          rows.isEmpty ? 0 : rows.length - 1,
-        );
         final header = _header(
           context,
           columns: columns,
@@ -1566,6 +1739,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
           idByColumn: idByColumn,
           pageIds: pageIds,
         );
+        final hasSummary = columns.any((column) => column.summary != null);
         final content = Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1576,12 +1750,17 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
                 child: ListView.builder(
                   controller: _verticalScroll,
                   itemCount: rows.length,
-                  itemBuilder: (context, index) => _row(
+                  // Every row is exactly [_rowHeight] tall, so the scroll
+                  // view can compute its extents without laying each child out.
+                  itemExtent: _rowHeight,
+                  // Rows hold no state worth keeping off-screen, so skip the
+                  // keep-alive element that `ListView.builder` adds per child.
+                  addAutomaticKeepAlives: false,
+                  itemBuilder: (context, index) => _focusAwareRow(
                     context,
                     rows[index],
                     index,
                     isLast: index == rows.length - 1,
-                    focused: index == focusedRow,
                     columns: columns,
                     widths: widths,
                     idByColumn: idByColumn,
@@ -1590,16 +1769,23 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
               )
             else
               for (var index = 0; index < rows.length; index++)
-                _row(
+                _focusAwareRow(
                   context,
                   rows[index],
                   index,
                   isLast: index == rows.length - 1,
-                  focused: index == focusedRow,
                   columns: columns,
                   widths: widths,
                   idByColumn: idByColumn,
                 ),
+            if (hasSummary)
+              _summaryRow(
+                context,
+                columns: columns,
+                rows: rows,
+                widths: widths,
+                idByColumn: idByColumn,
+              ),
           ],
         );
 
@@ -1640,7 +1826,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     final allSelected = pageIds.isNotEmpty && pageIds.every(_selected.contains);
     final someSelected = pageIds.any(_selected.contains);
     return Container(
-      height: widget.headerHeight,
+      height: _headerHeight,
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(
           alpha: 0.65,
@@ -1734,20 +1920,94 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
               bottom: 0,
               child: MouseRegion(
                 cursor: SystemMouseCursors.resizeLeftRight,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onHorizontalDragUpdate: (details) {
-                    final direction = rtl ? -1 : 1;
-                    _setWidth(id, width + details.delta.dx * direction);
-                  },
-                  child: SizedBox(
-                    width: 8,
-                    child: Center(
-                      child: Container(
-                        width: 1,
-                        color: theme.colorScheme.outline,
+                child: Tooltip(
+                  message: 'اسحب لتغيير العرض، وانقر مرتين لإعادة العرض',
+                  child: GestureDetector(
+                    key: ValueKey<String>('app-table-resize-$id'),
+                    behavior: HitTestBehavior.translucent,
+                    onDoubleTap: () => _resetColumnWidth(id),
+                    onHorizontalDragUpdate: (details) {
+                      final direction = rtl ? -1 : 1;
+                      _setWidth(id, width + details.delta.dx * direction);
+                    },
+                    child: SizedBox(
+                      width: 8,
+                      child: Center(
+                        child: Container(
+                          width: 1,
+                          color: theme.colorScheme.outline,
+                        ),
                       ),
                     ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds one row inside a focus scope so the keyboard cursor repaints only
+  /// the two rows involved instead of every row in the viewport.
+  Widget _focusAwareRow(
+    BuildContext context,
+    T row,
+    int index, {
+    required bool isLast,
+    required List<AppTableColumn<T>> columns,
+    required Map<String, double> widths,
+    required Map<AppTableColumn<T>, String> idByColumn,
+  }) {
+    return _RowFocusScope(
+      index: index,
+      notifier: _focusedRowNotifier,
+      builder: (context, focused) => _row(
+        context,
+        row,
+        index,
+        isLast: isLast,
+        focused: focused,
+        columns: columns,
+        widths: widths,
+        idByColumn: idByColumn,
+      ),
+    );
+  }
+
+  /// Totals row aligned with the columns, pinned under the body.
+  ///
+  /// The React table aligned its summary with the grid; the Flutter table
+  /// keeps the same alignment by reusing the resolved column widths.
+  Widget _summaryRow(
+    BuildContext context, {
+    required List<AppTableColumn<T>> columns,
+    required List<T> rows,
+    required Map<String, double> widths,
+    required Map<AppTableColumn<T>, String> idByColumn,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      height: _rowHeight,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.45,
+        ),
+        border: Border(top: BorderSide(color: theme.colorScheme.outline)),
+      ),
+      child: Row(
+        children: [
+          for (var index = 0; index < columns.length; index++)
+            SizedBox(
+              width: widths[idByColumn[columns[index]]!] ?? 0,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Align(
+                  alignment: columns[index].alignment,
+                  child: AppTableText(
+                    columns[index].summary?.call(rows) ??
+                        (index == 0 ? widget.summaryLabel : ''),
+                    style: theme.textTheme.titleSmall,
                   ),
                 ),
               ),
@@ -1771,7 +2031,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     final id = widget.rowId?.call(row);
     final selected = id != null && _selected.contains(id);
     final content = Container(
-      height: widget.rowHeight,
+      height: _rowHeight,
       foregroundDecoration: focused
           ? BoxDecoration(
               border: Border.all(color: theme.colorScheme.primary, width: 1.5),
@@ -1944,6 +2204,65 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
       ),
     );
   }
+}
+
+/// Rebuilds a single row when *its* focus state changes.
+///
+/// `AppDataTable` keeps the keyboard cursor in a [ValueNotifier] instead of
+/// calling `setState`. Listening here means an arrow key repaints the row that
+/// loses the highlight and the row that gains it; without this, every visible
+/// row rebuilds on each key repeat.
+class _RowFocusScope extends StatefulWidget {
+  const _RowFocusScope({
+    required this.index,
+    required this.notifier,
+    required this.builder,
+  });
+
+  final int index;
+  final ValueListenable<int?> notifier;
+  final Widget Function(BuildContext context, bool focused) builder;
+
+  @override
+  State<_RowFocusScope> createState() => _RowFocusScopeState();
+}
+
+class _RowFocusScopeState extends State<_RowFocusScope> {
+  late bool _focused = widget.notifier.value == widget.index;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.notifier.addListener(_onCursorChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant _RowFocusScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.notifier, widget.notifier)) {
+      oldWidget.notifier.removeListener(_onCursorChanged);
+      widget.notifier.addListener(_onCursorChanged);
+    }
+    // The parent rebuild may have moved the cursor or re-indexed this row, so
+    // resync before the build that follows this call.
+    _focused = widget.notifier.value == widget.index;
+  }
+
+  @override
+  void dispose() {
+    widget.notifier.removeListener(_onCursorChanged);
+    super.dispose();
+  }
+
+  void _onCursorChanged() {
+    final focused = widget.notifier.value == widget.index;
+    if (focused != _focused && mounted) {
+      setState(() => _focused = focused);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context, _focused);
 }
 
 class _ColumnSettingsRow extends StatelessWidget {

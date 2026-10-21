@@ -184,6 +184,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
         ),
         const SizedBox(height: AppSpacing.lg),
         AppDataTable<LedgerPayment>(
+          tableId: _isReceipt ? 'receipts' : 'payments',
           rows: visible,
           minWidth: 980,
           emptyTitle: 'لا توجد سندات',
@@ -198,35 +199,48 @@ class _PaymentsPageState extends State<PaymentsPage> {
           ),
           columns: [
             AppTableColumn(
+              id: 'number',
               label: 'رقم السند',
               flex: 2,
+              sortable: true,
+              sortValue: (payment) => payment.voucherNumber,
               builder: (context, payment) => AppTableText(
                 payment.voucherNumber,
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
             AppTableColumn(
+              id: 'party',
               label: _isReceipt ? 'العميل' : 'المورد',
               flex: 3,
+              sortable: true,
+              sortValue: (payment) => payment.partyName,
               builder: (context, payment) => AppTableText(
                 payment.partyName.isEmpty ? '—' : payment.partyName,
               ),
             ),
             AppTableColumn(
+              id: 'date',
               label: 'التاريخ',
               flex: 2,
+              sortable: true,
+              sortValue: (payment) => payment.paymentDate,
               builder: (context, payment) =>
                   AppTableText(_formatDate(payment.paymentDate)),
             ),
             AppTableColumn(
+              id: 'reference',
               label: 'المرجع',
               flex: 2,
               builder: (context, payment) =>
                   AppTableText(payment.reference ?? '—'),
             ),
             AppTableColumn(
+              id: 'amount',
               label: 'المبلغ',
               flex: 2,
+              sortable: true,
+              sortValue: (payment) => parseAmount(payment.amount),
               alignment: AlignmentDirectional.centerEnd,
               headerAlignment: AlignmentDirectional.centerEnd,
               builder: (context, payment) => AppTableText(
@@ -235,14 +249,18 @@ class _PaymentsPageState extends State<PaymentsPage> {
               ),
             ),
             AppTableColumn(
+              id: 'entry',
               label: 'القيد',
               flex: 2,
               builder: (context, payment) =>
                   AppTableText(payment.journalEntryNumber ?? '—'),
             ),
             AppTableColumn(
+              id: 'actions',
               label: 'إجراءات',
-              flex: 2,
+              width: 2 * AppTableActionButton.size + 24,
+              canHide: false,
+              canResize: false,
               alignment: AlignmentDirectional.centerEnd,
               headerAlignment: AlignmentDirectional.centerEnd,
               builder: (context, payment) {
@@ -258,19 +276,16 @@ class _PaymentsPageState extends State<PaymentsPage> {
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
+                    AppTableActionButton(
                       tooltip: 'تعديل',
                       onPressed: () => _openEditor(payment),
-                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      icon: Icons.edit_outlined,
                     ),
-                    IconButton(
+                    AppTableActionButton(
                       tooltip: 'حذف',
                       onPressed: () => _delete(payment),
-                      icon: Icon(
-                        Icons.delete_outline,
-                        size: 18,
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                      icon: Icons.delete_outline,
+                      color: Theme.of(context).colorScheme.error,
                     ),
                   ],
                 );
@@ -769,6 +784,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
         ),
         const SizedBox(height: AppSpacing.lg),
         AppDataTable<LedgerAccount>(
+          tableId: 'expense-items',
           rows: visible,
           minWidth: 860,
           emptyTitle: 'لا توجد بنود مصاريف',
@@ -781,13 +797,19 @@ class _ExpensesPageState extends State<ExpensesPage> {
           ),
           columns: [
             AppTableColumn(
+              id: 'code',
               label: 'الكود',
               flex: 2,
+              sortable: true,
+              sortValue: (item) => item.code,
               builder: (context, item) => AppTableText(item.code),
             ),
             AppTableColumn(
+              id: 'name',
               label: 'البند',
               flex: 4,
+              sortable: true,
+              sortValue: (item) => item.displayName,
               builder: (context, item) => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -805,8 +827,11 @@ class _ExpensesPageState extends State<ExpensesPage> {
               ),
             ),
             AppTableColumn(
+              id: 'balance',
               label: 'الرصيد',
               flex: 2,
+              sortable: true,
+              sortValue: (item) => parseAmount(item.balance),
               alignment: AlignmentDirectional.centerEnd,
               headerAlignment: AlignmentDirectional.centerEnd,
               builder: (context, item) => AppTableText(
@@ -815,8 +840,11 @@ class _ExpensesPageState extends State<ExpensesPage> {
               ),
             ),
             AppTableColumn(
+              id: 'status',
               label: 'الحالة',
               flex: 2,
+              sortable: true,
+              sortValue: (item) => item.isActive ? 1 : 0,
               builder: (context, item) => AppBadge(
                 label: item.isActive ? 'نشط' : 'موقوف',
                 tone: item.isActive
@@ -826,31 +854,31 @@ class _ExpensesPageState extends State<ExpensesPage> {
               ),
             ),
             AppTableColumn(
+              id: 'actions',
               label: 'إجراءات',
-              flex: 3,
+              width: 3 * AppTableActionButton.size + 24,
+              canHide: false,
+              canResize: false,
               alignment: AlignmentDirectional.centerEnd,
               headerAlignment: AlignmentDirectional.centerEnd,
               builder: (context, item) => Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
+                  AppTableActionButton(
                     tooltip: 'سند مصروف',
                     onPressed: () => _openVoucher(item),
-                    icon: const Icon(Icons.receipt_long_outlined, size: 18),
+                    icon: Icons.receipt_long_outlined,
                   ),
-                  IconButton(
+                  AppTableActionButton(
                     tooltip: 'تعديل',
                     onPressed: () => _openItemForm(item),
-                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    icon: Icons.edit_outlined,
                   ),
-                  IconButton(
+                  AppTableActionButton(
                     tooltip: 'حذف',
                     onPressed: () => _deleteItem(item),
-                    icon: Icon(
-                      Icons.delete_outline,
-                      size: 18,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                    icon: Icons.delete_outline,
+                    color: Theme.of(context).colorScheme.error,
                   ),
                 ],
               ),

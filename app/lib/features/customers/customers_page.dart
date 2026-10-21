@@ -4,6 +4,7 @@ import '../../ledger.dart';
 import '../../master_data_forms.dart';
 import '../../theme/app_theme.dart';
 import '../../ui/app_ui.dart';
+import '../../ui/table/row_filter_cache.dart';
 import '../../workspace_data.dart';
 import '../master_data/master_data_shared.dart';
 
@@ -29,6 +30,7 @@ class CustomersPage extends StatefulWidget {
 
 class _CustomersPageState extends State<CustomersPage> {
   final _searchController = TextEditingController();
+  final _filteredCustomers = RowFilterCache<LedgerCustomer>();
   String _query = '';
   bool _activeOnly = false;
 
@@ -39,21 +41,24 @@ class _CustomersPageState extends State<CustomersPage> {
   }
 
   List<LedgerCustomer> get _customers {
-    final query = _query.trim().toLowerCase();
-    return widget.data.customers
-        .where((customer) {
-          if (_activeOnly && !customer.isActive) {
-            return false;
-          }
-          if (query.isEmpty) {
-            return true;
-          }
-          return '${customer.code} ${customer.name} ${customer.phone ?? ''} '
-                  '${customer.address ?? ''}'
-              .toLowerCase()
-              .contains(query);
-        })
-        .toList(growable: false);
+    final source = widget.data.customers;
+    return _filteredCustomers.resolve((_query, _activeOnly, source), () {
+      final query = _query.trim().toLowerCase();
+      return source
+          .where((customer) {
+            if (_activeOnly && !customer.isActive) {
+              return false;
+            }
+            if (query.isEmpty) {
+              return true;
+            }
+            return '${customer.code} ${customer.name} ${customer.phone ?? ''} '
+                    '${customer.address ?? ''}'
+                .toLowerCase()
+                .contains(query);
+          })
+          .toList(growable: false);
+    });
   }
 
   Future<void> _notifyChanged() async {
@@ -277,7 +282,8 @@ class _CustomersPageState extends State<CustomersPage> {
       AppTableColumn(
         id: 'actions',
         label: '',
-        width: 56,
+        // The popup button is 48 px wide plus the cell padding.
+        width: 72,
         canHide: false,
         canResize: false,
         alignment: AlignmentDirectional.center,
