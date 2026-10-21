@@ -1,65 +1,45 @@
-# Miscellaneous
-*.class
+# OS and editor metadata
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.history
 *.log
 *.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
+*.class
 migrate_working_dir/
 
-# IntelliJ related
+# IntelliJ / Android Studio
+.idea/
 *.iml
 *.ipr
 *.iws
-.idea/
 
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.
 #.vscode/
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Flutter / Dart
 .dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
 .pub/
-/build/
-/coverage/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# Accounting Rust and Flutter workspace
-/target/
-**/target/
-**/.dart_tool/
-**/build/
+.pub-cache/
 .flutter-plugins
 .flutter-plugins-dependencies
-# Build output and dependencies
-**/node_modules/
-**/target/
 **/build/
-**/dist/
-**/.dart_tool/
-**/.fvm/
-**/.next/
 **/coverage/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+app.*.symbols
+app.*.map.json
+
+# Rust
+**/target/
+
+# Local tooling
+.fvm/
+**/.fvm/
+.refena_inspector/
 
 # Local secrets and database files
 .env
@@ -70,17 +50,10 @@ app.*.map.json
 *.sqlite3
 *.pem
 *.key
-
-# Linux AppImage
-/app/AppDir
-/app/appimage-build
-
-.refena_inspector/
-
 /secrets
 
-# FVM Version Cache
-.fvm/
-
-# macOS
-.DS_Store
+# Packaging output
+/dist/
+**/dist/
+/app/AppDir
+/app/appimage-build

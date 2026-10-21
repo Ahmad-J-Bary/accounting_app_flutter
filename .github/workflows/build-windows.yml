@@ -9,6 +9,9 @@ permissions:
 
 env:
   FLUTTER_VERSION: "3.41.9"
+  # Chocolatey pins the WiX 3.14 line. Product.wxs uses the WiX 3 namespace,
+  # so a WiX 4/5 compiler must never be picked up implicitly.
+  WIX_VERSION: "3.14.1.20250415"
 
 jobs:
   build-windows:
@@ -38,69 +41,152 @@ jobs:
       - name: Build Windows release
         working-directory: app
         run: flutter build windows --release
-      - name: Verify the Rust bridge DLL is packaged
+      - name: Verify the release bundle
         working-directory: app
         shell: pwsh
         run: |
-          $dll = 'build/windows/x64/runner/Release/accounting_app_flutter_isolates.dll'
-          if (-not (Test-Path $dll)) { throw "Missing Rust bridge DLL: $dll" }
-          Get-Item $dll | Select-Object FullName, Length
-      - name: Install Windows packaging tools
+          $ErrorActionPreference = 'Stop'
+          $release = (Resolve-Path 'build/windows/x64/runner/Release').Path
+          $required = @(
+            'accounting_app_flutter.exe',
+            'accounting_app_flutter_isolates.dll',
+            'flutter_windows.dll',
+            'data/app.so',
+            'data/icudtl.dat',
+            'data/flutter_assets/AssetManifest.bin',
+            'data/flutter_assets/assets/fonts/Cairo-Regular.ttf'
+          )
+          foreach ($relative in $required) {
+            $path = Join-Path $release $relative
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+              throw "The Windows release bundle is missing $relative"
+            }
+            $item = Get-Item -LiteralPath $path
+            if ($item.Length -le 0) { throw "The Windows release bundle contains an empty $relative" }
+            Write-Host ("OK {0} ({1} bytes)" -f $relative, $item.Length)
+          }
+          $dll = Get-Item -LiteralPath (Join-Path $release 'accounting_app_flutter_isolates.dll')
+          if ($dll.Length -lt 1024) { throw 'The Rust bridge DLL is suspiciously small.' }
+      - name: Install packaging tools
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-          if (-not (Test-Path $iscc)) {
+          if (-not (Test-Path -LiteralPath $iscc)) {
             choco install innosetup --no-progress -y
             $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           }
-          if (-not (Test-Path $iscc)) { throw 'Inno Setup compiler was not found.' }
+          if (-not (Test-Path -LiteralPath $iscc)) { throw 'Inno Setup compiler was not found.' }
           "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append
 
           $wix = "${env:ProgramFiles(x86)}\WiX Toolset v3.14\bin"
-          if (-not (Test-Path (Join-Path $wix 'candle.exe'))) {
-            choco install wixtoolset --no-progress -y
+          if (-not (Test-Path -LiteralPath (Join-Path $wix 'candle.exe'))) {
+            choco install wixtoolset --version=$env:WIX_VERSION --no-progress -y
             $wix = "${env:ProgramFiles(x86)}\WiX Toolset v3.14\bin"
           }
-          if (-not (Test-Path (Join-Path $wix 'candle.exe'))) { throw 'WiX Toolset was not found.' }
-          "WIXBIN=$wix" | Out-File -FilePath $env:GITHUB_ENV -Append
+          if (-not (Test-Path -LiteralPath (Join-Path $wix 'candle.exe'))) {
+            throw 'WiX Toolset 3.14 was not found after installation.'
+          }
 
+          $candleVersion = (& (Join-Path $wix 'candle.exe') -? 2>&1 | Out-String)
+          if ($candleVersion -notmatch 'version 3\.14\.') {
+            throw "WiX 3.14 is required for installer/windows/Product.wxs. candle reports:`n$candleVersion"
+          }
+          "WIXBIN=$wix" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Build portable ZIP, EXE and MSI
         id: package
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
           $version = '${{ steps.version.outputs.version }}'
           $release = (Resolve-Path 'app/build/windows/x64/runner/Release').Path
           $dist = Join-Path (Get-Location) 'dist'
           New-Item -ItemType Directory -Path $dist -Force | Out-Null
 
           $zip = Join-Path $dist "accounting-app-$version-windows-x64.zip"
-          if (Test-Path $zip) { Remove-Item $zip -Force }
+          if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
           Compress-Archive -Path "$release/*" -DestinationPath $zip -CompressionLevel Optimal
 
           & $env:ISCC_PATH "/DAppVersion=$version" "/DSourceDir=$release" "/DOutputDir=$dist" 'installer/windows/accounting_app.iss'
           if ($LASTEXITCODE -ne 0) { throw 'Inno Setup failed.' }
           $setup = Join-Path $dist "accounting-app-$version-windows-x64-setup.exe"
-          if (-not (Test-Path $setup)) { throw "Missing installer: $setup" }
+          if (-not (Test-Path -LiteralPath $setup)) { throw "Missing installer: $setup" }
 
           $msiBuild = Join-Path (Get-Location) 'app/build/msi'
           New-Item -ItemType Directory -Path $msiBuild -Force | Out-Null
           $heat = Join-Path $env:WIXBIN 'heat.exe'
+          $candle = Join-Path $env:WIXBIN 'candle.exe'
+          $light = Join-Path $env:WIXBIN 'light.exe'
           $product = Join-Path (Get-Location) 'installer/windows/Product.wxs'
-          & $heat dir $release -cg AppFiles -gg -scom -sreg -sfrag -srd -dr INSTALLFOLDER -var var.SourceDir -out (Join-Path $msiBuild 'Files.wxs')
+          $filesWxs = Join-Path $msiBuild 'Files.wxs'
+
+          & $heat dir $release -cg AppFiles -gg -scom -sreg -sfrag -srd -dr INSTALLFOLDER -var var.SourceDir -out $filesWxs
           if ($LASTEXITCODE -ne 0) { throw 'WiX heat failed.' }
+          if (-not (Test-Path -LiteralPath $filesWxs)) { throw "WiX heat did not produce $filesWxs" }
+
+          # Reject the old failure mode before candle/light see the file: a stray
+          # positional argument (historically the word "none" from
+          # `-pdbtype none`) is treated by light.exe as a source file.
+          [xml]$harvest = Get-Content -LiteralPath $filesWxs
+          $ns = New-Object System.Xml.XmlNamespaceManager($harvest.NameTable)
+          $ns.AddNamespace('w', 'http://schemas.microsoft.com/wix/2006/wi')
+          $fileNodes = $harvest.SelectNodes('//w:File', $ns)
+          if ($fileNodes.Count -eq 0) { throw 'WiX heat produced no File elements.' }
+          $checked = 0
+          foreach ($node in $fileNodes) {
+            $source = $node.GetAttribute('Source')
+            if ([string]::IsNullOrWhiteSpace($source) -or $source -eq 'none') {
+              throw "Invalid File Source '$source' in Files.wxs."
+            }
+            $expanded = $source.Replace('$(var.SourceDir)', $release)
+            if (-not (Test-Path -LiteralPath $expanded -PathType Leaf)) {
+              throw "Harvested source does not exist: $source"
+            }
+            $checked++
+          }
+          Write-Host "Validated $checked harvested files."
+
           $msiName = "accounting-app-$version-windows-x64.msi"
           $msi = Join-Path $msiBuild $msiName
           Push-Location $msiBuild
           try {
-            & (Join-Path $env:WIXBIN 'candle.exe') -arch x64 "-dAppVersion=$version" "-dSourceDir=$release" $product 'Files.wxs'
+            & $candle -arch x64 "-dAppVersion=$version" "-dSourceDir=$release" $product $filesWxs
             if ($LASTEXITCODE -ne 0) { throw 'WiX candle failed.' }
-            & (Join-Path $env:WIXBIN 'light.exe') -ext WixUIExtension -cultures:en-us -out $msi 'Product.wixobj' 'Files.wixobj'
+            & $light -ext WixUIExtension -cultures:en-us -out $msi 'Product.wixobj' 'Files.wixobj'
             if ($LASTEXITCODE -ne 0) { throw 'WiX light failed.' }
           } finally {
             Pop-Location
           }
-          if (-not (Test-Path $msi)) { throw "Missing MSI: $msi" }
-          Copy-Item -Path $msi -Destination (Join-Path $dist $msiName) -Force
+          if (-not (Test-Path -LiteralPath $msi)) { throw "Missing MSI: $msi" }
+          if ((Get-Item -LiteralPath $msi).Length -lt 1MB) { throw 'The MSI is suspiciously small.' }
+
+          # Administrative extraction proves that the MSI contains the complete
+          # payload without installing it or touching the runner's Program Files.
+          $extract = Join-Path $env:RUNNER_TEMP "msi-extract-$version"
+          if (Test-Path -LiteralPath $extract) { Remove-Item -LiteralPath $extract -Recurse -Force }
+          New-Item -ItemType Directory -Path $extract | Out-Null
+          $msiLog = Join-Path $env:RUNNER_TEMP "msi-extract-$version.log"
+          $arguments = @('/a', "`"$msi`"", '/qn', "TARGETDIR=`"$extract`"", '/l*v', "`"$msiLog`"")
+          $process = Start-Process -FilePath "$env:SystemRoot\System32\msiexec.exe" -ArgumentList $arguments -Wait -PassThru -NoNewWindow
+          if ($process.ExitCode -ne 0) {
+            if (Test-Path -LiteralPath $msiLog) { Get-Content -LiteralPath $msiLog -Tail 120 }
+            throw "msiexec /a failed with exit code $($process.ExitCode)."
+          }
+          $extracted = @(Get-ChildItem -LiteralPath $extract -Recurse -File)
+          foreach ($name in @('accounting_app_flutter.exe', 'accounting_app_flutter_isolates.dll', 'flutter_windows.dll', 'app.so', 'icudtl.dat', 'AssetManifest.bin')) {
+            if (-not ($extracted | Where-Object { $_.Name -eq $name })) {
+              throw "The MSI extraction is missing $name"
+            }
+          }
+          $sourceExe = Get-Item -LiteralPath (Join-Path $release 'accounting_app_flutter.exe')
+          $extractedExe = $extracted | Where-Object { $_.Name -eq 'accounting_app_flutter.exe' } | Select-Object -First 1
+          if ($extractedExe.Length -ne $sourceExe.Length) {
+            throw 'The MSI payload does not match the release executable.'
+          }
+          Write-Host "MSI extraction verified ($($extracted.Count) files)."
+
+          Copy-Item -LiteralPath $msi -Destination (Join-Path $dist $msiName) -Force
           Remove-Item (Join-Path $msiBuild '*.wixpdb') -Force -ErrorAction SilentlyContinue
 
           Get-ChildItem $dist -File | Where-Object { $_.Extension -in '.zip', '.exe', '.msi' } | ForEach-Object {

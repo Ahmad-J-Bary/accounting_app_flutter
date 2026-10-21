@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'categories.dart';
 import 'ledger.dart';
+import 'ui/unsaved_changes.dart';
 
 String? _requiredText(String? value) {
   if (value == null || value.trim().isEmpty) {
@@ -85,6 +86,7 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
   late String _currency;
   late bool _isActive;
   bool _saving = false;
+  bool _dirty = false;
   String? _error;
 
   bool get _isEdit => widget.customer != null;
@@ -150,6 +152,7 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
       if (!mounted) {
         return;
       }
+      _dirty = false;
       Navigator.of(context).pop(true);
     } catch (error) {
       if (!mounted) {
@@ -166,119 +169,130 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
   Widget build(BuildContext context) {
     final codes = _currencyCodes(widget.currencies, _currency);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? 'تعديل عميل' : 'إضافة عميل')),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              if (_error != null) ...[
-                _ErrorBanner(message: _error!),
-                const SizedBox(height: 12),
-              ],
-              TextFormField(
-                controller: _name,
-                autofocus: !_isEdit,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'اسم العميل',
-                  border: OutlineInputBorder(),
-                ),
-                validator: _requiredText,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _phone,
-                textInputAction: TextInputAction.next,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'الهاتف (اختياري)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _address,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'العنوان (اختياري)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: codes.contains(_currency) ? _currency : null,
-                decoration: const InputDecoration(
-                  labelText: 'العملة',
-                  border: OutlineInputBorder(),
-                ),
-                items: codes
-                    .map(
-                      (code) =>
-                          DropdownMenuItem(value: code, child: Text(code)),
-                    )
-                    .toList(),
-                onChanged: _isEdit
-                    ? null
-                    : (value) {
-                        if (value != null) {
-                          setState(() => _currency = value);
-                        }
-                      },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _openingBalance,
-                enabled: !_isEdit,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+    return UnsavedChangesGuard(
+      hasUnsavedChanges: _dirty,
+      child: Scaffold(
+        appBar: AppBar(title: Text(_isEdit ? 'تعديل عميل' : 'إضافة عميل')),
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            onChanged: () {
+              if (!_dirty) {
+                setState(() => _dirty = true);
+              }
+            },
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (_error != null) ...[
+                  _ErrorBanner(message: _error!),
+                  const SizedBox(height: 12),
                 ],
-                decoration: InputDecoration(
-                  labelText: 'الرصيد الافتتاحي (مدين)',
-                  helperText: _isEdit
-                      ? 'يمكن تعديل الرصيد الافتتاحي من شاشة «الأرصدة الافتتاحية».'
-                      : 'المبلغ الذي على العميل دفعه لنا عند بداية النظام.',
-                  border: const OutlineInputBorder(),
+                TextFormField(
+                  controller: _name,
+                  autofocus: !_isEdit,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: 'اسم العميل',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: _requiredText,
                 ),
-                validator: (value) => _nonNegativeNumber(value),
-              ),
-              if (_isEdit) ...[
-                const SizedBox(height: 8),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('نشط'),
-                  value: _isActive,
-                  onChanged: (value) => setState(() => _isActive = value),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _phone,
+                  textInputAction: TextInputAction.next,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'الهاتف (اختياري)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _address,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: 'العنوان (اختياري)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: codes.contains(_currency) ? _currency : null,
+                  decoration: const InputDecoration(
+                    labelText: 'العملة',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: codes
+                      .map(
+                        (code) =>
+                            DropdownMenuItem(value: code, child: Text(code)),
+                      )
+                      .toList(),
+                  onChanged: _isEdit
+                      ? null
+                      : (value) {
+                          if (value != null) {
+                            setState(() => _currency = value);
+                          }
+                        },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _openingBalance,
+                  enabled: !_isEdit,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                  ],
+                  decoration: InputDecoration(
+                    labelText: 'الرصيد الافتتاحي (مدين)',
+                    helperText: _isEdit
+                        ? 'يمكن تعديل الرصيد الافتتاحي من شاشة «الأرصدة الافتتاحية».'
+                        : 'المبلغ الذي على العميل دفعه لنا عند بداية النظام.',
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: (value) => _nonNegativeNumber(value),
+                ),
+                if (_isEdit) ...[
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('نشط'),
+                    value: _isActive,
+                    onChanged: (value) => setState(() {
+                      _isActive = value;
+                      _dirty = true;
+                    }),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _notes,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'ملاحظات (اختياري)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  onPressed: _saving ? null : _save,
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: Text(_saving ? 'جارٍ الحفظ…' : 'حفظ'),
                 ),
               ],
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _notes,
-                minLines: 2,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'ملاحظات (اختياري)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: _saving ? null : _save,
-                icon: _saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save_outlined),
-                label: Text(_saving ? 'جارٍ الحفظ…' : 'حفظ'),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -314,6 +328,7 @@ class _SupplierFormPageState extends State<SupplierFormPage> {
   late String _currency;
   late bool _isActive;
   bool _saving = false;
+  bool _dirty = false;
   String? _error;
 
   bool get _isEdit => widget.supplier != null;
@@ -379,6 +394,7 @@ class _SupplierFormPageState extends State<SupplierFormPage> {
       if (!mounted) {
         return;
       }
+      _dirty = false;
       Navigator.of(context).pop(true);
     } catch (error) {
       if (!mounted) {
@@ -395,122 +411,133 @@ class _SupplierFormPageState extends State<SupplierFormPage> {
   Widget build(BuildContext context) {
     final codes = _currencyCodes(widget.currencies, _currency);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? 'تعديل مورد' : 'إضافة مورد')),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              if (_error != null) ...[
-                _ErrorBanner(message: _error!),
-                const SizedBox(height: 12),
-              ],
-              TextFormField(
-                controller: _name,
-                autofocus: !_isEdit,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'اسم المورد',
-                  border: OutlineInputBorder(),
-                ),
-                validator: _requiredText,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _phone,
-                textInputAction: TextInputAction.next,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'الهاتف (اختياري)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _address,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'العنوان (اختياري)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: codes.contains(_currency) ? _currency : null,
-                decoration: const InputDecoration(
-                  labelText: 'العملة',
-                  border: OutlineInputBorder(),
-                ),
-                items: codes
-                    .map(
-                      (code) =>
-                          DropdownMenuItem(value: code, child: Text(code)),
-                    )
-                    .toList(),
-                onChanged: _isEdit
-                    ? null
-                    : (value) {
-                        if (value != null) {
-                          setState(() => _currency = value);
-                        }
-                      },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _openingBalance,
-                enabled: !_isEdit,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+    return UnsavedChangesGuard(
+      hasUnsavedChanges: _dirty,
+      child: Scaffold(
+        appBar: AppBar(title: Text(_isEdit ? 'تعديل مورد' : 'إضافة مورد')),
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            onChanged: () {
+              if (!_dirty) {
+                setState(() => _dirty = true);
+              }
+            },
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (_error != null) ...[
+                  _ErrorBanner(message: _error!),
+                  const SizedBox(height: 12),
                 ],
-                decoration: InputDecoration(
-                  labelText: 'الرصيد الافتتاحي (دائن)',
-                  helperText: _isEdit
-                      ? 'يمكن تعديل الرصيد الافتتاحي من شاشة «الأرصدة الافتتاحية».'
-                      : 'المبلغ الذي علينا دفعه للمورد عند بداية النظام.',
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) => _nonNegativeNumber(value),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _notes,
-                minLines: 2,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'ملاحظات (اختياري)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              if (_isEdit) ...[
-                const SizedBox(height: 8),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('نشط'),
-                  subtitle: const Text(
-                    'المورد غير النشط يبقى في السجلات ولا يظهر في القوائم التشغيلية.',
+                TextFormField(
+                  controller: _name,
+                  autofocus: !_isEdit,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: 'اسم المورد',
+                    border: OutlineInputBorder(),
                   ),
-                  value: _isActive,
-                  onChanged: (value) => setState(() => _isActive = value),
+                  validator: _requiredText,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _phone,
+                  textInputAction: TextInputAction.next,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'الهاتف (اختياري)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _address,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: 'العنوان (اختياري)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: codes.contains(_currency) ? _currency : null,
+                  decoration: const InputDecoration(
+                    labelText: 'العملة',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: codes
+                      .map(
+                        (code) =>
+                            DropdownMenuItem(value: code, child: Text(code)),
+                      )
+                      .toList(),
+                  onChanged: _isEdit
+                      ? null
+                      : (value) {
+                          if (value != null) {
+                            setState(() => _currency = value);
+                          }
+                        },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _openingBalance,
+                  enabled: !_isEdit,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                  ],
+                  decoration: InputDecoration(
+                    labelText: 'الرصيد الافتتاحي (دائن)',
+                    helperText: _isEdit
+                        ? 'يمكن تعديل الرصيد الافتتاحي من شاشة «الأرصدة الافتتاحية».'
+                        : 'المبلغ الذي علينا دفعه للمورد عند بداية النظام.',
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: (value) => _nonNegativeNumber(value),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _notes,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'ملاحظات (اختياري)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                if (_isEdit) ...[
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('نشط'),
+                    subtitle: const Text(
+                      'المورد غير النشط يبقى في السجلات ولا يظهر في القوائم التشغيلية.',
+                    ),
+                    value: _isActive,
+                    onChanged: (value) => setState(() {
+                      _isActive = value;
+                      _dirty = true;
+                    }),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  onPressed: _saving ? null : _save,
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: Text(_saving ? 'جارٍ الحفظ…' : 'حفظ'),
                 ),
               ],
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: _saving ? null : _save,
-                icon: _saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save_outlined),
-                label: Text(_saving ? 'جارٍ الحفظ…' : 'حفظ'),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -556,6 +583,7 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
   final Set<String> _selectedCategoryIds = {};
   final List<_ExtraUnitControllers> _extraUnits = [];
   bool _saving = false;
+  bool _dirty = false;
   String? _error;
 
   bool get _isEdit => widget.material != null;
@@ -614,6 +642,7 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
   void _addExtraUnit() {
     setState(() {
       _extraUnits.add(_ExtraUnitControllers());
+      _dirty = true;
     });
   }
 
@@ -621,6 +650,7 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
     setState(() {
       final unit = _extraUnits.removeAt(index);
       unit.dispose();
+      _dirty = true;
     });
   }
 
@@ -694,6 +724,7 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
       if (!mounted) {
         return;
       }
+      _dirty = false;
       Navigator.of(context).pop(true);
     } catch (error) {
       if (!mounted) {
@@ -851,247 +882,261 @@ class _MaterialFormPageState extends State<MaterialFormPage> {
   Widget build(BuildContext context) {
     final codes = _currencyCodes(widget.currencies, _currency);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? 'تعديل مادة' : 'إضافة مادة')),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              if (_error != null) ...[
-                _ErrorBanner(message: _error!),
-                const SizedBox(height: 12),
-              ],
-              if (_isEdit) ...[
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      'لا يمكن تغيير وحدة القياس أو معامل التحويل بعد إنشاء المادة. '
-                      'يمكن تعديل الأسعار والبيانات الوصفية.',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-              TextFormField(
-                controller: _name,
-                autofocus: !_isEdit,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'اسم المادة',
-                  border: OutlineInputBorder(),
-                ),
-                validator: _requiredText,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _nameEn,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'الاسم الإنجليزي (اختياري)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _code,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: 'رمز المادة (اختياري)',
-                  helperText: _isEdit
-                      ? null
-                      : 'اتركه فارغاً ليُولَّد تلقائياً.',
-                  border: const OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _barcode,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'الباركود (اختياري)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'التصنيفات',
-                  helperText:
-                      'يمكن اختيار أكثر من تصنيف. يُستخدم التصنيف الافتراضي عند عدم الاختيار.',
-                  border: OutlineInputBorder(),
-                ),
-                child: _buildCategoryChips(),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _unitName,
-                      enabled: !_isEdit,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'وحدة القياس',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: _isEdit ? null : _requiredText,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _conversionFactor,
-                      enabled: !_isEdit,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                      ],
-                      decoration: const InputDecoration(
-                        labelText: 'معامل التحويل',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: _isEdit ? null : _positiveNumber,
-                    ),
-                  ),
+    return UnsavedChangesGuard(
+      hasUnsavedChanges: _dirty,
+      child: Scaffold(
+        appBar: AppBar(title: Text(_isEdit ? 'تعديل مادة' : 'إضافة مادة')),
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            onChanged: () {
+              if (!_dirty) {
+                setState(() => _dirty = true);
+              }
+            },
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (_error != null) ...[
+                  _ErrorBanner(message: _error!),
+                  const SizedBox(height: 12),
                 ],
-              ),
-              if (!_isEdit) ...[const SizedBox(height: 12), _buildExtraUnits()],
-              const SizedBox(height: 12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _minimumStock,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
+                if (_isEdit) ...[
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        'لا يمكن تغيير وحدة القياس أو معامل التحويل بعد إنشاء المادة. '
+                        'يمكن تعديل الأسعار والبيانات الوصفية.',
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                      ],
-                      decoration: const InputDecoration(
-                        labelText: 'الحد الأدنى للمخزون',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) => _nonNegativeNumber(value),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: codes.contains(_currency)
-                          ? _currency
-                          : null,
-                      decoration: const InputDecoration(
-                        labelText: 'عملة الأسعار',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: codes
-                          .map(
-                            (code) => DropdownMenuItem(
-                              value: code,
-                              child: Text(code),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() => _currency = value);
-                        }
-                      },
-                    ),
-                  ),
+                  const SizedBox(height: 12),
                 ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _purchasePrice,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                      ],
-                      decoration: const InputDecoration(
-                        labelText: 'سعر الشراء (اختياري)',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) => _nonNegativeNumber(value),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _salePrice,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                      ],
-                      decoration: const InputDecoration(
-                        labelText: 'سعر البيع (اختياري)',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) => _nonNegativeNumber(value),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('له تاريخ صلاحية'),
-                value: _hasExpiry,
-                onChanged: (value) => setState(() => _hasExpiry = value),
-              ),
-              if (_hasExpiry) ...[
-                const SizedBox(height: 4),
                 TextFormField(
-                  controller: _expiryDays,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  controller: _name,
+                  autofocus: !_isEdit,
+                  textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
-                    labelText: 'تنبيه قبل انتهاء الصلاحية (أيام)',
+                    labelText: 'اسم المادة',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) => _nonNegativeNumber(value),
+                  validator: _requiredText,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _nameEn,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: 'الاسم الإنجليزي (اختياري)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _code,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: 'رمز المادة (اختياري)',
+                    helperText: _isEdit
+                        ? null
+                        : 'اتركه فارغاً ليُولَّد تلقائياً.',
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _barcode,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: 'الباركود (اختياري)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'التصنيفات',
+                    helperText:
+                        'يمكن اختيار أكثر من تصنيف. يُستخدم التصنيف الافتراضي عند عدم الاختيار.',
+                    border: OutlineInputBorder(),
+                  ),
+                  child: _buildCategoryChips(),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _unitName,
+                        enabled: !_isEdit,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'وحدة القياس',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: _isEdit ? null : _requiredText,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _conversionFactor,
+                        enabled: !_isEdit,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                        ],
+                        decoration: const InputDecoration(
+                          labelText: 'معامل التحويل',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: _isEdit ? null : _positiveNumber,
+                      ),
+                    ),
+                  ],
+                ),
+                if (!_isEdit) ...[
+                  const SizedBox(height: 12),
+                  _buildExtraUnits(),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _minimumStock,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                        ],
+                        decoration: const InputDecoration(
+                          labelText: 'الحد الأدنى للمخزون',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) => _nonNegativeNumber(value),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: codes.contains(_currency)
+                            ? _currency
+                            : null,
+                        decoration: const InputDecoration(
+                          labelText: 'عملة الأسعار',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: codes
+                            .map(
+                              (code) => DropdownMenuItem(
+                                value: code,
+                                child: Text(code),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _currency = value);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _purchasePrice,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                        ],
+                        decoration: const InputDecoration(
+                          labelText: 'سعر الشراء (اختياري)',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) => _nonNegativeNumber(value),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _salePrice,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                        ],
+                        decoration: const InputDecoration(
+                          labelText: 'سعر البيع (اختياري)',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) => _nonNegativeNumber(value),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('له تاريخ صلاحية'),
+                  value: _hasExpiry,
+                  onChanged: (value) => setState(() {
+                    _hasExpiry = value;
+                    _dirty = true;
+                  }),
+                ),
+                if (_hasExpiry) ...[
+                  const SizedBox(height: 4),
+                  TextFormField(
+                    controller: _expiryDays,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(
+                      labelText: 'تنبيه قبل انتهاء الصلاحية (أيام)',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) => _nonNegativeNumber(value),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _notes,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'ملاحظات (اختياري)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  onPressed: _saving ? null : _save,
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: Text(_saving ? 'جارٍ الحفظ…' : 'حفظ'),
                 ),
               ],
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _notes,
-                minLines: 2,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'ملاحظات (اختياري)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: _saving ? null : _save,
-                icon: _saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save_outlined),
-                label: Text(_saving ? 'جارٍ الحفظ…' : 'حفظ'),
-              ),
-            ],
+            ),
           ),
         ),
       ),

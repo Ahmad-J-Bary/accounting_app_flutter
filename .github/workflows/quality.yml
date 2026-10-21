@@ -105,6 +105,21 @@ jobs:
             git diff -- $GENERATED_PATHS
             exit 1
           fi
+      - name: Regenerate FRB bindings a second time
+        working-directory: packages/accounting_app_flutter_isolates
+        run: flutter_rust_bridge_codegen generate
+      - name: Normalise Rust formatting after the second run
+        run: cargo fmt --all
+      - name: Fail when a repeated generation changes the output
+        run: |
+          GENERATED_PATHS="packages/accounting_app_flutter_isolates/lib/src/rust packages/accounting_app_flutter_isolates/rust/src/frb_generated.rs"
+          STATUS=$(git status --porcelain --untracked-files=all -- $GENERATED_PATHS)
+          if [ -n "$STATUS" ]; then
+            echo "FRB generation is not reproducible; a second run changed:"
+            echo "$STATUS"
+            git diff -- $GENERATED_PATHS
+            exit 1
+          fi
 
   windows-build:
     name: Windows release build
@@ -117,5 +132,12 @@ jobs:
     name: Android release build
     needs: [rust, flutter]
     uses: ./.github/workflows/build-android.yml
+    permissions:
+      contents: read
+
+  linux-build:
+    name: Linux release build
+    needs: [rust, flutter]
+    uses: ./.github/workflows/build-linux.yml
     permissions:
       contents: read

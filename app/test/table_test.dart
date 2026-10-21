@@ -1,0 +1,334 @@
+import 'package:accounting_app_flutter/theme/app_theme.dart';
+import 'package:accounting_app_flutter/ui/app_ui.dart';
+import 'package:accounting_app_flutter/ui/table/table_preferences.dart';
+import 'package:accounting_app_flutter/ui/table/table_preferences_store_stub.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+class _Row {
+  const _Row(this.id, this.name, this.score);
+
+  final String id;
+  final String name;
+  final int score;
+}
+
+List<AppTableColumn<_Row>> _columns() => [
+  AppTableColumn<_Row>(
+    id: 'id',
+    label: 'الرمز',
+    canHide: false,
+    sortable: true,
+    sortValue: (row) => row.id,
+    builder: (context, row) => Text(row.id),
+  ),
+  AppTableColumn<_Row>(
+    id: 'name',
+    label: 'الاسم',
+    sortable: true,
+    sortValue: (row) => row.name,
+    builder: (context, row) => Text(row.name),
+  ),
+  AppTableColumn<_Row>(
+    id: 'score',
+    label: 'الدرجة',
+    alignment: AlignmentDirectional.centerEnd,
+    headerAlignment: AlignmentDirectional.centerEnd,
+    sortable: true,
+    sortValue: (row) => row.score,
+    builder: (context, row) => Text('${row.score}'),
+  ),
+];
+
+Widget _wrap(Widget child, {TextDirection direction = TextDirection.rtl}) {
+  return MaterialApp(
+    theme: AppTheme.light(),
+    home: Directionality(
+      textDirection: direction,
+      child: Scaffold(
+        body: Center(child: SizedBox(width: 900, height: 620, child: child)),
+      ),
+    ),
+  );
+}
+
+AppDataTable<_Row> _table({
+  required List<_Row> rows,
+  String? tableId,
+  TablePreferencesStore? store,
+  bool paginate = false,
+  int pageSize = 25,
+  bool loading = false,
+  String? error,
+  VoidCallback? onRetry,
+  bool enableSelection = false,
+  ValueChanged<Set<Object>>? onSelectionChanged,
+  String emptyTitle = 'لا توجد بيانات',
+}) {
+  return AppDataTable<_Row>(
+    tableId: tableId,
+    preferencesStore: store,
+    columns: _columns(),
+    rows: rows,
+    rowId: (row) => row.id,
+    paginate: paginate,
+    pageSize: pageSize,
+    loading: loading,
+    error: error,
+    onRetry: onRetry,
+    enableSelection: enableSelection,
+    onSelectionChanged: onSelectionChanged,
+    emptyTitle: emptyTitle,
+    emptyMessage: 'أضف صفاً جديداً.',
+  );
+}
+
+void main() {
+  const rows = <_Row>[
+    _Row('C', 'جمال', 20),
+    _Row('A', 'أحمد', 50),
+    _Row('B', 'بشار', 10),
+  ];
+
+  testWidgets('sorts rows by a stable column id and reverses direction', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_wrap(_table(rows: rows)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('الاسم'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getTopLeft(find.text('أحمد')).dy,
+      lessThan(tester.getTopLeft(find.text('بشار')).dy),
+    );
+
+    await tester.tap(find.text('الاسم'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getTopLeft(find.text('جمال')).dy,
+      lessThan(tester.getTopLeft(find.text('بشار')).dy),
+    );
+  });
+
+  testWidgets('hides a column, redistributes width and restores it', (
+    tester,
+  ) async {
+    final store = MemoryTablePreferencesStore();
+    await tester.pumpWidget(
+      _wrap(_table(rows: rows, tableId: 'columns', store: store)),
+    );
+    await tester.pumpAndSettle();
+
+    double headerWidth(String label) => tester
+        .getSize(
+          find
+              .ancestor(of: find.text(label), matching: find.byType(SizedBox))
+              .first,
+        )
+        .width;
+
+    expect(find.text('الرمز'), findsOneWidget);
+    final fullWidth = headerWidth('الرمز');
+
+    await tester.tap(find.byTooltip('إعدادات الأعمدة'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(Checkbox).at(1));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('تم'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('الاسم'), findsNothing);
+    expect(find.text('الرمز'), findsOneWidget);
+    // A hidden column must not reserve its share of the table width.
+    expect(headerWidth('الرمز'), greaterThan(fullWidth * 1.4));
+
+    await tester.tap(find.byTooltip('إعدادات الأعمدة'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(Checkbox).at(1));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('تم'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('الاسم'), findsOneWidget);
+    expect(headerWidth('الرمز'), closeTo(fullWidth, 1));
+  });
+
+  testWidgets('adopts saved preferences when the table id changes', (
+    tester,
+  ) async {
+    final many = [
+      for (var index = 0; index < 12; index++)
+        _Row('R$index', 'صف ${index.toString().padLeft(2, '0')}', index),
+    ];
+    final store = MemoryTablePreferencesStore({
+      'first': {
+        'pageSize': 10,
+        'sortColumnId': 'score',
+        'sortAscending': false,
+      },
+      'second': {'pageSize': 25, 'sortColumnId': 'name', 'sortAscending': true},
+    });
+
+    await tester.pumpWidget(
+      _wrap(_table(rows: many, tableId: 'first', store: store, paginate: true)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 / 2'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('صف 11')).dy,
+      lessThan(tester.getTopLeft(find.text('صف 10')).dy),
+    );
+
+    // Rebuilding with another table id must adopt that table's own saved
+    // preferences instead of keeping the previous table's sort and page size.
+    await tester.pumpWidget(
+      _wrap(
+        _table(rows: many, tableId: 'second', store: store, paginate: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 / 1'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('صف 00')).dy,
+      lessThan(tester.getTopLeft(find.text('صف 01')).dy),
+    );
+  });
+
+  testWidgets('paginates with an explicit page size', (tester) async {
+    final many = [
+      for (var index = 0; index < 25; index++)
+        _Row('R$index', 'صف $index', index),
+    ];
+    await tester.pumpWidget(
+      _wrap(_table(rows: many, paginate: true, pageSize: 10)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('عرض 1–10 من 25'), findsOneWidget);
+    await tester.tap(find.byTooltip('الصفحة التالية'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('عرض 11–20 من 25'), findsOneWidget);
+    expect(find.text('صف 10'), findsOneWidget);
+    expect(find.text('صف 0'), findsNothing);
+  });
+
+  testWidgets('selects rows and reports stable ids', (tester) async {
+    Set<Object>? selected;
+    await tester.pumpWidget(
+      _wrap(
+        _table(
+          rows: rows,
+          enableSelection: true,
+          onSelectionChanged: (value) => selected = value,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(Checkbox).last);
+    await tester.pumpAndSettle();
+
+    expect(selected, isNotNull);
+    expect(selected!.length, 1);
+    expect(selected, contains('B'));
+  });
+
+  testWidgets('shows loading, error and empty states', (tester) async {
+    await tester.pumpWidget(_wrap(_table(rows: const [], loading: true)));
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    var retried = false;
+    await tester.pumpWidget(
+      _wrap(
+        _table(
+          rows: const [],
+          error: 'تعذّر الاتصال',
+          onRetry: () => retried = true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('تعذّر الاتصال'), findsOneWidget);
+    await tester.tap(find.text('إعادة المحاولة'));
+    expect(retried, isTrue);
+
+    await tester.pumpWidget(
+      _wrap(_table(rows: const [], emptyTitle: 'لا يوجد عملاء')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('لا يوجد عملاء'), findsOneWidget);
+  });
+
+  testWidgets('renders in both RTL and LTR directions', (tester) async {
+    await tester.pumpWidget(
+      _wrap(_table(rows: rows), direction: TextDirection.rtl),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('الاسم'), findsOneWidget);
+
+    await tester.pumpWidget(
+      _wrap(_table(rows: rows), direction: TextDirection.ltr),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('الاسم'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('persists widths across controller instances', (tester) async {
+    final store = MemoryTablePreferencesStore();
+    final first = TablePreferencesController(
+      tableId: 'persisted',
+      columnIds: const ['id', 'name', 'score'],
+      store: store,
+    );
+    await first.load();
+    first.setWidth('name', 240);
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final second = TablePreferencesController(
+      tableId: 'persisted',
+      columnIds: const ['id', 'name', 'score'],
+      store: store,
+    );
+    await second.load();
+    expect(second.value.widths['name'], 240);
+
+    first.dispose();
+    second.dispose();
+  });
+
+  test('drops stale ids and clamps invalid preferences', () async {
+    final store = MemoryTablePreferencesStore({
+      'stale': {
+        'order': ['ghost', 'name'],
+        'hidden': ['ghost', 'id'],
+        'widths': {'ghost': 9999, 'name': 10},
+        'pageSize': 999,
+        'sortColumnId': 'ghost',
+        'sortAscending': false,
+      },
+    });
+    final controller = TablePreferencesController(
+      tableId: 'stale',
+      columnIds: const ['id', 'name'],
+      requiredColumnIds: const {'id'},
+      store: store,
+    );
+    await controller.load();
+
+    expect(controller.value.order, const ['name', 'id']);
+    expect(controller.value.hidden, isEmpty);
+    expect(controller.value.widths['name'], TablePreferences.minWidth);
+    expect(controller.value.widths.containsKey('ghost'), isFalse);
+    expect(controller.value.pageSize, 25);
+    expect(controller.value.sortColumnId, isNull);
+
+    controller.dispose();
+  });
+}

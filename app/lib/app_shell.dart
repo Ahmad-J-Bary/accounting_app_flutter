@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 
 import 'categories.dart';
 import 'dashboard.dart';
-import 'directory.dart';
+import 'features/customers/customers_page.dart';
+import 'features/materials/materials_page.dart';
+import 'features/suppliers/suppliers_page.dart';
 import 'journal.dart';
 import 'ledger.dart';
 import 'opening_balances.dart';
@@ -45,6 +47,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
   bool _refreshing = false;
   bool _sidebarCollapsed = false;
   WorkspaceSection _section = WorkspaceSection.dashboard;
+  final List<WorkspaceSection> _history = <WorkspaceSection>[];
 
   @override
   void initState() {
@@ -117,7 +120,25 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
   }
 
   void _select(WorkspaceSection section) {
-    setState(() => _section = section);
+    if (section == _section) {
+      return;
+    }
+    setState(() {
+      _history.add(_section);
+      if (_history.length > 50) {
+        _history.removeAt(0);
+      }
+      _section = section;
+    });
+  }
+
+  bool get _canGoBack => _history.isNotEmpty;
+
+  void _goBack() {
+    if (_history.isEmpty) {
+      return;
+    }
+    setState(() => _section = _history.removeLast());
   }
 
   Future<void> _openCategories() async {
@@ -200,89 +221,104 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
       bindings: <ShortcutActivator, VoidCallback>{
         const SingleActivator(LogicalKeyboardKey.keyK, control: true):
             _openCommandPalette,
+        const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): _goBack,
+        const SingleActivator(LogicalKeyboardKey.escape): _goBack,
       },
       child: Focus(
         autofocus: true,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxWidth < 940;
-            return Scaffold(
-              key: _scaffoldKey,
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              drawer: compact
-                  ? Drawer(
-                      width: 286,
-                      backgroundColor: context.semanticColors.sidebarBackground,
-                      child: SafeArea(
-                        child: _Sidebar(
-                          collapsed: false,
-                          selected: _section,
-                          companyName: _data?.status.companyName ?? 'المحاسبة',
-                          currencyLabel:
-                              _data?.status.currencyLabel ?? 'جارٍ التحميل',
-                          onSelect: (section) {
-                            Navigator.of(context).pop();
-                            _select(section);
-                          },
-                          onCategories: () {
-                            Navigator.of(context).pop();
-                            _openCategories();
-                          },
-                          onOpeningBalances: () {
-                            Navigator.of(context).pop();
-                            _openOpeningBalances();
-                          },
-                          onToggleCollapse: null,
-                        ),
-                      ),
-                    )
-                  : null,
-              body: Row(
-                children: [
-                  if (!compact)
-                    _Sidebar(
-                      collapsed: _sidebarCollapsed,
-                      selected: _section,
-                      companyName: _data?.status.companyName ?? 'المحاسبة',
-                      currencyLabel:
-                          _data?.status.currencyLabel ?? 'جارٍ التحميل',
-                      onSelect: _select,
-                      onCategories: _openCategories,
-                      onOpeningBalances: _openOpeningBalances,
-                      onToggleCollapse: () {
-                        setState(() => _sidebarCollapsed = !_sidebarCollapsed);
-                      },
-                    ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        _TopBar(
-                          compact: compact,
-                          title: _sectionLabel(_section),
-                          companyName: _data?.status.companyName ?? '',
-                          refreshing: _refreshing,
-                          onMenu: compact
-                              ? () => _scaffoldKey.currentState?.openDrawer()
-                              : null,
-                          onRefresh: () => _load(showRefreshing: true),
-                          onSearch: _openCommandPalette,
-                          onToggleTheme: () {
-                            AppThemeScope.of(context).toggle();
-                          },
-                          onNavigate: (section) => _select(section),
-                          onNotifications: _openNotifications,
-                          onCategories: _openCategories,
-                          onOpeningBalances: _openOpeningBalances,
-                        ),
-                        const Divider(height: 1),
-                        Expanded(child: _content()),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
+        child: PopScope(
+          canPop: !_canGoBack,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop) {
+              _goBack();
+            }
           },
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 940;
+              return Scaffold(
+                key: _scaffoldKey,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                drawer: compact
+                    ? Drawer(
+                        width: 286,
+                        backgroundColor:
+                            context.semanticColors.sidebarBackground,
+                        child: SafeArea(
+                          child: _Sidebar(
+                            collapsed: false,
+                            selected: _section,
+                            companyName:
+                                _data?.status.companyName ?? 'المحاسبة',
+                            currencyLabel:
+                                _data?.status.currencyLabel ?? 'جارٍ التحميل',
+                            onSelect: (section) {
+                              Navigator.of(context).pop();
+                              _select(section);
+                            },
+                            onCategories: () {
+                              Navigator.of(context).pop();
+                              _openCategories();
+                            },
+                            onOpeningBalances: () {
+                              Navigator.of(context).pop();
+                              _openOpeningBalances();
+                            },
+                            onToggleCollapse: null,
+                          ),
+                        ),
+                      )
+                    : null,
+                body: Row(
+                  children: [
+                    if (!compact)
+                      _Sidebar(
+                        collapsed: _sidebarCollapsed,
+                        selected: _section,
+                        companyName: _data?.status.companyName ?? 'المحاسبة',
+                        currencyLabel:
+                            _data?.status.currencyLabel ?? 'جارٍ التحميل',
+                        onSelect: _select,
+                        onCategories: _openCategories,
+                        onOpeningBalances: _openOpeningBalances,
+                        onToggleCollapse: () {
+                          setState(
+                            () => _sidebarCollapsed = !_sidebarCollapsed,
+                          );
+                        },
+                      ),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _TopBar(
+                            compact: compact,
+                            title: _sectionLabel(_section),
+                            companyName: _data?.status.companyName ?? '',
+                            refreshing: _refreshing,
+                            onMenu: compact
+                                ? () => _scaffoldKey.currentState?.openDrawer()
+                                : null,
+                            onBack: _canGoBack ? _goBack : null,
+                            onRefresh: () => _load(showRefreshing: true),
+                            onSearch: _openCommandPalette,
+                            onToggleTheme: () {
+                              AppThemeScope.of(context).toggle();
+                            },
+                            onNavigate: (section) => _select(section),
+                            onNotifications: _openNotifications,
+                            onCategories: _openCategories,
+                            onOpeningBalances: _openOpeningBalances,
+                          ),
+                          const Divider(height: 1),
+                          Expanded(child: _content()),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -368,26 +404,21 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
         data: data,
         onChanged: () => _load(showRefreshing: true),
       ),
-      WorkspaceSection.customers => DirectoryPage(
+      WorkspaceSection.customers => CustomersPage(
         gateway: widget.gateway,
         data: data,
-        initialTab: DirectoryTab.customers,
         onChanged: () => _load(showRefreshing: true),
-        onOpenCategories: _openCategories,
         onOpenOpeningBalances: _openOpeningBalances,
       ),
-      WorkspaceSection.suppliers => DirectoryPage(
+      WorkspaceSection.suppliers => SuppliersPage(
         gateway: widget.gateway,
         data: data,
-        initialTab: DirectoryTab.suppliers,
         onChanged: () => _load(showRefreshing: true),
-        onOpenCategories: _openCategories,
         onOpenOpeningBalances: _openOpeningBalances,
       ),
-      WorkspaceSection.materials => DirectoryPage(
+      WorkspaceSection.materials => MaterialsPage(
         gateway: widget.gateway,
         data: data,
-        initialTab: DirectoryTab.materials,
         onChanged: () => _load(showRefreshing: true),
         onOpenCategories: _openCategories,
         onOpenOpeningBalances: _openOpeningBalances,
@@ -961,6 +992,7 @@ class _TopBar extends StatelessWidget {
     required this.companyName,
     required this.refreshing,
     required this.onMenu,
+    required this.onBack,
     required this.onRefresh,
     required this.onSearch,
     required this.onToggleTheme,
@@ -975,6 +1007,7 @@ class _TopBar extends StatelessWidget {
   final String companyName;
   final bool refreshing;
   final VoidCallback? onMenu;
+  final VoidCallback? onBack;
   final VoidCallback onRefresh;
   final VoidCallback onSearch;
   final VoidCallback onToggleTheme;
@@ -1000,6 +1033,18 @@ class _TopBar extends StatelessWidget {
               tooltip: 'القائمة',
               onPressed: onMenu,
               icon: const Icon(Icons.menu),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+          ],
+          if (onBack != null) ...[
+            IconButton(
+              tooltip: 'رجوع',
+              onPressed: onBack,
+              icon: Icon(
+                Directionality.of(context) == TextDirection.rtl
+                    ? Icons.arrow_forward
+                    : Icons.arrow_back,
+              ),
             ),
             const SizedBox(width: AppSpacing.xs),
           ],

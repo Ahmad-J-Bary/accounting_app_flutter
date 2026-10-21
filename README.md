@@ -1,12 +1,17 @@
 # Accounting App (Flutter + Rust)
 
-Arabic-first accounting and business management application for Windows and Android.
+Arabic-first accounting and business management application for Windows, Linux and Android.
 
 ## Repository layout
 
 | Path | Purpose |
 |---|---|
 | `app/` | Flutter application |
+| `app/lib/ui/` | Shared design system, data table and table preferences |
+| `app/lib/features/` | Independent customers, suppliers and materials pages |
+| `docs/architecture/` | Layer boundaries and architectural decisions |
+| `docs/ui/` | Design system, table contract, navigation and shortcuts |
+| `docs/development/` | FRB codegen, Windows MSI and Linux build guides |
 | `crates/domain/` | Accounting domain model and rules |
 | `crates/application/` | Use cases, DTOs and repository ports |
 | `crates/infrastructure/` | SQLite repositories and migrations |
@@ -21,6 +26,7 @@ Arabic-first accounting and business management application for Windows and Andr
 - Rust `1.99.1` (`rust-toolchain.toml`)
 - Flutter Rust Bridge `2.13.0`
 - Visual Studio 2022 Build Tools with the Desktop C++ workload (Windows)
+- GTK 3, CMake, Ninja, Clang and pkg-config (Linux)
 - Android SDK + NDK (Cargokit installs the required NDK automatically)
 
 ```powershell
@@ -44,6 +50,7 @@ fvm flutter analyze
 fvm flutter test test
 fvm flutter test integration_test/bridge_test.dart -d windows
 fvm flutter build windows --release
+fvm flutter build linux --release
 fvm flutter build apk --release --split-per-abi
 
 Set-Location 'E:\My Projects\accounting_app_flutter'
@@ -56,19 +63,24 @@ cargo fmt --all
 GitHub Actions runs the same Rust and Flutter gates in
 `.github/workflows/quality.yml`. That workflow also checks that the generated
 FRB bindings are fresh, then calls the reusable
-`.github/workflows/build-windows.yml` and `.github/workflows/build-android.yml`
-workflows. Each build uploads checksummed artifacts:
+`.github/workflows/build-windows.yml`, `.github/workflows/build-linux.yml` and
+`.github/workflows/build-android.yml` workflows. Each build uploads
+checksummed artifacts:
 
 - Windows portable: `accounting-app-<version>-windows-x64.zip` plus `.sha256`.
 - Windows installers: `accounting-app-<version>-windows-x64-setup.exe` (Inno
   Setup) and `accounting-app-<version>-windows-x64.msi` (WiX), each with a
   `.sha256` file.
+- Linux portable: `accounting-app-<version>-linux-x64.tar.gz` plus `.sha256`.
 - Android: split `app-<abi>-release.apk` files plus `sha256sums.txt`.
 
 The Inno Setup EXE is a per-user install, so it does not require administrator
 privileges. The WiX MSI is a per-machine install and prompts for elevation. Both
 install the same Flutter runner, Rust bridge DLL and `data/flutter_assets`
-payload as the portable ZIP.
+payload as the portable ZIP. The MSI is built with WiX 3.14 and verified in CI
+by an administrative extraction (`msiexec /a`) that checks the executable, Rust
+DLL and assets; see `docs/development/windows-msi.md` for the former `none` /
+`LGHT0103` root cause and the current guardrails.
 
 A real FFI integration test runs on Windows and covers the bridge end to end:
 
@@ -84,8 +96,8 @@ voucher. Posted vouchers must reject direct deletion, proving the audit trail is
 enforced by the Rust core.
 
 `.github/workflows/release.yml` can be started manually or by pushing a `v*` tag
-to build both platforms and create or update a draft GitHub release with those
-assets. The `1.x` line is intentionally marked **pre-release** until financial
+to build all three platforms and create or update a draft GitHub release with
+those assets. The `1.x` line is intentionally marked **pre-release** until financial
 year closing and partner-capital management are complete. Dependabot keeps
 Cargo, pub and GitHub Actions dependencies current; semver-major updates are
 ignored for Cargo and pub until they have a dedicated impact and rollback plan.
@@ -105,8 +117,25 @@ payments, expense items and expense vouchers.
 The Flutter app uses a React-derived design system with the bundled Cairo font,
 light/dark themes, a persistent RTL workspace shell, a dashboard, a dedicated
 journal page, ERP-style tables, a `Ctrl+K` command palette and inventory
-notifications. Remaining work includes i18n switching, RBAC, tabs, financial-year
-closing, partner/capital management, form side panels, and the Axum/PostgreSQL
-sync layer. Returns currently support creation and posting only; editing or
-reversing a posted return needs a dedicated use case before the UI can expose it.
+notifications. Customers, suppliers and materials are independent pages rather
+than one combined master-data screen. The shared `AppDataTable` supports stable
+column ids, sorting, column visibility/order/width preferences, pagination,
+selection, loading/error/empty states and RTL/LTR layout. Section history backs
+the top-bar back button, Android system back, `Alt+Left` and `Escape`; forms warn
+before discarding unsaved changes.
+
+Remaining work includes i18n switching, RBAC, tabs, financial-year closing,
+partner/capital management, form side panels, and the Axum/PostgreSQL sync
+layer. Returns currently support creation and posting only; editing or reversing
+a posted return needs a dedicated use case before the UI can expose it.
+
+Architecture and development details:
+
+- `docs/architecture/overview.md` — DDD + hexagonal boundaries and invariants.
+- `docs/ui/design-system.md` — tokens, components and the table contract.
+- `docs/ui/navigation-and-shortcuts.md` — sections, back handling, shortcuts.
+- `docs/development/frb-codegen.md` — pinned FRB regeneration and CI check.
+- `docs/development/windows-msi.md` — WiX 3.14, the `none` root cause, MSI
+  verification.
+- `docs/development/linux-build.md` — Linux dependencies, bundle and tarball.
 

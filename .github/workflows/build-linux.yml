@@ -1,0 +1,91 @@
+name: Build Linux
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.41.9"
+
+jobs:
+  build-linux:
+    name: Linux x64 release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      - name: Install Linux desktop build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libgtk-3-dev \
+            liblzma-dev \
+            libstdc++-12-dev
+      - name: Install pinned Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1.16.1
+      - name: Read application version
+        id: version
+        run: |
+          VERSION=$(sed -n 's/^version: \([0-9]*\.[0-9]*\.[0-9]*\).*/\1/p' app/pubspec.yaml)
+          if [ -z "$VERSION" ]; then
+            echo "Could not read the version from app/pubspec.yaml" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Install Flutter ${{ env.FLUTTER_VERSION }}
+        uses: subosito/flutter-action@v2.23.0
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Resolve Dart workspace dependencies
+        run: flutter pub get
+      - name: Build Linux release
+        working-directory: app
+        run: flutter build linux --release
+      - name: Verify the Linux release bundle
+        working-directory: app
+        run: |
+          BUNDLE="build/linux/x64/release/bundle"
+          test -x "$BUNDLE/accounting_app_flutter"
+          test -f "$BUNDLE/lib/libaccounting_app_flutter_isolates.so"
+          test -f "$BUNDLE/lib/libapp.so"
+          test -f "$BUNDLE/data/icudtl.dat"
+          test -f "$BUNDLE/data/flutter_assets/AssetManifest.bin"
+          test -f "$BUNDLE/data/flutter_assets/assets/fonts/Cairo-Regular.ttf"
+          if ldd "$BUNDLE/accounting_app_flutter" | grep -q 'not found'; then
+            echo "The Linux executable has unresolved shared-library dependencies:" >&2
+            ldd "$BUNDLE/accounting_app_flutter" >&2
+            exit 1
+          fi
+          find "$BUNDLE" -maxdepth 2 -type f -printf '%P %s bytes\n' | sort
+      - name: Package the Linux tarball
+        run: |
+          VERSION='${{ steps.version.outputs.version }}'
+          BUNDLE="app/build/linux/x64/release/bundle"
+          ARCHIVE="accounting-app-$VERSION-linux-x64.tar.gz"
+          mkdir -p dist
+          tar -C "$BUNDLE" -czf "dist/$ARCHIVE" .
+          (
+            cd dist
+            sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
+          )
+          tar -tzf "dist/$ARCHIVE" | grep -q '^\./accounting_app_flutter$'
+          tar -tzf "dist/$ARCHIVE" | grep -q '^\./lib/libaccounting_app_flutter_isolates\.so$'
+          ls -lh dist
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: linux-x64-${{ steps.version.outputs.version }}
+          path: |
+            dist/accounting-app-${{ steps.version.outputs.version }}-linux-x64.tar.gz
+            dist/accounting-app-${{ steps.version.outputs.version }}-linux-x64.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 14

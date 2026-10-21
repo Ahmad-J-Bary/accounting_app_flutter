@@ -31,9 +31,15 @@ jobs:
     permissions:
       contents: read
 
+  build_linux:
+    name: Build Linux
+    uses: ./.github/workflows/build-linux.yml
+    permissions:
+      contents: read
+
   draft_release:
     name: Draft GitHub release
-    needs: [build_windows, build_android]
+    needs: [build_windows, build_android, build_linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -64,12 +70,19 @@ jobs:
         with:
           name: android-release
           path: dist/android
+      - name: Download the Linux artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: linux-x64-${{ steps.version.outputs.version }}
+          path: dist/linux
       - name: Verify the published checksums
         run: |
           cd dist/windows
           sha256sum -c ./*.sha256
           cd ../android
           sha256sum -c sha256sums.txt
+          cd ../linux
+          sha256sum -c ./*.sha256
       - name: Check for an existing release
         id: release
         env:
@@ -99,7 +112,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Refresh the release notes
-        if: steps.release.outputs.exists == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: v${{ steps.version.outputs.version }}
@@ -117,6 +129,7 @@ jobs:
         run: |
           gh release upload "$TAG" dist/windows/* --clobber
           gh release upload "$TAG" dist/android/* --clobber
+          gh release upload "$TAG" dist/linux/* --clobber
       - name: Publish the release when requested
         if: github.event.inputs.draft == 'false'
         env:

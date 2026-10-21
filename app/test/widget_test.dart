@@ -1,6 +1,7 @@
 import 'package:accounting_app_flutter/ledger.dart';
 import 'package:accounting_app_flutter/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _FakeGateway implements LedgerGateway {
@@ -414,8 +415,8 @@ Future<void> _openCustomers(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _openMaterialsTab(WidgetTester tester) async {
-  await tester.tap(find.textContaining('المواد (1)'));
+Future<void> _openMaterials(WidgetTester tester) async {
+  await tester.tap(find.text('المواد').first);
   await tester.pumpAndSettle();
 }
 
@@ -471,15 +472,23 @@ void main() {
     expect(find.byType(SnackBar), findsOneWidget);
   });
 
-  testWidgets('opens the master-data tabs from the sidebar', (tester) async {
+  testWidgets('opens customers, suppliers and materials as independent pages', (
+    tester,
+  ) async {
     await _pumpWorkspace(tester);
     await _openCustomers(tester);
 
-    expect(find.text('البيانات الأساسية'), findsWidgets);
+    expect(find.text('العملاء'), findsWidgets);
     expect(find.text('أحمد محمد'), findsOneWidget);
-    expect(find.textContaining('العملاء (1)'), findsOneWidget);
 
-    await _openMaterialsTab(tester);
+    await tester.tap(find.text('الموردون').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('الموردون'), findsWidgets);
+    expect(find.text('مورد النور'), findsOneWidget);
+    expect(find.text('أحمد محمد'), findsNothing);
+
+    await _openMaterials(tester);
 
     expect(find.text('قمح'), findsOneWidget);
     expect(find.textContaining('متاح: 50'), findsOneWidget);
@@ -553,9 +562,11 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('opens category management from master data', (tester) async {
+  testWidgets('opens category management from the materials page', (
+    tester,
+  ) async {
     await _pumpWorkspace(tester);
-    await _openCustomers(tester);
+    await _openMaterials(tester);
     await tester.tap(find.byTooltip('تصنيفات المواد'));
     await tester.pumpAndSettle();
 
@@ -595,8 +606,7 @@ void main() {
     tester,
   ) async {
     await _pumpWorkspace(tester);
-    await _openCustomers(tester);
-    await _openMaterialsTab(tester);
+    await _openMaterials(tester);
 
     await tester.tap(find.byTooltip('إجراءات').last);
     await tester.pumpAndSettle();
@@ -613,8 +623,7 @@ void main() {
     tester,
   ) async {
     await _pumpWorkspace(tester);
-    await _openCustomers(tester);
-    await _openMaterialsTab(tester);
+    await _openMaterials(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'إضافة مادة'));
     await tester.pumpAndSettle();
 
@@ -739,5 +748,103 @@ void main() {
 
     expect(find.text('ميزان المراجعة'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('returns to the previous section with the back button', (
+    tester,
+  ) async {
+    await _pumpWorkspace(tester);
+    await _openCustomers(tester);
+    await tester.tap(find.text('الموردون').first);
+    await tester.pumpAndSettle();
+    expect(find.text('مورد النور'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('رجوع'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('أحمد محمد'), findsOneWidget);
+    expect(find.text('مورد النور'), findsNothing);
+  });
+
+  testWidgets('handles the system back button between sections', (
+    tester,
+  ) async {
+    await _pumpWorkspace(tester);
+    await _openCustomers(tester);
+    await tester.tap(find.text('الموردون').first);
+    await tester.pumpAndSettle();
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(find.text('أحمد محمد'), findsOneWidget);
+    expect(find.text('مورد النور'), findsNothing);
+  });
+
+  testWidgets('navigates back with Alt+Left and Escape', (tester) async {
+    await _pumpWorkspace(tester);
+    await _openCustomers(tester);
+    await tester.tap(find.text('الموردون').first);
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+    await tester.pumpAndSettle();
+
+    expect(find.text('أحمد محمد'), findsOneWidget);
+
+    await tester.tap(find.text('الموردون').first);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.text('أحمد محمد'), findsOneWidget);
+  });
+
+  testWidgets('closes the form after a successful save without a warning', (
+    tester,
+  ) async {
+    await _pumpWorkspace(tester);
+    await _openCustomers(tester);
+    await tester.tap(find.widgetWithText(FilledButton, 'إضافة عميل'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).first, 'عميل جديد');
+    await tester.pumpAndSettle();
+    final saveButton = find.widgetWithText(FilledButton, 'حفظ');
+    await tester.ensureVisible(saveButton);
+    await tester.pumpAndSettle();
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('تغييرات غير محفوظة'), findsNothing);
+    expect(find.widgetWithText(AppBar, 'إضافة عميل'), findsNothing);
+    expect(find.text('تمت إضافة العميل.'), findsOneWidget);
+  });
+
+  testWidgets('warns before discarding unsaved form changes', (tester) async {
+    await _pumpWorkspace(tester);
+    await _openCustomers(tester);
+    await tester.tap(find.widgetWithText(FilledButton, 'إضافة عميل'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).first, 'عميل جديد');
+    await tester.pumpAndSettle();
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('تغييرات غير محفوظة'), findsOneWidget);
+
+    await tester.tap(find.text('البقاء'));
+    await tester.pumpAndSettle();
+    expect(find.text('إضافة عميل'), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('مغادرة دون حفظ'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('أحمد محمد'), findsOneWidget);
   });
 }
