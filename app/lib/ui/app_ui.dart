@@ -1181,30 +1181,31 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
       return KeyEventResult.ignored;
     }
     final current = _focusedRow?.clamp(0, rows.length - 1);
+    final count = rows.length;
     final key = event.logicalKey;
 
     if (key == LogicalKeyboardKey.arrowDown) {
-      _focusRow(current == null ? 0 : current + 1);
+      _focusRow(current == null ? 0 : current + 1, count);
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.arrowUp) {
-      _focusRow(current == null ? rows.length - 1 : current - 1);
+      _focusRow(current == null ? count - 1 : current - 1, count);
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.home) {
-      _focusRow(0);
+      _focusRow(0, count);
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.end) {
-      _focusRow(rows.length - 1);
+      _focusRow(count - 1, count);
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.pageDown) {
-      _focusRow((current ?? 0) + _keyboardPageStep);
+      _focusRow((current ?? 0) + _keyboardPageStep, count);
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.pageUp) {
-      _focusRow((current ?? rows.length - 1) - _keyboardPageStep);
+      _focusRow((current ?? count - 1) - _keyboardPageStep, count);
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.enter ||
@@ -1228,12 +1229,11 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     return KeyEventResult.ignored;
   }
 
-  void _focusRow(int index) {
-    final rows = _currentRowCount;
-    if (rows == 0) {
+  void _focusRow(int index, int count) {
+    if (count == 0) {
       return;
     }
-    final next = index.clamp(0, rows - 1);
+    final next = index.clamp(0, count - 1);
     setState(() => _focusedRow = next);
     _tableFocus.requestFocus();
     final controller = _verticalScroll;
@@ -1260,8 +1260,6 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
       curve: Curves.easeOut,
     );
   }
-
-  int _currentRowCount = 0;
 
   void _resetFocus([int page = 0]) {
     _focusedRow = null;
@@ -1378,7 +1376,6 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     final start = page * pageSize;
     final end = math.min(start + pageSize, sorted.length);
     final pageRows = widget.paginate ? sorted.sublist(start, end) : sorted;
-    _currentRowCount = pageRows.length;
     final pageIds = <Object>[
       if (widget.rowId != null)
         for (final row in pageRows) widget.rowId!(row),
