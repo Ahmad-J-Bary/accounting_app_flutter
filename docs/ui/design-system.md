@@ -39,6 +39,9 @@ Rules:
   by name, code, barcode and unit barcode and shows at most thirty results.
   The React document grid opens a floating search panel; a dropdown that lists
   every material is unusable once a company owns a few hundred of them.
+- The invoice editor shows the document state in its app bar («مسودة» /
+  «مرحّلة») and a «المتبقي» row with a «مسدد» badge in the summary panel, the
+  two affordances the React `DocumentStatusBadge` and `SummaryPanel` provide.
 - Data: `AppTableColumn<T>`, `AppDataTable<T>`, `AppTableText`,
   `AppTableActionButton`.
 - Master-data helpers: `MasterDataPageLayout`, `MasterDataSearchBar`, delete

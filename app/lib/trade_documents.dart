@@ -535,6 +535,14 @@ class _InvoiceEditorPageState extends State<InvoiceEditorPage> {
     return value < 0 ? 0 : value;
   }
 
+  /// Amount already paid with the chosen payment method; the difference is
+  /// what the customer still owes.
+  double get _paidAmount => switch (_paymentMethod) {
+    'Cash' => _total,
+    'Partial' => parseAmount(_paidController.text).clamp(0, _total).toDouble(),
+    _ => 0,
+  };
+
   void _addLine() {
     setState(() {
       _lines.add(_InvoiceLineEditor());
@@ -680,10 +688,25 @@ class _InvoiceEditorPageState extends State<InvoiceEditorPage> {
       hasUnsavedChanges: _dirty,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            widget.invoice == null
-                ? (_isSales ? 'فاتورة بيع جديدة' : 'فاتورة شراء جديدة')
-                : 'تعديل الفاتورة ${widget.invoice!.number}',
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.invoice == null
+                      ? (_isSales ? 'فاتورة بيع جديدة' : 'فاتورة شراء جديدة')
+                      : 'تعديل الفاتورة ${widget.invoice!.number}',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              AppBadge(
+                label: widget.invoice?.isPosted == true ? 'مرحّلة' : 'مسودة',
+                tone: widget.invoice?.isPosted == true
+                    ? AppBadgeTone.success
+                    : AppBadgeTone.warning,
+                compact: true,
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -870,6 +893,7 @@ class _InvoiceEditorPageState extends State<InvoiceEditorPage> {
               taxController: _taxController,
               extraController: _extraController,
               total: _total,
+              paid: _paidAmount,
               currency: widget.data.baseCurrency,
               onChanged: () => setState(() => _dirty = true),
             );
@@ -1113,6 +1137,7 @@ class _InvoiceSummary extends StatelessWidget {
     required this.taxController,
     required this.extraController,
     required this.total,
+    required this.paid,
     required this.currency,
     required this.onChanged,
   });
@@ -1122,12 +1147,16 @@ class _InvoiceSummary extends StatelessWidget {
   final TextEditingController taxController;
   final TextEditingController extraController;
   final double total;
+
+  /// Amount already paid; the difference is what is still due.
+  final double paid;
   final String currency;
   final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final remaining = (total - paid).clamp(0, double.infinity);
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
@@ -1166,6 +1195,16 @@ class _InvoiceSummary extends StatelessWidget {
             value: formatMoney(total.toString(), currency: currency),
             strong: true,
           ),
+          const SizedBox(height: AppSpacing.md),
+          _SummaryRow(
+            label: 'المتبقي',
+            value: formatMoney(remaining.toString(), currency: currency),
+            strong: true,
+            badgeLabel: remaining <= 0 ? 'مسدد' : null,
+            badgeTone: remaining <= 0
+                ? AppBadgeTone.success
+                : AppBadgeTone.warning,
+          ),
           const SizedBox(height: AppSpacing.lg),
           AppInfoBanner(
             title: 'ترحيل متكامل',
@@ -1185,11 +1224,18 @@ class _SummaryRow extends StatelessWidget {
     required this.label,
     required this.value,
     this.strong = false,
+    this.badgeLabel,
+    this.badgeTone,
   });
 
   final String label;
   final String value;
   final bool strong;
+
+  /// Optional badge shown next to the value, as the React summary panel does
+  /// for the remaining amount.
+  final String? badgeLabel;
+  final AppBadgeTone? badgeTone;
 
   @override
   Widget build(BuildContext context) {
@@ -1212,6 +1258,10 @@ class _SummaryRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
+        if (badgeLabel != null && badgeTone != null) ...[
+          const SizedBox(width: AppSpacing.sm),
+          AppBadge(label: badgeLabel!, tone: badgeTone!, compact: true),
+        ],
       ],
     );
   }
