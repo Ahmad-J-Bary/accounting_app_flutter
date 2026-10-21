@@ -278,7 +278,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
             AppTableColumn(
               label: 'الرقم',
               flex: 2,
-              builder: (context, invoice) => Text(
+              builder: (context, invoice) => AppTableText(
                 invoice.number,
                 style: Theme.of(
                   context,
@@ -288,27 +288,28 @@ class _InvoicesPageState extends State<InvoicesPage> {
             AppTableColumn(
               label: _isSales ? 'العميل' : 'المورد',
               flex: 3,
-              builder: (context, invoice) =>
-                  Text(invoice.partyName.isEmpty ? '—' : invoice.partyName),
+              builder: (context, invoice) => AppTableText(
+                invoice.partyName.isEmpty ? '—' : invoice.partyName,
+              ),
             ),
             AppTableColumn(
               label: 'التاريخ',
               flex: 2,
               builder: (context, invoice) =>
-                  Text(_formatDate(invoice.issuedAt)),
+                  AppTableText(_formatDate(invoice.issuedAt)),
             ),
             AppTableColumn(
               label: 'طريقة الدفع',
               flex: 2,
               builder: (context, invoice) =>
-                  Text(_paymentLabel(invoice.paymentMethod)),
+                  AppTableText(_paymentLabel(invoice.paymentMethod)),
             ),
             AppTableColumn(
               label: 'الإجمالي',
               flex: 2,
               alignment: AlignmentDirectional.centerEnd,
               headerAlignment: AlignmentDirectional.centerEnd,
-              builder: (context, invoice) => Text(
+              builder: (context, invoice) => AppTableText(
                 formatMoney(invoice.total, currency: invoice.currency),
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
@@ -320,7 +321,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
               headerAlignment: AlignmentDirectional.centerEnd,
               builder: (context, invoice) {
                 final remaining = parseAmount(invoice.remaining);
-                return Text(
+                return AppTableText(
                   formatMoney(invoice.remaining, currency: invoice.currency),
                   style: TextStyle(
                     color: remaining > 0
@@ -1477,7 +1478,7 @@ class _ReturnsPageState extends State<ReturnsPage> {
             AppTableColumn(
               label: 'الرقم',
               flex: 2,
-              builder: (context, item) => Text(
+              builder: (context, item) => AppTableText(
                 item.number,
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
@@ -1486,24 +1487,25 @@ class _ReturnsPageState extends State<ReturnsPage> {
               label: _isSales ? 'العميل' : 'المورد',
               flex: 3,
               builder: (context, item) =>
-                  Text(item.partyName.isEmpty ? '—' : item.partyName),
+                  AppTableText(item.partyName.isEmpty ? '—' : item.partyName),
             ),
             AppTableColumn(
               label: 'التاريخ',
               flex: 2,
-              builder: (context, item) => Text(_formatDate(item.returnDate)),
+              builder: (context, item) =>
+                  AppTableText(_formatDate(item.returnDate)),
             ),
             AppTableColumn(
               label: 'عدد البنود',
               flex: 2,
-              builder: (context, item) => Text('${item.lines.length}'),
+              builder: (context, item) => AppTableText('${item.lines.length}'),
             ),
             AppTableColumn(
               label: 'الإجمالي',
               flex: 2,
               alignment: AlignmentDirectional.centerEnd,
               headerAlignment: AlignmentDirectional.centerEnd,
-              builder: (context, item) => Text(
+              builder: (context, item) => AppTableText(
                 formatMoney(item.total, currency: widget.data.baseCurrency),
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),

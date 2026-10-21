@@ -159,128 +159,93 @@ class _MaterialsPageState extends State<MaterialsPage> {
   Widget build(BuildContext context) {
     final materials = _materials;
     final lowStock = widget.data.lowStockMaterials.length;
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xl,
-            AppSpacing.xl,
-            AppSpacing.xl,
-            AppSpacing.md,
+    return MasterDataPageLayout(
+      header: AppPageHeader(
+        title: 'المواد',
+        subtitle:
+            'إدارة الأصناف والتصنيفات والوحدات والأسعار مع تنبيه نقص المخزون.',
+        icon: Icons.inventory_2_outlined,
+        actions: [
+          IconButton(
+            tooltip: 'تصنيفات المواد',
+            onPressed: _openCategories,
+            icon: const Icon(Icons.category_outlined, size: 20),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AppPageHeader(
-                title: 'المواد',
-                subtitle:
-                    'إدارة الأصناف والتصنيفات والوحدات والأسعار مع تنبيه نقص المخزون.',
-                icon: Icons.inventory_2_outlined,
-                actions: [
-                  IconButton(
-                    tooltip: 'تصنيفات المواد',
-                    onPressed: _openCategories,
-                    icon: const Icon(Icons.category_outlined, size: 20),
-                  ),
-                  if (widget.onOpenOpeningBalances != null)
-                    IconButton(
-                      tooltip: 'الأرصدة الافتتاحية',
-                      onPressed: _openOpeningBalances,
-                      icon: const Icon(
-                        Icons.account_balance_wallet_outlined,
-                        size: 20,
-                      ),
-                    ),
-                  FilledButton.icon(
-                    onPressed: _openForm,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('إضافة مادة'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AppMetricGrid(
-                maxColumns: 3,
-                children: [
-                  AppMetricCard(
-                    label: 'إجمالي المواد',
-                    value: '${widget.data.materials.length}',
-                    icon: Icons.inventory_2_outlined,
-                    tone: AppBadgeTone.success,
-                  ),
-                  AppMetricCard(
-                    label: 'مواد تحت الحد الأدنى',
-                    value: '$lowStock',
-                    icon: Icons.warning_amber_outlined,
-                    tone: AppBadgeTone.warning,
-                  ),
-                  AppMetricCard(
-                    label: 'قيمة المخزون',
-                    value: formatMoney(
-                      widget.data.inventoryValue.toStringAsFixed(2),
-                      currency: widget.data.baseCurrency,
-                    ),
-                    icon: Icons.account_balance_wallet_outlined,
-                    tone: AppBadgeTone.info,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              MasterDataSearchBar(
-                controller: _searchController,
-                hintText: 'بحث بالاسم أو الرمز أو الباركود…',
-                onChanged: (value) =>
-                    setState(() => _query = value.trim().toLowerCase()),
-                resultCount: materials.length,
-                filters: [
-                  _CategoryFilter(
-                    categories: widget.data.categories,
-                    value: _categoryId,
-                    onChanged: (value) => setState(() => _categoryId = value),
-                  ),
-                  FilterChip(
-                    label: const Text('تحت الحد الأدنى'),
-                    selected: _lowStockOnly,
-                    onSelected: (value) =>
-                        setState(() => _lowStockOnly = value),
-                  ),
-                ],
-              ),
-            ],
+          if (widget.onOpenOpeningBalances != null)
+            IconButton(
+              tooltip: 'الأرصدة الافتتاحية',
+              onPressed: _openOpeningBalances,
+              icon: const Icon(Icons.account_balance_wallet_outlined, size: 20),
+            ),
+          FilledButton.icon(
+            onPressed: _openForm,
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('إضافة مادة'),
           ),
+        ],
+      ),
+      metrics: [
+        AppMetricCard(
+          label: 'إجمالي المواد',
+          value: '${widget.data.materials.length}',
+          icon: Icons.inventory_2_outlined,
+          tone: AppBadgeTone.success,
         ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl,
-              0,
-              AppSpacing.xl,
-              AppSpacing.xl,
-            ),
-            child: AppDataTable<LedgerMaterial>(
-              tableId: 'materials',
-              columns: _columns(context),
-              rows: materials,
-              rowId: (material) => material.id,
-              paginate: true,
-              minWidth: 1040,
-              rowHeight: 64,
-              onRowTap: (material) => _openForm(material: material),
-              emptyTitle:
-                  _query.isEmpty && _categoryId == null && !_lowStockOnly
-                  ? 'لا توجد مواد بعد'
-                  : 'لا توجد مواد مطابقة',
-              emptyMessage: 'أضف مادة جديدة أو عدّل البحث والتصفية.',
-              emptyIcon: Icons.inventory_2_outlined,
-              emptyAction: FilledButton.icon(
-                onPressed: _openForm,
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('إضافة مادة'),
-              ),
-            ),
+        AppMetricCard(
+          label: 'مواد تحت الحد الأدنى',
+          value: '$lowStock',
+          icon: Icons.warning_amber_outlined,
+          tone: AppBadgeTone.warning,
+        ),
+        AppMetricCard(
+          label: 'قيمة المخزون',
+          value: formatMoney(
+            widget.data.inventoryValue.toStringAsFixed(2),
+            currency: widget.data.baseCurrency,
           ),
+          icon: Icons.account_balance_wallet_outlined,
+          tone: AppBadgeTone.info,
         ),
       ],
+      search: MasterDataSearchBar(
+        controller: _searchController,
+        hintText: 'بحث بالاسم أو الرمز أو الباركود…',
+        onChanged: (value) =>
+            setState(() => _query = value.trim().toLowerCase()),
+        resultCount: materials.length,
+        filters: [
+          _CategoryFilter(
+            categories: widget.data.categories,
+            value: _categoryId,
+            onChanged: (value) => setState(() => _categoryId = value),
+          ),
+          FilterChip(
+            label: const Text('تحت الحد الأدنى'),
+            selected: _lowStockOnly,
+            onSelected: (value) => setState(() => _lowStockOnly = value),
+          ),
+        ],
+      ),
+      table: AppDataTable<LedgerMaterial>(
+        tableId: 'materials',
+        columns: _columns(context),
+        rows: materials,
+        rowId: (material) => material.id,
+        paginate: true,
+        minWidth: 1040,
+        rowHeight: 64,
+        onRowTap: (material) => _openForm(material: material),
+        emptyTitle: _query.isEmpty && _categoryId == null && !_lowStockOnly
+            ? 'لا توجد مواد بعد'
+            : 'لا توجد مواد مطابقة',
+        emptyMessage: 'أضف مادة جديدة أو عدّل البحث والتصفية.',
+        emptyIcon: Icons.inventory_2_outlined,
+        emptyAction: FilledButton.icon(
+          onPressed: _openForm,
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('إضافة مادة'),
+        ),
+      ),
     );
   }
 
@@ -296,7 +261,7 @@ class _MaterialsPageState extends State<MaterialsPage> {
         sortable: true,
         sortValue: (material) => material.code,
         builder: (context, material) =>
-            Text(material.code, style: theme.textTheme.labelMedium),
+            AppTableText(material.code, style: theme.textTheme.labelMedium),
       ),
       AppTableColumn(
         id: 'name',
@@ -353,7 +318,7 @@ class _MaterialsPageState extends State<MaterialsPage> {
         label: 'الوحدة',
         flex: 2,
         minWidth: 90,
-        builder: (context, material) => Text(
+        builder: (context, material) => AppTableText(
           material.unitName.isEmpty ? '—' : material.unitName,
           style: theme.textTheme.bodySmall,
         ),
@@ -367,7 +332,7 @@ class _MaterialsPageState extends State<MaterialsPage> {
         headerAlignment: AlignmentDirectional.centerEnd,
         sortable: true,
         sortValue: (material) => parseAmount(material.totalAvailable),
-        builder: (context, material) => Text(
+        builder: (context, material) => AppTableText(
           '${material.totalAvailable} ${material.unitName}',
           style: theme.textTheme.labelMedium,
         ),
@@ -381,7 +346,7 @@ class _MaterialsPageState extends State<MaterialsPage> {
         headerAlignment: AlignmentDirectional.centerEnd,
         sortable: true,
         sortValue: (material) => parseAmount(material.minimumStock),
-        builder: (context, material) => Text(
+        builder: (context, material) => AppTableText(
           material.minimumStock,
           style: theme.textTheme.labelMedium?.copyWith(
             color: context.semanticColors.warning,
@@ -393,10 +358,8 @@ class _MaterialsPageState extends State<MaterialsPage> {
         label: 'الأسعار',
         flex: 3,
         minWidth: 190,
-        builder: (context, material) => Text(
+        builder: (context, material) => AppTableText(
           'شراء ${material.purchasePrice.isEmpty ? '—' : material.purchasePrice} • بيع ${material.salePrice.isEmpty ? '—' : material.salePrice}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
           style: theme.textTheme.labelSmall,
         ),
       ),

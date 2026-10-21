@@ -73,6 +73,75 @@ class _ActionRow extends StatelessWidget {
   }
 }
 
+/// Fixed page chrome + table for the master-data pages.
+///
+/// The header, metrics and search strip stay above the table so the table can
+/// own the remaining height and scroll internally. Metric cards are hidden on
+/// narrow screens: stacked into a single column they are taller than a phone
+/// viewport and would push the table out of view.
+class MasterDataPageLayout extends StatelessWidget {
+  const MasterDataPageLayout({
+    super.key,
+    required this.header,
+    required this.metrics,
+    required this.search,
+    required this.table,
+    this.metricColumns = 3,
+    this.metricsBreakpoint = 720,
+  });
+
+  final AppPageHeader header;
+  final List<Widget> metrics;
+  final Widget search;
+  final Widget table;
+  final int metricColumns;
+  final double metricsBreakpoint;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final showMetrics = constraints.maxWidth >= metricsBreakpoint;
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.xl,
+                AppSpacing.xl,
+                AppSpacing.md,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  header,
+                  if (showMetrics) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    AppMetricGrid(maxColumns: metricColumns, children: metrics),
+                  ],
+                  const SizedBox(height: AppSpacing.lg),
+                  search,
+                ],
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xl,
+                  0,
+                  AppSpacing.xl,
+                  AppSpacing.xl,
+                ),
+                child: table,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 /// Search + filter strip shared by the master-data pages.
 class MasterDataSearchBar extends StatelessWidget {
   const MasterDataSearchBar({

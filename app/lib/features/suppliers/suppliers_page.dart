@@ -119,114 +119,81 @@ class _SuppliersPageState extends State<SuppliersPage> {
     final active = widget.data.suppliers
         .where((supplier) => supplier.isActive)
         .length;
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xl,
-            AppSpacing.xl,
-            AppSpacing.xl,
-            AppSpacing.md,
+    return MasterDataPageLayout(
+      header: AppPageHeader(
+        title: 'الموردون',
+        subtitle: 'إدارة بيانات الموردين والأرصدة مع بحث وتصفية فورية.',
+        icon: Icons.local_shipping_outlined,
+        actions: [
+          if (widget.onOpenOpeningBalances != null)
+            IconButton(
+              tooltip: 'الأرصدة الافتتاحية',
+              onPressed: _openOpeningBalances,
+              icon: const Icon(Icons.account_balance_wallet_outlined, size: 20),
+            ),
+          FilledButton.icon(
+            onPressed: _openForm,
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('إضافة مورد'),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AppPageHeader(
-                title: 'الموردون',
-                subtitle: 'إدارة بيانات الموردين والأرصدة مع بحث وتصفية فورية.',
-                icon: Icons.local_shipping_outlined,
-                actions: [
-                  if (widget.onOpenOpeningBalances != null)
-                    IconButton(
-                      tooltip: 'الأرصدة الافتتاحية',
-                      onPressed: _openOpeningBalances,
-                      icon: const Icon(
-                        Icons.account_balance_wallet_outlined,
-                        size: 20,
-                      ),
-                    ),
-                  FilledButton.icon(
-                    onPressed: _openForm,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('إضافة مورد'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AppMetricGrid(
-                maxColumns: 3,
-                children: [
-                  AppMetricCard(
-                    label: 'إجمالي الموردين',
-                    value: '${widget.data.suppliers.length}',
-                    icon: Icons.local_shipping_outlined,
-                    tone: AppBadgeTone.info,
-                  ),
-                  AppMetricCard(
-                    label: 'الموردون النشطون',
-                    value: '$active',
-                    icon: Icons.verified_user_outlined,
-                    tone: AppBadgeTone.success,
-                  ),
-                  AppMetricCard(
-                    label: 'إجمالي الأرصدة',
-                    value: formatMoney(
-                      widget.data.supplierBalances.toStringAsFixed(2),
-                      currency: widget.data.baseCurrency,
-                    ),
-                    icon: Icons.account_balance_wallet_outlined,
-                    tone: AppBadgeTone.warning,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              MasterDataSearchBar(
-                controller: _searchController,
-                hintText: 'بحث بالاسم أو الرمز أو الهاتف…',
-                onChanged: (value) =>
-                    setState(() => _query = value.trim().toLowerCase()),
-                resultCount: suppliers.length,
-                filters: [
-                  FilterChip(
-                    label: const Text('النشطون فقط'),
-                    selected: _activeOnly,
-                    onSelected: (value) => setState(() => _activeOnly = value),
-                  ),
-                ],
-              ),
-            ],
-          ),
+        ],
+      ),
+      metrics: [
+        AppMetricCard(
+          label: 'إجمالي الموردين',
+          value: '${widget.data.suppliers.length}',
+          icon: Icons.local_shipping_outlined,
+          tone: AppBadgeTone.info,
         ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl,
-              0,
-              AppSpacing.xl,
-              AppSpacing.xl,
-            ),
-            child: AppDataTable<LedgerSupplier>(
-              tableId: 'suppliers',
-              columns: _columns(context),
-              rows: suppliers,
-              rowId: (supplier) => supplier.id,
-              paginate: true,
-              minWidth: 760,
-              onRowTap: (supplier) => _openForm(supplier: supplier),
-              emptyTitle: _query.isEmpty && !_activeOnly
-                  ? 'لا يوجد موردون بعد'
-                  : 'لا يوجد موردون مطابقون',
-              emptyMessage: 'أضف مورداً جديداً أو عدّل البحث والتصفية.',
-              emptyIcon: Icons.local_shipping_outlined,
-              emptyAction: FilledButton.icon(
-                onPressed: _openForm,
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('إضافة مورد'),
-              ),
-            ),
+        AppMetricCard(
+          label: 'الموردون النشطون',
+          value: '$active',
+          icon: Icons.verified_user_outlined,
+          tone: AppBadgeTone.success,
+        ),
+        AppMetricCard(
+          label: 'إجمالي الأرصدة',
+          value: formatMoney(
+            widget.data.supplierBalances.toStringAsFixed(2),
+            currency: widget.data.baseCurrency,
           ),
+          icon: Icons.account_balance_wallet_outlined,
+          tone: AppBadgeTone.warning,
         ),
       ],
+      search: MasterDataSearchBar(
+        controller: _searchController,
+        hintText: 'بحث بالاسم أو الرمز أو الهاتف…',
+        onChanged: (value) =>
+            setState(() => _query = value.trim().toLowerCase()),
+        resultCount: suppliers.length,
+        filters: [
+          FilterChip(
+            label: const Text('النشطون فقط'),
+            selected: _activeOnly,
+            onSelected: (value) => setState(() => _activeOnly = value),
+          ),
+        ],
+      ),
+      table: AppDataTable<LedgerSupplier>(
+        tableId: 'suppliers',
+        columns: _columns(context),
+        rows: suppliers,
+        rowId: (supplier) => supplier.id,
+        paginate: true,
+        minWidth: 760,
+        onRowTap: (supplier) => _openForm(supplier: supplier),
+        emptyTitle: _query.isEmpty && !_activeOnly
+            ? 'لا يوجد موردون بعد'
+            : 'لا يوجد موردون مطابقون',
+        emptyMessage: 'أضف مورداً جديداً أو عدّل البحث والتصفية.',
+        emptyIcon: Icons.local_shipping_outlined,
+        emptyAction: FilledButton.icon(
+          onPressed: _openForm,
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('إضافة مورد'),
+        ),
+      ),
     );
   }
 
@@ -241,7 +208,7 @@ class _SuppliersPageState extends State<SuppliersPage> {
         sortable: true,
         sortValue: (supplier) => supplier.code,
         builder: (context, supplier) =>
-            Text(supplier.code, style: theme.textTheme.labelMedium),
+            AppTableText(supplier.code, style: theme.textTheme.labelMedium),
       ),
       AppTableColumn(
         id: 'name',
@@ -305,7 +272,7 @@ class _SuppliersPageState extends State<SuppliersPage> {
         headerAlignment: AlignmentDirectional.centerEnd,
         sortable: true,
         sortValue: (supplier) => parseAmount(supplier.balance),
-        builder: (context, supplier) => Text(
+        builder: (context, supplier) => AppTableText(
           formatMoney(supplier.balance, currency: supplier.currency),
           style: theme.textTheme.labelLarge,
         ),
