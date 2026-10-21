@@ -4,6 +4,7 @@ import '../../ledger.dart';
 import '../../master_data_forms.dart';
 import '../../theme/app_theme.dart';
 import '../../ui/app_ui.dart';
+import '../../ui/table/row_filter_cache.dart';
 import '../../workspace_data.dart';
 import '../master_data/master_data_shared.dart';
 
@@ -28,6 +29,7 @@ class SuppliersPage extends StatefulWidget {
 
 class _SuppliersPageState extends State<SuppliersPage> {
   final _searchController = TextEditingController();
+  final _filteredSuppliers = RowFilterCache<LedgerSupplier>();
   String _query = '';
   bool _activeOnly = false;
 
@@ -38,21 +40,24 @@ class _SuppliersPageState extends State<SuppliersPage> {
   }
 
   List<LedgerSupplier> get _suppliers {
-    final query = _query.trim().toLowerCase();
-    return widget.data.suppliers
-        .where((supplier) {
-          if (_activeOnly && !supplier.isActive) {
-            return false;
-          }
-          if (query.isEmpty) {
-            return true;
-          }
-          return '${supplier.code} ${supplier.name} ${supplier.phone ?? ''} '
-                  '${supplier.address ?? ''}'
-              .toLowerCase()
-              .contains(query);
-        })
-        .toList(growable: false);
+    final source = widget.data.suppliers;
+    return _filteredSuppliers.resolve((_query, _activeOnly, source), () {
+      final query = _query.trim().toLowerCase();
+      return source
+          .where((supplier) {
+            if (_activeOnly && !supplier.isActive) {
+              return false;
+            }
+            if (query.isEmpty) {
+              return true;
+            }
+            return '${supplier.code} ${supplier.name} ${supplier.phone ?? ''} '
+                    '${supplier.address ?? ''}'
+                .toLowerCase()
+                .contains(query);
+          })
+          .toList(growable: false);
+    });
   }
 
   Future<void> _notifyChanged() async {

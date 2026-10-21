@@ -443,4 +443,135 @@ void main() {
 
     controller.dispose();
   });
+
+  testWidgets('extracts every sort key once instead of once per comparison', (
+    tester,
+  ) async {
+    var extractions = 0;
+    final many = [
+      for (var index = 0; index < 200; index++)
+        _Row('r$index', 'اسم $index', index),
+    ];
+    await tester.pumpWidget(
+      _wrap(
+        AppDataTable<_Row>(
+          columns: [
+            AppTableColumn<_Row>(
+              id: 'score',
+              label: 'الدرجة',
+              sortable: true,
+              sortValue: (row) {
+                extractions++;
+                return row.score;
+              },
+              builder: (context, row) => Text('${row.score}'),
+            ),
+          ],
+          rows: many,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      extractions,
+      0,
+      reason: 'sorting starts only when a header is tapped',
+    );
+
+    await tester.tap(find.text('الدرجة'));
+    await tester.pumpAndSettle();
+
+    // One extraction per row. A comparator that reads the key on every
+    // comparison would call it O(n log n) times.
+    expect(extractions, many.length);
+
+    // Reversing the direction reuses the extracted keys.
+    await tester.tap(find.text('الدرجة'));
+    await tester.pumpAndSettle();
+    expect(extractions, many.length);
+  });
+
+  testWidgets('rebuilds only the rows touched by the keyboard cursor', (
+    tester,
+  ) async {
+    var builds = 0;
+    final many = [
+      for (var index = 0; index < 40; index++)
+        _Row('r$index', 'اسم $index', index),
+    ];
+    await tester.pumpWidget(
+      _wrap(
+        AppDataTable<_Row>(
+          columns: [
+            AppTableColumn<_Row>(
+              id: 'name',
+              label: 'الاسم',
+              builder: (context, row) {
+                builds++;
+                return Text(row.name);
+              },
+            ),
+          ],
+          rows: many,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Only the visible rows are built: the list is virtualised.
+    expect(builds, lessThan(many.length));
+
+    builds = 0;
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    // The cursor moved to the first row, so only that row repaints.
+    expect(builds, lessThanOrEqualTo(2));
+
+    builds = 0;
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    // Now two rows change: the one that lost the cursor and the one that got
+    // it. The rest of the viewport is untouched.
+    expect(builds, lessThanOrEqualTo(4));
+    expect(builds, lessThan(many.length));
+  });
+
+  testWidgets('applies the stored density to the row height', (tester) async {
+    final store = MemoryTablePreferencesStore({
+      'dense': {'density': 'compact'},
+    });
+    await tester.pumpWidget(
+      _wrap(_table(rows: rows, tableId: 'dense', store: store)),
+    );
+    await tester.pumpAndSettle();
+
+    final gap =
+        tester.getTopLeft(find.text('A')).dy -
+        tester.getTopLeft(find.text('C')).dy;
+    expect(gap, closeTo(TableDensity.compact.rowHeight, 1));
+  });
+
+  testWidgets('switches the row density from the column settings', (
+    tester,
+  ) async {
+    final store = MemoryTablePreferencesStore();
+    await tester.pumpWidget(
+      _wrap(_table(rows: rows, tableId: 'density-switch', store: store)),
+    );
+    await tester.pumpAndSettle();
+
+    double rowGap() =>
+        tester.getTopLeft(find.text('A')).dy -
+        tester.getTopLeft(find.text('C')).dy;
+    expect(rowGap(), closeTo(TableDensity.comfortable.rowHeight, 1));
+
+    await tester.tap(find.byTooltip('إعدادات الأعمدة'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('مدمج'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('تم'));
+    await tester.pumpAndSettle();
+
+    expect(rowGap(), closeTo(TableDensity.compact.rowHeight, 1));
+  });
 }

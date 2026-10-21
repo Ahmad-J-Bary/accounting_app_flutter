@@ -82,6 +82,7 @@ A column may declare:
 | Selection | Optional checkboxes with select-all; `onSelectionChanged` reports stable `rowId` values, not row indices. Space toggles the focused row. |
 | Keyboard | Focus the table (click any part of it), then: ↑/↓ move the row cursor, Home/End jump to the first/last row, PageUp/PageDown move by a viewport, Enter opens the row (`onRowTap`), Space toggles selection. The focused row is outlined and scrolled into view. |
 | Scrolling | Rows scroll vertically; columns scroll horizontally with an interactive scrollbar at the bottom edge. |
+| Density | Three presets: compact (44 px rows), comfortable (58 px) and spacious (72 px). The user picks one from the column settings dialog; the choice is stored per table. `AppDataTable.density` sets the default for tables without a stored preference, and `rowHeight`/`headerHeight` override it. |
 | Long text | Use `AppTableText` for every single-line cell: it clamps to one line with an ellipsis, so a long name never produces a vertical overflow inside the fixed row height. |
 | Loading | Replaces the body with a progress indicator while headers remain available. |
 | Error | Shows the message and an optional retry action. |
@@ -151,7 +152,8 @@ application-support directory as `accounting.db`:
       "widths": {"name": 240},
       "pageSize": 25,
       "sortColumnId": "name",
-      "sortAscending": true
+      "sortAscending": true,
+      "density": "compact"
     }
   }
 }
@@ -171,6 +173,7 @@ Preferences are untrusted input from an older build. On load:
 - Widths are clamped to 56–720 px.
 - Page size must be one of 10/25/50/100.
 - A sort column that no longer exists is cleared.
+- An unknown density id falls back to `comfortable`.
 - If every column would be hidden, the first column is kept visible.
 
 A failed load or save only logs a debug message and keeps the in-memory
@@ -210,12 +213,46 @@ stored entry.
 - Avoid nesting the table inside another vertical `ListView`; use `Expanded` or
   a fixed height.
 
+### What the table already does
+
+| Concern | Behaviour |
+|---|---|
+| Sort keys | `sortValue` is read once per row and cached per (rows list, column). The comparator only compares the extracted keys, so sorting costs `O(n log n)` comparisons instead of `O(n log n)` key reads. Reversing the direction reuses the same keys. |
+| Keyboard cursor | The cursor lives in a `ValueNotifier`, not in `setState`. Moving it rebuilds only the row that loses the highlight and the row that gains it, so holding an arrow key does not rebuild the viewport. |
+| Row layout | Rows have a fixed height, so the row list uses `itemExtent` and the scroll view computes its extents without laying out every child. |
+| Row list | `ListView.builder` builds only the visible rows; the keep-alive wrapper is skipped because rows hold no state worth keeping. |
+| Reuse | The sorted list and the extracted sort keys stay valid while the rows list instance and the sort key stay the same. |
+| Persistence | Preference writes are debounced by 350 ms, so dragging a column edge does not write to disk on every pointer move. |
+
+### Filtering the rows in the page
+
+A page that filters its rows on every build hands the table a new list each
+time, which throws the sort cache away. Cache the filtered list with
+`RowFilterCache` (`app/lib/ui/table/row_filter_cache.dart`) and key it by the
+search text, the active filters and the identity of the source list:
+
+```dart
+final _filteredCustomers = RowFilterCache<LedgerCustomer>();
+
+List<LedgerCustomer> get _customers {
+  final source = widget.data.customers;
+  return _filteredCustomers.resolve((_query, _activeOnly, source), () {
+    /* filter source */
+  });
+}
+```
+
+The key must contain everything that can change the result; a new source list
+instance invalidates the cache automatically.
+
 ## Tests
 
 `app/test/table_test.dart` covers sorting, keyboard navigation (arrows, Enter,
 End, Space), column hiding (including width redistribution, «إظهار الكل» and
 restoring the column), adopting saved preferences when the table id changes,
 pagination, selection, loading/error/empty states, RTL/LTR, single-line cell
-ellipsis, width persistence and stale preference sanitisation. Page-level tests
-live in `app/test/widget_test.dart`, including the 430×900 customers-page
-layout.
+ellipsis, width persistence and stale preference sanitisation. It also guards
+the performance contract: one sort-key extraction per row, and a keyboard cursor
+that rebuilds only the rows it touches. `app/test/row_filter_cache_test.dart`
+covers the page-level row filter cache. Page-level tests live in
+`app/test/widget_test.dart`, including the 430×900 customers-page layout.

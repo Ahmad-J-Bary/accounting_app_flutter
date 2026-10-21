@@ -2,6 +2,37 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+/// Row density presets for the shared table.
+///
+/// The React table offered three densities; the same presets are stored per
+/// table so a compact grid stays compact the next time the screen opens.
+enum TableDensity {
+  compact('compact', 44, 38),
+  comfortable('comfortable', 58, 44),
+  spacious('spacious', 72, 50);
+
+  const TableDensity(this.id, this.rowHeight, this.headerHeight);
+
+  /// Value written to the preferences file.
+  final String id;
+
+  /// Height of a data row in logical pixels.
+  final double rowHeight;
+
+  /// Height of the header row in logical pixels.
+  final double headerHeight;
+
+  /// Resolves a stored id, falling back to [comfortable] for unknown values.
+  static TableDensity fromId(String? id) {
+    for (final density in TableDensity.values) {
+      if (density.id == id) {
+        return density;
+      }
+    }
+    return TableDensity.comfortable;
+  }
+}
+
 /// Persistence boundary for table preferences.
 abstract class TablePreferencesStore {
   Future<Map<String, Object?>?> load(String tableId);
@@ -23,6 +54,7 @@ class TablePreferences {
     required this.pageSize,
     this.sortColumnId,
     this.sortAscending = true,
+    this.density = 'comfortable',
   });
 
   final List<String> order;
@@ -32,6 +64,9 @@ class TablePreferences {
   final String? sortColumnId;
   final bool sortAscending;
 
+  /// Stored [TableDensity.id]; unknown ids fall back to comfortable.
+  final String density;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'order': order,
     'hidden': hidden.toList()..sort(),
@@ -39,6 +74,7 @@ class TablePreferences {
     'pageSize': pageSize,
     if (sortColumnId != null) 'sortColumnId': sortColumnId,
     'sortAscending': sortAscending,
+    'density': density,
   };
 
   @override
@@ -49,7 +85,8 @@ class TablePreferences {
         mapEquals(other.widths, widths) &&
         other.pageSize == pageSize &&
         other.sortColumnId == sortColumnId &&
-        other.sortAscending == sortAscending;
+        other.sortAscending == sortAscending &&
+        other.density == density;
   }
 
   @override
@@ -62,6 +99,7 @@ class TablePreferences {
     pageSize,
     sortColumnId,
     sortAscending,
+    density,
   );
 
   static const List<int> allowedPageSizes = <int>[10, 25, 50, 100];
@@ -73,12 +111,14 @@ class TablePreferences {
     Set<String> hidden = const <String>{},
     Map<String, double> widths = const <String, double>{},
     int pageSize = 25,
+    TableDensity density = TableDensity.comfortable,
   }) {
     return TablePreferences(
       order: List<String>.unmodifiable(columnIds),
       hidden: Set<String>.unmodifiable(hidden),
       widths: Map<String, double>.unmodifiable(widths),
       pageSize: allowedPageSizes.contains(pageSize) ? pageSize : 25,
+      density: density.id,
     );
   }
 
@@ -152,6 +192,13 @@ class TablePreferences {
         : null;
     final storedAscending = raw['sortAscending'];
 
+    final storedDensity = raw['density'];
+    final density =
+        storedDensity is String &&
+            TableDensity.values.any((value) => value.id == storedDensity)
+        ? storedDensity
+        : fallback.density;
+
     return TablePreferences(
       order: List<String>.unmodifiable(order),
       hidden: Set<String>.unmodifiable(hidden),
@@ -159,6 +206,7 @@ class TablePreferences {
       pageSize: pageSize,
       sortColumnId: sortColumnId,
       sortAscending: storedAscending is bool ? storedAscending : true,
+      density: density,
     );
   }
 }
@@ -174,6 +222,7 @@ class TablePreferencesController extends ChangeNotifier {
     required TablePreferencesStore store,
     Map<String, double> defaultWidths = const <String, double>{},
     int defaultPageSize = 25,
+    TableDensity defaultDensity = TableDensity.comfortable,
   }) : _columnIds = List<String>.unmodifiable(_dedupe(columnIds)),
        _requiredColumnIds = Set<String>.unmodifiable(requiredColumnIds),
        _store = store,
@@ -181,11 +230,13 @@ class TablePreferencesController extends ChangeNotifier {
          columnIds: _dedupe(columnIds),
          widths: defaultWidths,
          pageSize: defaultPageSize,
+         density: defaultDensity,
        ),
        _value = TablePreferences.defaults(
          columnIds: _dedupe(columnIds),
          widths: defaultWidths,
          pageSize: defaultPageSize,
+         density: defaultDensity,
        );
 
   final String tableId;
@@ -274,6 +325,7 @@ class TablePreferencesController extends ChangeNotifier {
         pageSize: _value.pageSize,
         sortColumnId: _value.sortColumnId,
         sortAscending: _value.sortAscending,
+        density: _value.density,
       ),
     );
   }
@@ -295,6 +347,7 @@ class TablePreferencesController extends ChangeNotifier {
         pageSize: _value.pageSize,
         sortColumnId: _value.sortColumnId,
         sortAscending: _value.sortAscending,
+        density: _value.density,
       ),
     );
   }
@@ -317,6 +370,7 @@ class TablePreferencesController extends ChangeNotifier {
         pageSize: _value.pageSize,
         sortColumnId: _value.sortColumnId,
         sortAscending: _value.sortAscending,
+        density: _value.density,
       ),
     );
   }
@@ -340,6 +394,7 @@ class TablePreferencesController extends ChangeNotifier {
         pageSize: _value.pageSize,
         sortColumnId: columnId,
         sortAscending: nextAscending,
+        density: _value.density,
       ),
     );
   }
@@ -356,6 +411,25 @@ class TablePreferencesController extends ChangeNotifier {
         pageSize: pageSize,
         sortColumnId: _value.sortColumnId,
         sortAscending: _value.sortAscending,
+        density: _value.density,
+      ),
+    );
+  }
+
+  /// Switches the row density of the table.
+  void setDensity(TableDensity density) {
+    if (_value.density == density.id) {
+      return;
+    }
+    _update(
+      TablePreferences(
+        order: _value.order,
+        hidden: _value.hidden,
+        widths: _value.widths,
+        pageSize: _value.pageSize,
+        sortColumnId: _value.sortColumnId,
+        sortAscending: _value.sortAscending,
+        density: density.id,
       ),
     );
   }

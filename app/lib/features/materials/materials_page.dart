@@ -6,6 +6,7 @@ import '../../master_data_forms.dart';
 import '../../material_units.dart';
 import '../../theme/app_theme.dart';
 import '../../ui/app_ui.dart';
+import '../../ui/table/row_filter_cache.dart';
 import '../../workspace_data.dart';
 import '../master_data/master_data_shared.dart';
 
@@ -32,6 +33,7 @@ class MaterialsPage extends StatefulWidget {
 
 class _MaterialsPageState extends State<MaterialsPage> {
   final _searchController = TextEditingController();
+  final _filteredMaterials = RowFilterCache<LedgerMaterial>();
   String _query = '';
   String? _categoryId;
   bool _lowStockOnly = false;
@@ -48,29 +50,35 @@ class _MaterialsPageState extends State<MaterialsPage> {
   };
 
   List<LedgerMaterial> get _materials {
-    final query = _query.trim().toLowerCase();
-    return widget.data.materials
-        .where((material) {
-          if (_categoryId != null &&
-              !material.categoryIds.contains(_categoryId)) {
-            return false;
-          }
-          if (_lowStockOnly) {
-            final available = parseAmount(material.totalAvailable);
-            final minimum = parseAmount(material.minimumStock);
-            if (minimum <= 0 || available > minimum) {
-              return false;
-            }
-          }
-          if (query.isEmpty) {
-            return true;
-          }
-          return '${material.code} ${material.name} ${material.nameEn} '
-                  '${material.barcode}'
-              .toLowerCase()
-              .contains(query);
-        })
-        .toList(growable: false);
+    final source = widget.data.materials;
+    return _filteredMaterials.resolve(
+      (_query, _categoryId, _lowStockOnly, source),
+      () {
+        final query = _query.trim().toLowerCase();
+        return source
+            .where((material) {
+              if (_categoryId != null &&
+                  !material.categoryIds.contains(_categoryId)) {
+                return false;
+              }
+              if (_lowStockOnly) {
+                final available = parseAmount(material.totalAvailable);
+                final minimum = parseAmount(material.minimumStock);
+                if (minimum <= 0 || available > minimum) {
+                  return false;
+                }
+              }
+              if (query.isEmpty) {
+                return true;
+              }
+              return '${material.code} ${material.name} ${material.nameEn} '
+                      '${material.barcode}'
+                  .toLowerCase()
+                  .contains(query);
+            })
+            .toList(growable: false);
+      },
+    );
   }
 
   Future<void> _notifyChanged() async {
