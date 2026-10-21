@@ -396,16 +396,47 @@ class _FakeGateway implements LedgerGateway {
   Future<void> deleteExpenseItem(String id) async {}
 }
 
+/// A gateway that returns one sales invoice, so the invoice table can be
+/// exercised with a row.
+class _InvoiceGateway extends _FakeGateway {
+  _InvoiceGateway();
+
+  @override
+  Future<List<LedgerInvoice>> loadInvoices() async => const [
+    LedgerInvoice(
+      id: 'inv-1',
+      number: 'INV-001',
+      invoiceType: 'Sales',
+      partyName: 'عميل الاختبار',
+      status: 'Draft',
+      lines: [],
+      taxAmount: '0',
+      discountAmount: '0',
+      extraCosts: '0',
+      subtotal: '100',
+      total: '100',
+      amountPaid: '0',
+      remaining: '100',
+      paymentMethod: 'Cash',
+      issuedAt: '2026-01-05',
+      currency: 'SYP',
+    ),
+  ];
+}
+
 Future<void> _pumpWorkspace(
   WidgetTester tester, {
   bool setupComplete = true,
+  LedgerGateway? gateway,
 }) async {
   tester.view.physicalSize = const Size(1440, 1024);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
-    AccountingApp(gateway: _FakeGateway(setupComplete: setupComplete)),
+    AccountingApp(
+      gateway: gateway ?? _FakeGateway(setupComplete: setupComplete),
+    ),
   );
   await tester.pumpAndSettle();
 }
@@ -516,6 +547,22 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('لا توجد بنود مصاريف'), findsOneWidget);
+  });
+
+  testWidgets('opens the invoice details when a table row is tapped', (
+    tester,
+  ) async {
+    await _pumpWorkspace(tester, gateway: _InvoiceGateway());
+    await tester.tap(find.text('فواتير البيع').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('INV-001'), findsOneWidget);
+    await tester.tap(find.text('INV-001'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('فاتورة INV-001'), findsOneWidget);
+    // The action buttons of the invoice row must fit their column.
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('opens the sales invoice editor and validates the party', (

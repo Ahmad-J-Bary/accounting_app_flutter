@@ -764,6 +764,46 @@ class AppTableText extends StatelessWidget {
   }
 }
 
+/// A compact icon button for the action cell of a table row.
+///
+/// Table rows have a fixed height and a narrow action column, so the button
+/// uses a smaller tap area than the Material default. Without it a row with
+/// three or four actions overflows its column.
+class AppTableActionButton extends StatelessWidget {
+  const AppTableActionButton({
+    super.key,
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+    this.color,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final Color? color;
+
+  /// Width and height of the button in logical pixels.
+  static const double size = 36;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18, color: color),
+      style: IconButton.styleFrom(
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+        fixedSize: const Size(size, size),
+        minimumSize: const Size(size, size),
+        maximumSize: const Size(size, size),
+        padding: EdgeInsets.zero,
+      ),
+    );
+  }
+}
+
 class AppTableColumn<T> {
   const AppTableColumn({
     this.id,

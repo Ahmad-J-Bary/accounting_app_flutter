@@ -258,7 +258,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
             AppTableColumn(
               id: 'actions',
               label: 'إجراءات',
-              flex: 2,
+              width: 2 * AppTableActionButton.size + 24,
               canHide: false,
               canResize: false,
               alignment: AlignmentDirectional.centerEnd,
@@ -276,19 +276,16 @@ class _PaymentsPageState extends State<PaymentsPage> {
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
+                    AppTableActionButton(
                       tooltip: 'تعديل',
                       onPressed: () => _openEditor(payment),
-                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      icon: Icons.edit_outlined,
                     ),
-                    IconButton(
+                    AppTableActionButton(
                       tooltip: 'حذف',
                       onPressed: () => _delete(payment),
-                      icon: Icon(
-                        Icons.delete_outline,
-                        size: 18,
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                      icon: Icons.delete_outline,
+                      color: Theme.of(context).colorScheme.error,
                     ),
                   ],
                 );
@@ -859,7 +856,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
             AppTableColumn(
               id: 'actions',
               label: 'إجراءات',
-              flex: 3,
+              width: 3 * AppTableActionButton.size + 24,
               canHide: false,
               canResize: false,
               alignment: AlignmentDirectional.centerEnd,
@@ -867,24 +864,21 @@ class _ExpensesPageState extends State<ExpensesPage> {
               builder: (context, item) => Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
+                  AppTableActionButton(
                     tooltip: 'سند مصروف',
                     onPressed: () => _openVoucher(item),
-                    icon: const Icon(Icons.receipt_long_outlined, size: 18),
+                    icon: Icons.receipt_long_outlined,
                   ),
-                  IconButton(
+                  AppTableActionButton(
                     tooltip: 'تعديل',
                     onPressed: () => _openItemForm(item),
-                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    icon: Icons.edit_outlined,
                   ),
-                  IconButton(
+                  AppTableActionButton(
                     tooltip: 'حذف',
                     onPressed: () => _deleteItem(item),
-                    icon: Icon(
-                      Icons.delete_outline,
-                      size: 18,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                    icon: Icons.delete_outline,
+                    color: Theme.of(context).colorScheme.error,
                   ),
                 ],
               ),

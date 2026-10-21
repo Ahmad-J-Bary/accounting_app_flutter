@@ -274,7 +274,8 @@ class _InvoicesPageState extends State<InvoicesPage> {
             icon: const Icon(Icons.add, size: 18),
             label: const Text('إنشاء فاتورة'),
           ),
-          onRowTap: (_) {},
+          onRowTap: (invoice) =>
+              showInvoiceDetails(context, invoice, isSales: _isSales),
           columns: [
             AppTableColumn(
               id: 'number',
@@ -366,7 +367,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
             AppTableColumn(
               id: 'actions',
               label: 'إجراءات',
-              flex: 2,
+              width: 4 * AppTableActionButton.size + 24,
               canHide: false,
               canResize: false,
               alignment: AlignmentDirectional.centerEnd,
@@ -374,33 +375,33 @@ class _InvoicesPageState extends State<InvoicesPage> {
               builder: (context, invoice) => Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
+                  AppTableActionButton(
                     tooltip: 'عرض',
                     onPressed: () =>
                         showInvoiceDetails(context, invoice, isSales: _isSales),
-                    icon: const Icon(Icons.visibility_outlined, size: 18),
+                    icon: Icons.visibility_outlined,
                   ),
                   if (!invoice.isPosted)
-                    IconButton(
+                    AppTableActionButton(
                       tooltip: 'تعديل',
                       onPressed: () => _openEditor(invoice),
-                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      icon: Icons.edit_outlined,
                     ),
                   if (!invoice.isPosted)
-                    IconButton(
+                    AppTableActionButton(
                       tooltip: 'ترحيل',
                       onPressed: () => _post(invoice),
-                      icon: const Icon(Icons.play_circle_outline, size: 18),
+                      icon: Icons.play_circle_outline,
                     ),
-                  IconButton(
-                    tooltip: 'حذف',
-                    onPressed: () => _delete(invoice),
-                    icon: Icon(
-                      Icons.delete_outline,
-                      size: 18,
+                  // Posted invoices are audit history: the core rejects their
+                  // deletion, so the action is not offered.
+                  if (!invoice.isPosted)
+                    AppTableActionButton(
+                      tooltip: 'حذف',
+                      onPressed: () => _delete(invoice),
+                      icon: Icons.delete_outline,
                       color: Theme.of(context).colorScheme.error,
                     ),
-                  ),
                 ],
               ),
             ),

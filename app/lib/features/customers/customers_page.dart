@@ -282,7 +282,8 @@ class _CustomersPageState extends State<CustomersPage> {
       AppTableColumn(
         id: 'actions',
         label: '',
-        width: 56,
+        // The popup button is 48 px wide plus the cell padding.
+        width: 72,
         canHide: false,
         canResize: false,
         alignment: AlignmentDirectional.center,
