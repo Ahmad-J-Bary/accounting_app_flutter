@@ -35,9 +35,10 @@ Rules:
 - Feedback: `AppBadge`, `AppEmptyState`, `AppErrorState`, `AppLoadingState`,
   `AppIconTile`.
 - Input: `AppSearchField`.
-- Data: `AppTableColumn<T>`, `AppDataTable<T>`.
-- Master-data helpers: `MasterDataSearchBar`, delete confirmation and snackbar
-  helpers in `app/lib/features/master_data/master_data_shared.dart`.
+- Data: `AppTableColumn<T>`, `AppDataTable<T>`, `AppTableText`.
+- Master-data helpers: `MasterDataPageLayout`, `MasterDataSearchBar`, delete
+  confirmation and snackbar helpers in
+  `app/lib/features/master_data/master_data_shared.dart`.
 
 ## `AppDataTable` contract
 
@@ -75,15 +76,18 @@ A column may declare:
 | Feature | Behaviour |
 |---|---|
 | Sorting | Click a sortable header; second click reverses. Sorting is by the column's `sortValue`, never by rendered text. |
-| Column menu | Show/hide, move left/right, reset widths/order/visibility. Required columns cannot be hidden. Hidden columns stop reserving width, so the remaining columns share the freed space. |
+| Column menu | Show/hide, move left/right, reset widths/order/visibility, or restore every hidden column with «إظهار الكل». Required columns cannot be hidden. Hidden columns stop reserving width, so the remaining columns share the freed space. A badge on the toolbar icon shows how many columns are hidden. |
 | Resize | Drag the handle at the column edge; widths clamp to 56–720 px. |
-| Pagination | Optional local pagination with page sizes 10/25/50/100. Footer shows the visible range. |
-| Selection | Optional checkboxes with select-all; `onSelectionChanged` reports stable `rowId` values, not row indices. |
+| Pagination | Optional local pagination with page sizes 10/25/50/100. Footer shows the visible range and stacks into two rows below 520 px so it never overflows on phones. |
+| Selection | Optional checkboxes with select-all; `onSelectionChanged` reports stable `rowId` values, not row indices. Space toggles the focused row. |
+| Keyboard | Focus the table (click any part of it), then: ↑/↓ move the row cursor, Home/End jump to the first/last row, PageUp/PageDown move by a viewport, Enter opens the row (`onRowTap`), Space toggles selection. The focused row is outlined and scrolled into view. |
+| Scrolling | Rows scroll vertically; columns scroll horizontally with an interactive scrollbar at the bottom edge. |
+| Long text | Use `AppTableText` for every single-line cell: it clamps to one line with an ellipsis, so a long name never produces a vertical overflow inside the fixed row height. |
 | Loading | Replaces the body with a progress indicator while headers remain available. |
 | Error | Shows the message and an optional retry action. |
 | Empty | Shows title/message/action; distinguish "no data yet" from "no matches". |
 | RTL/LTR | Directional alignment and icons; horizontal scrolling works in both directions. |
-| Long lists | Rows are built lazily with `ListView.builder` when height is bounded. |
+| Long lists | Rows are built lazily with `ListView.builder` when height is bounded. Page or sort changes jump the vertical scroll back to the top. |
 | Footer | Horizontally scrollable and at least `minWidth` wide, so totals do not overflow on phones. |
 
 ### Sizing and scrolling
@@ -95,6 +99,20 @@ A column may declare:
 - The table recomputes its content width from the resolved column widths; this
   prevents the "10 px RenderFlex overflow" class of bugs when minimum widths
   and flex distribution disagree.
+- Keep the page chrome above the table fixed (`MasterDataPageLayout`): the table
+  owns the remaining height and scrolls internally.
+
+### Master-data page layout
+
+`MasterDataPageLayout` owns the shared chrome of the customers, suppliers and
+materials pages:
+
+- Header (`AppPageHeader`) and search strip stay fixed above the table.
+- Metric cards are shown from 720 px upward. On a phone the three cards stack
+  into a single column taller than the viewport and would push the table off
+  screen, so they are hidden below that breakpoint.
+- At 430×900 the customers page keeps a usable table plus the compact
+  two-row pagination bar; a widget test guards against overflow regressions.
 
 ### Page integration checklist
 
@@ -168,10 +186,14 @@ stored entry.
 
 - Every icon-only action has a tooltip (for example `إعدادات الأعمدة`,
   `الصفحة التالية`, `رجوع`).
-- Table headers expose the sort action through an `InkWell`; keep the label
-  readable and avoid icon-only headers.
-- Use `TextOverflow.ellipsis` for fixed-width cells and keep the full value in
-  the row detail/form.
+- Table headers expose the sort action through an `InkWell` wrapped in
+  `Semantics(button: ...)`; keep the label readable and avoid icon-only headers.
+- The select-all checkbox announces «تحديد كل الصفوف في هذه الصفحة».
+- The table is reachable with Tab and fully operable with the keyboard (see the
+  keyboard row in the behaviour table); the focused row is visible, not just
+  selected.
+- Use `AppTableText` (or an explicit `maxLines: 1` + `TextOverflow.ellipsis`)
+  for fixed-width cells and keep the full value in the row detail/form.
 - Verify both `TextDirection.rtl` and `TextDirection.ltr` in tests. Icons that
   imply direction (back/next) must flip with the direction.
 - Do not encode meaning in colour alone; badges also carry text/icons.
@@ -190,8 +212,10 @@ stored entry.
 
 ## Tests
 
-`app/test/table_test.dart` covers sorting, column hiding (including width
-redistribution and restoring the column), adopting saved preferences when the
-table id changes, pagination, selection, loading/error/empty states, RTL/LTR,
-width persistence and stale preference sanitisation. Page-level tests live in
-`app/test/widget_test.dart`.
+`app/test/table_test.dart` covers sorting, keyboard navigation (arrows, Enter,
+End, Space), column hiding (including width redistribution, «إظهار الكل» and
+restoring the column), adopting saved preferences when the table id changes,
+pagination, selection, loading/error/empty states, RTL/LTR, single-line cell
+ellipsis, width persistence and stale preference sanitisation. Page-level tests
+live in `app/test/widget_test.dart`, including the 430×900 customers-page
+layout.

@@ -750,6 +750,28 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('keeps the customers table usable on a narrow screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('القائمة'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('العملاء').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('العملاء'), findsWidgets);
+    expect(find.text('أحمد محمد'), findsOneWidget);
+    expect(find.byTooltip('إعدادات الأعمدة'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('returns to the previous section with the back button', (
     tester,
   ) async {

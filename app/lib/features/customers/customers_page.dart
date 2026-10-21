@@ -120,114 +120,81 @@ class _CustomersPageState extends State<CustomersPage> {
     final active = widget.data.customers
         .where((customer) => customer.isActive)
         .length;
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xl,
-            AppSpacing.xl,
-            AppSpacing.xl,
-            AppSpacing.md,
+    return MasterDataPageLayout(
+      header: AppPageHeader(
+        title: 'العملاء',
+        subtitle: 'إدارة بيانات العملاء والأرصدة مع بحث وتصفية فورية.',
+        icon: Icons.people_alt_outlined,
+        actions: [
+          if (widget.onOpenOpeningBalances != null)
+            IconButton(
+              tooltip: 'الأرصدة الافتتاحية',
+              onPressed: _openOpeningBalances,
+              icon: const Icon(Icons.account_balance_wallet_outlined, size: 20),
+            ),
+          FilledButton.icon(
+            onPressed: _openForm,
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('إضافة عميل'),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AppPageHeader(
-                title: 'العملاء',
-                subtitle: 'إدارة بيانات العملاء والأرصدة مع بحث وتصفية فورية.',
-                icon: Icons.people_alt_outlined,
-                actions: [
-                  if (widget.onOpenOpeningBalances != null)
-                    IconButton(
-                      tooltip: 'الأرصدة الافتتاحية',
-                      onPressed: _openOpeningBalances,
-                      icon: const Icon(
-                        Icons.account_balance_wallet_outlined,
-                        size: 20,
-                      ),
-                    ),
-                  FilledButton.icon(
-                    onPressed: _openForm,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('إضافة عميل'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AppMetricGrid(
-                maxColumns: 3,
-                children: [
-                  AppMetricCard(
-                    label: 'إجمالي العملاء',
-                    value: '${widget.data.customers.length}',
-                    icon: Icons.people_alt_outlined,
-                    tone: AppBadgeTone.warning,
-                  ),
-                  AppMetricCard(
-                    label: 'العملاء النشطون',
-                    value: '$active',
-                    icon: Icons.verified_user_outlined,
-                    tone: AppBadgeTone.success,
-                  ),
-                  AppMetricCard(
-                    label: 'إجمالي الأرصدة',
-                    value: formatMoney(
-                      widget.data.customerBalances.toStringAsFixed(2),
-                      currency: widget.data.baseCurrency,
-                    ),
-                    icon: Icons.account_balance_wallet_outlined,
-                    tone: AppBadgeTone.info,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              MasterDataSearchBar(
-                controller: _searchController,
-                hintText: 'بحث بالاسم أو الرمز أو الهاتف…',
-                onChanged: (value) =>
-                    setState(() => _query = value.trim().toLowerCase()),
-                resultCount: customers.length,
-                filters: [
-                  FilterChip(
-                    label: const Text('النشطون فقط'),
-                    selected: _activeOnly,
-                    onSelected: (value) => setState(() => _activeOnly = value),
-                  ),
-                ],
-              ),
-            ],
-          ),
+        ],
+      ),
+      metrics: [
+        AppMetricCard(
+          label: 'إجمالي العملاء',
+          value: '${widget.data.customers.length}',
+          icon: Icons.people_alt_outlined,
+          tone: AppBadgeTone.warning,
         ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl,
-              0,
-              AppSpacing.xl,
-              AppSpacing.xl,
-            ),
-            child: AppDataTable<LedgerCustomer>(
-              tableId: 'customers',
-              columns: _columns(context),
-              rows: customers,
-              rowId: (customer) => customer.id,
-              paginate: true,
-              minWidth: 760,
-              onRowTap: (customer) => _openForm(customer: customer),
-              emptyTitle: _query.isEmpty && !_activeOnly
-                  ? 'لا يوجد عملاء بعد'
-                  : 'لا يوجد عملاء مطابقون',
-              emptyMessage: 'أضف عميلاً جديداً أو عدّل البحث والتصفية.',
-              emptyIcon: Icons.people_alt_outlined,
-              emptyAction: FilledButton.icon(
-                onPressed: _openForm,
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('إضافة عميل'),
-              ),
-            ),
+        AppMetricCard(
+          label: 'العملاء النشطون',
+          value: '$active',
+          icon: Icons.verified_user_outlined,
+          tone: AppBadgeTone.success,
+        ),
+        AppMetricCard(
+          label: 'إجمالي الأرصدة',
+          value: formatMoney(
+            widget.data.customerBalances.toStringAsFixed(2),
+            currency: widget.data.baseCurrency,
           ),
+          icon: Icons.account_balance_wallet_outlined,
+          tone: AppBadgeTone.info,
         ),
       ],
+      search: MasterDataSearchBar(
+        controller: _searchController,
+        hintText: 'بحث بالاسم أو الرمز أو الهاتف…',
+        onChanged: (value) =>
+            setState(() => _query = value.trim().toLowerCase()),
+        resultCount: customers.length,
+        filters: [
+          FilterChip(
+            label: const Text('النشطون فقط'),
+            selected: _activeOnly,
+            onSelected: (value) => setState(() => _activeOnly = value),
+          ),
+        ],
+      ),
+      table: AppDataTable<LedgerCustomer>(
+        tableId: 'customers',
+        columns: _columns(context),
+        rows: customers,
+        rowId: (customer) => customer.id,
+        paginate: true,
+        minWidth: 760,
+        onRowTap: (customer) => _openForm(customer: customer),
+        emptyTitle: _query.isEmpty && !_activeOnly
+            ? 'لا يوجد عملاء بعد'
+            : 'لا يوجد عملاء مطابقون',
+        emptyMessage: 'أضف عميلاً جديداً أو عدّل البحث والتصفية.',
+        emptyIcon: Icons.people_alt_outlined,
+        emptyAction: FilledButton.icon(
+          onPressed: _openForm,
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('إضافة عميل'),
+        ),
+      ),
     );
   }
 
@@ -242,7 +209,7 @@ class _CustomersPageState extends State<CustomersPage> {
         sortable: true,
         sortValue: (customer) => customer.code,
         builder: (context, customer) =>
-            Text(customer.code, style: theme.textTheme.labelMedium),
+            AppTableText(customer.code, style: theme.textTheme.labelMedium),
       ),
       AppTableColumn(
         id: 'name',
@@ -302,7 +269,7 @@ class _CustomersPageState extends State<CustomersPage> {
         headerAlignment: AlignmentDirectional.centerEnd,
         sortable: true,
         sortValue: (customer) => parseAmount(customer.balance),
-        builder: (context, customer) => Text(
+        builder: (context, customer) => AppTableText(
           formatMoney(customer.balance, currency: customer.currency),
           style: theme.textTheme.labelLarge,
         ),
