@@ -565,6 +565,62 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('picks a material through the searchable picker', (tester) async {
+    await _pumpWorkspace(tester);
+    await tester.tap(find.text('فواتير البيع').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('إنشاء فاتورة'));
+    await tester.pumpAndSettle();
+
+    // The line editor opens a searchable panel instead of a long dropdown.
+    await tester.tap(find.text('اختر مادة'));
+    await tester.pumpAndSettle();
+
+    final search = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText?.contains('ابحث بالاسم') == true,
+    );
+    expect(search, findsOneWidget);
+
+    await tester.enterText(search, 'M001');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('قمح'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('اختر مادة'), findsNothing);
+    expect(find.text('قمح (M001)'), findsOneWidget);
+  });
+
+  testWidgets('warns before leaving the invoice editor with unsaved changes', (
+    tester,
+  ) async {
+    await _pumpWorkspace(tester);
+    await tester.tap(find.text('فواتير البيع').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('إنشاء فاتورة'));
+    await tester.pumpAndSettle();
+
+    final notes = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText?.contains('ملاحظات') == true,
+    );
+    expect(notes, findsOneWidget);
+    await tester.enterText(notes, 'تسوية');
+    await tester.pumpAndSettle();
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(find.text('تغييرات غير محفوظة'), findsOneWidget);
+
+    await tester.tap(find.text('البقاء'));
+    await tester.pumpAndSettle();
+    expect(find.text('فاتورة بيع جديدة'), findsOneWidget);
+  });
+
   testWidgets('opens the sales invoice editor and validates the party', (
     tester,
   ) async {
@@ -817,7 +873,7 @@ void main() {
 
     expect(find.text('العملاء'), findsWidgets);
     expect(find.text('أحمد محمد'), findsOneWidget);
-    expect(find.byTooltip('إعدادات الأعمدة'), findsOneWidget);
+    expect(find.byTooltip('إعدادات الجدول'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

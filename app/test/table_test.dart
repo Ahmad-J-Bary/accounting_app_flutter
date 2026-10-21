@@ -1,4 +1,4 @@
-import 'package:accounting_app_flutter/theme/app_theme.dart';
+﻿import 'package:accounting_app_flutter/theme/app_theme.dart';
 import 'package:accounting_app_flutter/ui/app_ui.dart';
 import 'package:accounting_app_flutter/ui/table/table_preferences.dart';
 import 'package:accounting_app_flutter/ui/table/table_preferences_store_stub.dart';
@@ -155,7 +155,7 @@ void main() {
     expect(find.text('الرمز'), findsOneWidget);
     final fullWidth = headerWidth('الرمز');
 
-    await tester.tap(find.byTooltip('إعدادات الأعمدة'));
+    await tester.tap(find.byTooltip('إعدادات الجدول'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byType(Checkbox).at(1));
@@ -168,7 +168,7 @@ void main() {
     // A hidden column must not reserve its share of the table width.
     expect(headerWidth('الرمز'), greaterThan(fullWidth * 1.4));
 
-    await tester.tap(find.byTooltip('إعدادات الأعمدة'));
+    await tester.tap(find.byTooltip('إعدادات الجدول'));
     await tester.pumpAndSettle();
     await tester.tap(find.byType(Checkbox).at(1));
     await tester.pumpAndSettle();
@@ -192,7 +192,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('الاسم'), findsNothing);
-    await tester.tap(find.byTooltip('إعدادات الأعمدة'));
+    await tester.tap(find.byTooltip('إعدادات الجدول'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('إظهار الكل'));
     await tester.pumpAndSettle();
@@ -565,7 +565,7 @@ void main() {
         tester.getTopLeft(find.text('C')).dy;
     expect(rowGap(), closeTo(TableDensity.comfortable.rowHeight, 1));
 
-    await tester.tap(find.byTooltip('إعدادات الأعمدة'));
+    await tester.tap(find.byTooltip('إعدادات الجدول'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('مدمج'));
     await tester.pumpAndSettle();
@@ -607,6 +607,48 @@ void main() {
       tester.getTopLeft(find.text('80')).dx,
       lessThan(tester.getTopLeft(find.text('الإجمالي')).dx),
     );
+  });
+
+  testWidgets('toggles the zebra rows and the column dividers', (tester) async {
+    final store = MemoryTablePreferencesStore();
+    await tester.pumpWidget(
+      _wrap(_table(rows: rows, tableId: 'appearance', store: store)),
+    );
+    await tester.pumpAndSettle();
+
+    BoxDecoration? rowDecoration(String label) {
+      final container = tester.widget<Container>(
+        find
+            .ancestor(of: find.text(label), matching: find.byType(Container))
+            .first,
+      );
+      return container.decoration is BoxDecoration
+          ? container.decoration as BoxDecoration
+          : null;
+    }
+
+    expect(rowDecoration('A')?.color, isNull);
+
+    await tester.tap(find.byTooltip('إعدادات الجدول'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('صفوف متناوبة'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('تم'));
+    await tester.pumpAndSettle();
+
+    // The second row of the list is tinted, the first one is not.
+    expect(rowDecoration('A')?.color, isNotNull);
+    expect(rowDecoration('C')?.color, isNull);
+
+    // Every column but the first one is separated by a vertical line.
+    final dividers = find.byWidgetPredicate(
+      (widget) =>
+          widget is DecoratedBox &&
+          widget.decoration is BoxDecoration &&
+          (widget.decoration as BoxDecoration).border != null,
+    );
+    expect(dividers, findsWidgets);
   });
 
   testWidgets('resets a resized column on a double click', (tester) async {
