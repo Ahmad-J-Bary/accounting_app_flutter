@@ -535,6 +535,10 @@ class _TrialBalanceCard extends StatelessWidget {
                 flex: 2,
                 alignment: AlignmentDirectional.centerEnd,
                 headerAlignment: AlignmentDirectional.centerEnd,
+                summary: (rows) => formatMoney(
+                  data.snapshot.totalDebit,
+                  currency: data.baseCurrency,
+                ),
                 builder: (context, row) => AppTableText(
                   formatMoney(row.debit, currency: data.baseCurrency),
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -547,6 +551,10 @@ class _TrialBalanceCard extends StatelessWidget {
                 flex: 2,
                 alignment: AlignmentDirectional.centerEnd,
                 headerAlignment: AlignmentDirectional.centerEnd,
+                summary: (rows) => formatMoney(
+                  data.snapshot.totalCredit,
+                  currency: data.baseCurrency,
+                ),
                 builder: (context, row) => AppTableText(
                   formatMoney(row.credit, currency: data.baseCurrency),
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -561,31 +569,6 @@ class _TrialBalanceCard extends StatelessWidget {
                 'أنشئ أول قيد من النموذج المجاور ليظهر ميزان المراجعة.',
             emptyIcon: Icons.receipt_long_outlined,
             rowHeight: 52,
-            footer: Row(
-              children: [
-                Text('الإجمالي', style: theme.textTheme.titleSmall),
-                const Spacer(),
-                Text(
-                  formatMoney(
-                    data.snapshot.totalDebit,
-                    currency: data.baseCurrency,
-                  ),
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: context.semanticColors.success,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.xl),
-                Text(
-                  formatMoney(
-                    data.snapshot.totalCredit,
-                    currency: data.baseCurrency,
-                  ),
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: context.semanticColors.info,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

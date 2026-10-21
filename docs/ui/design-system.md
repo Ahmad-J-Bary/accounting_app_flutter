@@ -90,6 +90,7 @@ A column may declare:
 | RTL/LTR | Directional alignment and icons; horizontal scrolling works in both directions. |
 | Long lists | Rows are built lazily with `ListView.builder` when height is bounded. Page or sort changes jump the vertical scroll back to the top. |
 | Footer | Horizontally scrollable and at least `minWidth` wide, so totals do not overflow on phones. |
+| Summary row | A column with a `summary` callback gets a totals row pinned under the body and aligned with the columns (the React table aligned its summary with the grid). The first column without a total shows `summaryLabel` (default «الإجمالي»). The callback receives the rows the table displays, so a page may sum them or use its own authoritative totals. |
 
 ### Sizing and scrolling
 
@@ -126,6 +127,8 @@ materials pages:
 7. Wire `loading`, `error` and `onRetry` to the gateway state.
 8. Add a widget test for sorting/pagination/visibility if the page customises
    the table beyond the defaults.
+9. Add a `summary` callback to the money columns that need a totals row, and
+   prefer the totals the Rust core already reports over summing in Dart.
 
 ## Table preferences
 
@@ -251,8 +254,10 @@ instance invalidates the cache automatically.
 End, Space), column hiding (including width redistribution, «إظهار الكل» and
 restoring the column), adopting saved preferences when the table id changes,
 pagination, selection, loading/error/empty states, RTL/LTR, single-line cell
-ellipsis, width persistence and stale preference sanitisation. It also guards
-the performance contract: one sort-key extraction per row, and a keyboard cursor
-that rebuilds only the rows it touches. `app/test/row_filter_cache_test.dart`
-covers the page-level row filter cache. Page-level tests live in
-`app/test/widget_test.dart`, including the 430×900 customers-page layout.
+ellipsis, width persistence, stale preference sanitisation, the row densities
+and the column-aligned summary row. It also guards the performance contract:
+one sort-key extraction per row, and a keyboard cursor that rebuilds only the
+rows it touches.
+`app/test/row_filter_cache_test.dart` covers the page-level row filter cache.
+Page-level tests live in `app/test/widget_test.dart`, including the 430×900
+customers-page layout and the trial-balance summary row.

@@ -777,6 +777,7 @@ class AppTableColumn<T> {
     this.sortable = false,
     this.sortValue,
     this.searchText,
+    this.summary,
     this.visibleByDefault = true,
     this.canHide = true,
     this.canResize = true,
@@ -799,6 +800,13 @@ class AppTableColumn<T> {
 
   /// Value used for search/filter helpers built on top of the table.
   final String Function(T row)? searchText;
+
+  /// Total for this column, shown in the summary row under the body.
+  ///
+  /// The callback receives the rows the table currently displays (the current
+  /// page when [AppDataTable.paginate] is on). A page that already knows the
+  /// authoritative total may ignore the argument.
+  final String? Function(List<T> rows)? summary;
   final bool visibleByDefault;
   final bool canHide;
   final bool canResize;
@@ -841,6 +849,7 @@ class AppDataTable<T> extends StatefulWidget {
     this.showColumnMenu = true,
     this.initialSortColumnId,
     this.initialSortAscending = true,
+    this.summaryLabel = 'الإجمالي',
   }) : assert(
          !enableSelection || rowId != null,
          'enableSelection requires rowId so selection survives sorting.',
@@ -887,6 +896,9 @@ class AppDataTable<T> extends StatefulWidget {
   final bool showColumnMenu;
   final String? initialSortColumnId;
   final bool initialSortAscending;
+
+  /// Label shown in the first column of the summary row.
+  final String summaryLabel;
 
   @override
   State<AppDataTable<T>> createState() => _AppDataTableState<T>();
@@ -1676,6 +1688,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
           idByColumn: idByColumn,
           pageIds: pageIds,
         );
+        final hasSummary = columns.any((column) => column.summary != null);
         final content = Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1714,6 +1727,14 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
                   widths: widths,
                   idByColumn: idByColumn,
                 ),
+            if (hasSummary)
+              _summaryRow(
+                context,
+                columns: columns,
+                rows: rows,
+                widths: widths,
+                idByColumn: idByColumn,
+              ),
           ],
         );
 
@@ -1894,6 +1915,48 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
         columns: columns,
         widths: widths,
         idByColumn: idByColumn,
+      ),
+    );
+  }
+
+  /// Totals row aligned with the columns, pinned under the body.
+  ///
+  /// The React table aligned its summary with the grid; the Flutter table
+  /// keeps the same alignment by reusing the resolved column widths.
+  Widget _summaryRow(
+    BuildContext context, {
+    required List<AppTableColumn<T>> columns,
+    required List<T> rows,
+    required Map<String, double> widths,
+    required Map<AppTableColumn<T>, String> idByColumn,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      height: _rowHeight,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.45,
+        ),
+        border: Border(top: BorderSide(color: theme.colorScheme.outline)),
+      ),
+      child: Row(
+        children: [
+          for (var index = 0; index < columns.length; index++)
+            SizedBox(
+              width: widths[idByColumn[columns[index]]!] ?? 0,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Align(
+                  alignment: columns[index].alignment,
+                  child: AppTableText(
+                    columns[index].summary?.call(rows) ??
+                        (index == 0 ? widget.summaryLabel : ''),
+                    style: theme.textTheme.titleSmall,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

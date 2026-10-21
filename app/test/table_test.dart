@@ -574,4 +574,38 @@ void main() {
 
     expect(rowGap(), closeTo(TableDensity.compact.rowHeight, 1));
   });
+
+  testWidgets('renders a summary row aligned with the columns', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        AppDataTable<_Row>(
+          columns: [
+            AppTableColumn<_Row>(
+              id: 'name',
+              label: 'الاسم',
+              builder: (context, row) => Text(row.name),
+            ),
+            AppTableColumn<_Row>(
+              id: 'score',
+              label: 'الدرجة',
+              alignment: AlignmentDirectional.centerEnd,
+              summary: (rows) =>
+                  '${rows.fold<int>(0, (sum, row) => sum + row.score)}',
+              builder: (context, row) => Text('${row.score}'),
+            ),
+          ],
+          rows: rows,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The label sits in the first column and the total in the second one.
+    expect(find.text('الإجمالي'), findsOneWidget);
+    expect(find.text('80'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('80')).dx,
+      lessThan(tester.getTopLeft(find.text('الإجمالي')).dx),
+    );
+  });
 }

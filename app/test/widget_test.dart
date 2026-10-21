@@ -441,6 +441,8 @@ void main() {
 
     expect(find.text('ميزان المراجعة'), findsOneWidget);
     expect(find.text('الصندوق'), findsWidgets);
+    // The trial balance totals sit in a column-aligned summary row.
+    expect(find.text('الإجمالي'), findsOneWidget);
   });
 
   testWidgets('shows the setup wizard when setup is incomplete', (
