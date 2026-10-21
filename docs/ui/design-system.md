@@ -119,7 +119,12 @@ materials pages:
 ### Page integration checklist
 
 1. Give every column a stable `id`.
-2. Give the table a stable `tableId` if preferences should persist.
+2. Give the table a stable `tableId` if preferences should persist. Every table
+   in the app has one: `customers`, `suppliers`, `materials`, `sales-invoices`,
+   `purchase-invoices`, `sales-returns`, `purchase-returns`, `receipts`,
+   `payments`, `expense-items` and `trial-balance`. A table that shares its
+   widget between two modes (sales and purchase invoices) needs one `tableId`
+   per mode, because the column labels change with the mode.
 3. Provide `rowId` when selection is enabled.
 4. Pass filtered rows and keep the filter state in the page.
 5. Set a realistic `minWidth`.

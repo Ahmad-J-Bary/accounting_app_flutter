@@ -263,6 +263,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
         ),
         const SizedBox(height: AppSpacing.lg),
         AppDataTable<LedgerInvoice>(
+          tableId: _isSales ? 'sales-invoices' : 'purchase-invoices',
           rows: visible,
           minWidth: 1120,
           emptyTitle: 'لا توجد فواتير بعد',
@@ -276,8 +277,11 @@ class _InvoicesPageState extends State<InvoicesPage> {
           onRowTap: (_) {},
           columns: [
             AppTableColumn(
+              id: 'number',
               label: 'الرقم',
               flex: 2,
+              sortable: true,
+              sortValue: (invoice) => invoice.number,
               builder: (context, invoice) => AppTableText(
                 invoice.number,
                 style: Theme.of(
@@ -286,27 +290,37 @@ class _InvoicesPageState extends State<InvoicesPage> {
               ),
             ),
             AppTableColumn(
+              id: 'party',
               label: _isSales ? 'العميل' : 'المورد',
               flex: 3,
+              sortable: true,
+              sortValue: (invoice) => invoice.partyName,
               builder: (context, invoice) => AppTableText(
                 invoice.partyName.isEmpty ? '—' : invoice.partyName,
               ),
             ),
             AppTableColumn(
+              id: 'date',
               label: 'التاريخ',
               flex: 2,
+              sortable: true,
+              sortValue: (invoice) => invoice.issuedAt,
               builder: (context, invoice) =>
                   AppTableText(_formatDate(invoice.issuedAt)),
             ),
             AppTableColumn(
+              id: 'payment',
               label: 'طريقة الدفع',
               flex: 2,
               builder: (context, invoice) =>
                   AppTableText(_paymentLabel(invoice.paymentMethod)),
             ),
             AppTableColumn(
+              id: 'total',
               label: 'الإجمالي',
               flex: 2,
+              sortable: true,
+              sortValue: (invoice) => parseAmount(invoice.total),
               alignment: AlignmentDirectional.centerEnd,
               headerAlignment: AlignmentDirectional.centerEnd,
               builder: (context, invoice) => AppTableText(
@@ -315,8 +329,11 @@ class _InvoicesPageState extends State<InvoicesPage> {
               ),
             ),
             AppTableColumn(
+              id: 'remaining',
               label: 'المتبقي',
               flex: 2,
+              sortable: true,
+              sortValue: (invoice) => parseAmount(invoice.remaining),
               alignment: AlignmentDirectional.centerEnd,
               headerAlignment: AlignmentDirectional.centerEnd,
               builder: (context, invoice) {
@@ -333,8 +350,11 @@ class _InvoicesPageState extends State<InvoicesPage> {
               },
             ),
             AppTableColumn(
+              id: 'status',
               label: 'الحالة',
               flex: 2,
+              sortable: true,
+              sortValue: (invoice) => invoice.isPosted ? 1 : 0,
               builder: (context, invoice) => AppBadge(
                 label: invoice.isPosted ? 'مرحّلة' : 'مسودة',
                 tone: invoice.isPosted
@@ -344,8 +364,11 @@ class _InvoicesPageState extends State<InvoicesPage> {
               ),
             ),
             AppTableColumn(
+              id: 'actions',
               label: 'إجراءات',
               flex: 2,
+              canHide: false,
+              canResize: false,
               alignment: AlignmentDirectional.centerEnd,
               headerAlignment: AlignmentDirectional.centerEnd,
               builder: (context, invoice) => Row(
@@ -1469,6 +1492,7 @@ class _ReturnsPageState extends State<ReturnsPage> {
         ),
         const SizedBox(height: AppSpacing.lg),
         AppDataTable<LedgerReturn>(
+          tableId: _isSales ? 'sales-returns' : 'purchase-returns',
           rows: visible,
           minWidth: 900,
           emptyTitle: 'لا توجد مرتجعات',
@@ -1476,33 +1500,48 @@ class _ReturnsPageState extends State<ReturnsPage> {
           emptyIcon: Icons.assignment_return_outlined,
           columns: [
             AppTableColumn(
+              id: 'number',
               label: 'الرقم',
               flex: 2,
+              sortable: true,
+              sortValue: (item) => item.number,
               builder: (context, item) => AppTableText(
                 item.number,
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
             AppTableColumn(
+              id: 'party',
               label: _isSales ? 'العميل' : 'المورد',
               flex: 3,
+              sortable: true,
+              sortValue: (item) => item.partyName,
               builder: (context, item) =>
                   AppTableText(item.partyName.isEmpty ? '—' : item.partyName),
             ),
             AppTableColumn(
+              id: 'date',
               label: 'التاريخ',
               flex: 2,
+              sortable: true,
+              sortValue: (item) => item.returnDate,
               builder: (context, item) =>
                   AppTableText(_formatDate(item.returnDate)),
             ),
             AppTableColumn(
+              id: 'lines',
               label: 'عدد البنود',
               flex: 2,
+              sortable: true,
+              sortValue: (item) => item.lines.length,
               builder: (context, item) => AppTableText('${item.lines.length}'),
             ),
             AppTableColumn(
+              id: 'total',
               label: 'الإجمالي',
               flex: 2,
+              sortable: true,
+              sortValue: (item) => parseAmount(item.total),
               alignment: AlignmentDirectional.centerEnd,
               headerAlignment: AlignmentDirectional.centerEnd,
               builder: (context, item) => AppTableText(
@@ -1511,6 +1550,7 @@ class _ReturnsPageState extends State<ReturnsPage> {
               ),
             ),
             AppTableColumn(
+              id: 'status',
               label: 'الحالة',
               flex: 2,
               builder: (context, item) => const AppBadge(

@@ -514,25 +514,35 @@ class _TrialBalanceCard extends StatelessWidget {
           ),
           const Divider(height: 1),
           AppDataTable<TrialBalanceRow>(
+            tableId: 'trial-balance',
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             minWidth: 620,
             columns: [
               AppTableColumn(
+                id: 'code',
                 label: 'الرمز',
                 flex: 2,
+                sortable: true,
+                sortValue: (row) => row.accountCode,
                 builder: (context, row) => AppTableText(
                   row.accountCode,
                   style: theme.textTheme.labelMedium,
                 ),
               ),
               AppTableColumn(
+                id: 'account',
                 label: 'الحساب',
                 flex: 5,
+                sortable: true,
+                sortValue: (row) => row.accountName,
                 builder: (context, row) => AppTableText(row.accountName),
               ),
               AppTableColumn(
+                id: 'debit',
                 label: 'مدين',
                 flex: 2,
+                sortable: true,
+                sortValue: (row) => parseAmount(row.debit),
                 alignment: AlignmentDirectional.centerEnd,
                 headerAlignment: AlignmentDirectional.centerEnd,
                 summary: (rows) => formatMoney(
@@ -547,8 +557,11 @@ class _TrialBalanceCard extends StatelessWidget {
                 ),
               ),
               AppTableColumn(
+                id: 'credit',
                 label: 'دائن',
                 flex: 2,
+                sortable: true,
+                sortValue: (row) => parseAmount(row.credit),
                 alignment: AlignmentDirectional.centerEnd,
                 headerAlignment: AlignmentDirectional.centerEnd,
                 summary: (rows) => formatMoney(
