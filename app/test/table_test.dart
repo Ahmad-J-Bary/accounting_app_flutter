@@ -114,6 +114,27 @@ void main() {
     );
   });
 
+  testWidgets('keeps source order for rows with equal sort keys', (
+    tester,
+  ) async {
+    final tied = [
+      for (var index = 0; index < 40; index++)
+        _Row('r$index', 'r$index', index % 2),
+    ];
+    await tester.pumpWidget(_wrap(_table(rows: tied)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('الدرجة'));
+    await tester.pumpAndSettle();
+
+    // Score 0 rows must stay in source order: r0, r2, r4…
+    final y0 = tester.getTopLeft(find.text('r0').first).dy;
+    final y2 = tester.getTopLeft(find.text('r2').first).dy;
+    final y4 = tester.getTopLeft(find.text('r4').first).dy;
+    expect(y0, lessThan(y2));
+    expect(y2, lessThan(y4));
+  });
+
   testWidgets('hides a column, redistributes width and restores it', (
     tester,
   ) async {

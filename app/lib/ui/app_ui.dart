@@ -892,6 +892,9 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
   int _page = 0;
   int _localPageSize = 25;
   int? _focusedRow;
+  List<T>? _sortedCache;
+  List<T>? _sortedSource;
+  String? _sortedKey;
   List<String> _columnIds = const <String>[];
 
   @override
@@ -1062,45 +1065,72 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
 
   List<T> _sortedRows() {
     final id = _sortColumnId;
-    if (id == null) {
+    final sortValue = _sortValueFor(id);
+    if (sortValue == null) {
       return widget.rows;
+    }
+    final key = '${id}_$_sortAscending';
+    if (identical(_sortedSource, widget.rows) &&
+        _sortedKey == key &&
+        _sortedCache != null) {
+      return _sortedCache!;
+    }
+    final ascending = _sortAscending;
+    final indexed = <(int, T)>[
+      for (var index = 0; index < widget.rows.length; index++)
+        (index, widget.rows[index]),
+    ];
+    indexed.sort((a, b) {
+      final left = sortValue(a.$2);
+      final right = sortValue(b.$2);
+      final int comparison;
+      if (left == null && right == null) {
+        comparison = 0;
+      } else if (left == null) {
+        // Null values stay last in both directions.
+        comparison = 1;
+      } else if (right == null) {
+        comparison = -1;
+      } else {
+        final value = _compareValues(left, right);
+        comparison = ascending ? value : -value;
+      }
+      // Equal keys keep their source order: sorting must not reshuffle rows
+      // between pages when many rows share a value (same date, same party…).
+      return comparison != 0 ? comparison : a.$1.compareTo(b.$1);
+    });
+    final sorted = <T>[for (final entry in indexed) entry.$2];
+    _sortedSource = widget.rows;
+    _sortedKey = key;
+    _sortedCache = sorted;
+    return sorted;
+  }
+
+  Object? Function(T)? _sortValueFor(String? id) {
+    if (id == null) {
+      return null;
     }
     final index = _columnIds.indexOf(id);
     if (index < 0) {
-      return widget.rows;
+      return null;
     }
     final column = widget.columns[index];
-    final sortValue = column.sortValue;
-    if (!column.sortable || sortValue == null) {
-      return widget.rows;
+    if (!column.sortable) {
+      return null;
     }
-    final ascending = _sortAscending;
-    final sorted = List<T>.of(widget.rows);
-    sorted.sort((a, b) {
-      final left = sortValue(a);
-      final right = sortValue(b);
-      if (left == null && right == null) {
-        return 0;
-      }
-      if (left == null) {
-        return 1;
-      }
-      if (right == null) {
-        return -1;
-      }
-      final int comparison;
-      if (left is num && right is num) {
-        comparison = left.compareTo(right);
-      } else if (left is DateTime && right is DateTime) {
-        comparison = left.compareTo(right);
-      } else {
-        comparison = left.toString().toLowerCase().compareTo(
-          right.toString().toLowerCase(),
-        );
-      }
-      return ascending ? comparison : -comparison;
-    });
-    return sorted;
+    return column.sortValue;
+  }
+
+  int _compareValues(Object left, Object right) {
+    if (left is num && right is num) {
+      return left.compareTo(right);
+    }
+    if (left is DateTime && right is DateTime) {
+      return left.compareTo(right);
+    }
+    return left.toString().toLowerCase().compareTo(
+      right.toString().toLowerCase(),
+    );
   }
 
   void _notifySelection() {

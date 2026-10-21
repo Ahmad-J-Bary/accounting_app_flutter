@@ -75,7 +75,7 @@ A column may declare:
 
 | Feature | Behaviour |
 |---|---|
-| Sorting | Click a sortable header; second click reverses. Sorting is by the column's `sortValue`, never by rendered text. |
+| Sorting | Click a sortable header; second click reverses. Sorting is by the column's `sortValue`, never by rendered text. Nulls sort last in both directions and equal values keep their source order (stable sort), so tied rows never jump between pages. The sorted list is memoised until the rows or the sort key change. |
 | Column menu | Show/hide, move left/right, reset widths/order/visibility, or restore every hidden column with «إظهار الكل». Required columns cannot be hidden. Hidden columns stop reserving width, so the remaining columns share the freed space. A badge on the toolbar icon shows how many columns are hidden. |
 | Resize | Drag the handle at the column edge; widths clamp to 56–720 px. |
 | Pagination | Optional local pagination with page sizes 10/25/50/100. Footer shows the visible range and stacks into two rows below 520 px so it never overflows on phones. |
