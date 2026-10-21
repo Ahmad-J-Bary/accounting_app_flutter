@@ -128,6 +128,9 @@ The invoice and return editors show their lines as a grid, like the React
   the column; the stacked layout keeps its labels.
 - The column order is: المادة، الوحدة، الكمية، السعر، خصم %، الإجمالي، ثم
   زر حذف البند.
+- On a phone the editor keeps the stacked card layout and the app bar falls
+  back to icon buttons with tooltips, because two labelled save buttons do not
+  fit in 430 px. A widget test guards that viewport.
 
 ### Master-data page layout
 
@@ -290,10 +293,12 @@ instance invalidates the cache automatically.
 End, Space), column hiding (including width redistribution, «إظهار الكل» and
 restoring the column), adopting saved preferences when the table id changes,
 pagination, selection, loading/error/empty states, RTL/LTR, single-line cell
-ellipsis, width persistence, stale preference sanitisation, the row densities
-and the column-aligned summary row. It also guards the performance contract:
-one sort-key extraction per row, and a keyboard cursor that rebuilds only the
-rows it touches.
+ellipsis, width persistence, stale preference sanitisation, the row densities,
+the appearance switches and the column-aligned summary row. It also guards the
+performance contract: one sort-key extraction per row, and a keyboard cursor
+that rebuilds only the rows it touches.
 `app/test/row_filter_cache_test.dart` covers the page-level row filter cache.
-Page-level tests live in `app/test/widget_test.dart`, including the 430×900
-customers-page layout and the trial-balance summary row.
+Page-level tests live in `app/test/widget_test.dart`: the 430×900 layouts of
+the customers page, the invoice list and the invoice, return and payment
+editors, the trial-balance summary row, the searchable material picker and the
+unsaved-changes guard.
