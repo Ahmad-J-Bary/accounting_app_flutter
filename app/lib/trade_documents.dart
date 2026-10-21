@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'ledger.dart';
 import 'theme/app_theme.dart';
@@ -842,33 +842,65 @@ class _InvoiceEditorPageState extends State<InvoiceEditorPage> {
                     icon: const Icon(Icons.add, size: 18),
                     label: const Text('إضافة بند'),
                   ),
-                  child: Column(
-                    children: [
-                      for (var index = 0; index < _lines.length; index++)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                          child: _InvoiceLineRow(
-                            key: ObjectKey(_lines[index]),
-                            line: _lines[index],
-                            index: index,
-                            materials: widget.data.materials,
-                            baseCurrency: widget.data.baseCurrency,
-                            isSales: _isSales,
-                            canDelete: _lines.length > 1,
-                            onChanged: () => setState(() => _dirty = true),
-                            onDelete: () => _removeLine(index),
-                          ),
-                        ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Align(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final grid = constraints.maxWidth >= 780;
+                      Widget buildRow(int index) => _InvoiceLineRow(
+                        key: ObjectKey(_lines[index]),
+                        line: _lines[index],
+                        index: index,
+                        materials: widget.data.materials,
+                        baseCurrency: widget.data.baseCurrency,
+                        isSales: _isSales,
+                        canDelete: _lines.length > 1,
+                        onChanged: () => setState(() => _dirty = true),
+                        onDelete: () => _removeLine(index),
+                      );
+                      final addButton = Align(
                         alignment: AlignmentDirectional.centerStart,
                         child: TextButton.icon(
                           onPressed: _addLine,
                           icon: const Icon(Icons.add, size: 18),
                           label: const Text('بند جديد'),
                         ),
-                      ),
-                    ],
+                      );
+                      if (!grid) {
+                        return Column(
+                          children: [
+                            for (var index = 0; index < _lines.length; index++)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: AppSpacing.md,
+                                ),
+                                child: buildRow(index),
+                              ),
+                            const SizedBox(height: AppSpacing.sm),
+                            addButton,
+                          ],
+                        );
+                      }
+                      // The grid: one header for all the rows, and a horizontal
+                      // scroll when the columns do not fit.
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
+                          width: _lineGridWidth,
+                          child: Column(
+                            children: [
+                              const _LineGridHeader(),
+                              for (
+                                var index = 0;
+                                index < _lines.length;
+                                index++
+                              )
+                                buildRow(index),
+                              const SizedBox(height: AppSpacing.sm),
+                              addButton,
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
@@ -968,6 +1000,65 @@ class _InvoiceLineEditor {
   }
 }
 
+/// Shared column layout of the invoice and return line grid.
+///
+/// The React document grid uses one template for the header and every row, so
+/// the columns stay aligned. The same widths are used here.
+class _LineGridColumn {
+  const _LineGridColumn({required this.label, required this.width});
+
+  final String label;
+  final double width;
+}
+
+const List<_LineGridColumn> _lineGridColumns = <_LineGridColumn>[
+  _LineGridColumn(label: 'المادة', width: 300),
+  _LineGridColumn(label: 'الوحدة', width: 160),
+  _LineGridColumn(label: 'الكمية', width: 110),
+  _LineGridColumn(label: 'السعر', width: 130),
+  _LineGridColumn(label: 'خصم %', width: 110),
+  _LineGridColumn(label: 'الإجمالي', width: 140),
+  _LineGridColumn(label: '', width: 48),
+];
+
+const double _lineGridWidth = 998;
+
+/// Header of the line grid, aligned with the rows below it.
+class _LineGridHeader extends StatelessWidget {
+  const _LineGridHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        border: Border(bottom: BorderSide(color: theme.colorScheme.outline)),
+      ),
+      child: Row(
+        children: [
+          for (final column in _lineGridColumns)
+            SizedBox(
+              width: column.width,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  column.label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _InvoiceLineRow extends StatelessWidget {
   const _InvoiceLineRow({
     super.key,
@@ -993,111 +1084,108 @@ class _InvoiceLineRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final units = line.material?.units ?? const <LedgerMaterialUnit>[];
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 780;
-          final fields = <Widget>[
-            SizedBox(
-              width: compact ? constraints.maxWidth : 300,
-              child: AppMaterialPicker(
-                label: 'المادة ${index + 1}',
-                materials: materials,
-                selectedId: line.material?.id,
-                isSales: isSales,
-                onSelected: (material) {
-                  line.material = material;
-                  line.unitId = material == null ? null : _baseUnitId(material);
-                  line.conversionFactor = '1';
-                  final price = isSales
-                      ? material?.salePrice ?? ''
-                      : material?.purchasePrice ?? '';
-                  if (parseAmount(line.unitPrice.text) == 0 &&
-                      parseAmount(price) > 0) {
-                    line.unitPrice.text = price;
-                  }
-                  onChanged();
-                },
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 780;
+        // In the grid the column header names the field, so the cells stay
+        // bare like the React grid. The stacked layout keeps its labels.
+        String? fieldLabel(String text) => compact ? text : null;
+        final fields = <Widget>[
+          SizedBox(
+            width: compact ? constraints.maxWidth : _lineGridColumns[0].width,
+            child: AppMaterialPicker(
+              label: 'المادة ${index + 1}',
+              hideLabel: !compact,
+              materials: materials,
+              selectedId: line.material?.id,
+              isSales: isSales,
+              onSelected: (material) {
+                line.material = material;
+                line.unitId = material == null ? null : _baseUnitId(material);
+                line.conversionFactor = '1';
+                final price = isSales
+                    ? material?.salePrice ?? ''
+                    : material?.purchasePrice ?? '';
+                if (parseAmount(line.unitPrice.text) == 0 &&
+                    parseAmount(price) > 0) {
+                  line.unitPrice.text = price;
+                }
+                onChanged();
+              },
             ),
-            SizedBox(
-              width: 160,
-              child: DropdownButtonFormField<String>(
-                key: ValueKey('${line.material?.id}-unit'),
-                initialValue: line.unitId,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'الوحدة'),
-                items: units
-                    .map(
-                      (unit) => DropdownMenuItem(
-                        value: unit.id,
-                        child: Text(
-                          '${unit.name} (×${unit.conversionFactor})',
-                          overflow: TextOverflow.ellipsis,
-                        ),
+          ),
+          SizedBox(
+            width: _lineGridColumns[1].width,
+            child: DropdownButtonFormField<String>(
+              key: ValueKey('${line.material?.id}-unit'),
+              initialValue: line.unitId,
+              isExpanded: true,
+              decoration: InputDecoration(labelText: fieldLabel('الوحدة')),
+              items: units
+                  .map(
+                    (unit) => DropdownMenuItem(
+                      value: unit.id,
+                      child: Text(
+                        '${unit.name} (×${unit.conversionFactor})',
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    )
-                    .toList(),
-                onChanged: (id) {
-                  final unit = units.where((unit) => unit.id == id).firstOrNull;
-                  line.unitId = id;
-                  line.conversionFactor = unit?.conversionFactor ?? '1';
-                  onChanged();
-                },
+                    ),
+                  )
+                  .toList(),
+              onChanged: (id) {
+                final unit = units.where((unit) => unit.id == id).firstOrNull;
+                line.unitId = id;
+                line.conversionFactor = unit?.conversionFactor ?? '1';
+                onChanged();
+              },
+            ),
+          ),
+          SizedBox(
+            width: _lineGridColumns[2].width,
+            child: TextField(
+              controller: line.quantity,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              onChanged: (_) => onChanged(),
+              decoration: InputDecoration(labelText: fieldLabel('الكمية')),
+            ),
+          ),
+          SizedBox(
+            width: _lineGridColumns[3].width,
+            child: TextField(
+              controller: line.unitPrice,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              onChanged: (_) => onChanged(),
+              decoration: InputDecoration(labelText: fieldLabel('السعر')),
+            ),
+          ),
+          SizedBox(
+            width: _lineGridColumns[4].width,
+            child: TextField(
+              controller: line.discount,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              onChanged: (_) => onChanged(),
+              decoration: InputDecoration(labelText: fieldLabel('خصم %')),
+            ),
+          ),
+          SizedBox(
+            width: _lineGridColumns[5].width,
+            child: InputDecorator(
+              decoration: InputDecoration(labelText: fieldLabel('الإجمالي')),
+              child: Text(
+                formatMoney(line.total.toString(), currency: baseCurrency),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
-            SizedBox(
-              width: 110,
-              child: TextField(
-                controller: line.quantity,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                onChanged: (_) => onChanged(),
-                decoration: const InputDecoration(labelText: 'الكمية'),
-              ),
-            ),
-            SizedBox(
-              width: 130,
-              child: TextField(
-                controller: line.unitPrice,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                onChanged: (_) => onChanged(),
-                decoration: const InputDecoration(labelText: 'السعر'),
-              ),
-            ),
-            SizedBox(
-              width: 110,
-              child: TextField(
-                controller: line.discount,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                onChanged: (_) => onChanged(),
-                decoration: const InputDecoration(labelText: 'خصم %'),
-              ),
-            ),
-            SizedBox(
-              width: 140,
-              child: InputDecorator(
-                decoration: const InputDecoration(labelText: 'الإجمالي'),
-                child: Text(
-                  formatMoney(line.total.toString(), currency: baseCurrency),
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
-            IconButton(
+          ),
+          SizedBox(
+            width: _lineGridColumns[6].width,
+            child: IconButton(
               tooltip: 'حذف البند',
               onPressed: canDelete ? onDelete : null,
               icon: Icon(
@@ -1105,9 +1193,21 @@ class _InvoiceLineRow extends StatelessWidget {
                 color: Theme.of(context).colorScheme.error,
               ),
             ),
-          ];
-          if (compact) {
-            return Column(
+          ),
+        ];
+        if (compact) {
+          // On a phone the line keeps its card layout: a grid would need
+          // horizontal scrolling for every field.
+          return Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
+            ),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 for (final field in fields)
@@ -1116,16 +1216,24 @@ class _InvoiceLineRow extends StatelessWidget {
                     child: field,
                   ),
               ],
-            );
-          }
-          return Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: fields,
+            ),
           );
-        },
-      ),
+        }
+        // The grid row: one cell per column, aligned with the header.
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: Theme.of(
+                  context,
+                ).colorScheme.outline.withValues(alpha: 0.6),
+              ),
+            ),
+          ),
+          child: Row(children: fields),
+        );
+      },
     );
   }
 }
@@ -1933,27 +2041,50 @@ class _ReturnEditorPageState extends State<ReturnEditorPage> {
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('إضافة بند'),
               ),
-              child: Column(
-                children: [
-                  for (var index = 0; index < _lines.length; index++)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: _InvoiceLineRow(
-                        key: ObjectKey(_lines[index]),
-                        line: _lines[index],
-                        index: index,
-                        materials: widget.data.materials,
-                        baseCurrency: widget.data.baseCurrency,
-                        isSales: _isSales,
-                        canDelete: _lines.length > 1,
-                        onChanged: () => setState(() => _dirty = true),
-                        onDelete: () => setState(() {
-                          _lines.removeAt(index).dispose();
-                          _dirty = true;
-                        }),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final grid = constraints.maxWidth >= 780;
+                  Widget buildRow(int index) => _InvoiceLineRow(
+                    key: ObjectKey(_lines[index]),
+                    line: _lines[index],
+                    index: index,
+                    materials: widget.data.materials,
+                    baseCurrency: widget.data.baseCurrency,
+                    isSales: _isSales,
+                    canDelete: _lines.length > 1,
+                    onChanged: () => setState(() => _dirty = true),
+                    onDelete: () => setState(() {
+                      _lines.removeAt(index).dispose();
+                      _dirty = true;
+                    }),
+                  );
+                  if (!grid) {
+                    return Column(
+                      children: [
+                        for (var index = 0; index < _lines.length; index++)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.md,
+                            ),
+                            child: buildRow(index),
+                          ),
+                      ],
+                    );
+                  }
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: _lineGridWidth,
+                      child: Column(
+                        children: [
+                          const _LineGridHeader(),
+                          for (var index = 0; index < _lines.length; index++)
+                            buildRow(index),
+                        ],
                       ),
                     ),
-                ],
+                  );
+                },
               ),
             ),
             const SizedBox(height: AppSpacing.xl),

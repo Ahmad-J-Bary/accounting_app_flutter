@@ -565,6 +565,34 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('shows the aligned line grid in the invoice editor', (
+    tester,
+  ) async {
+    await _pumpWorkspace(tester);
+    await tester.tap(find.text('فواتير البيع').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('إنشاء فاتورة'));
+    await tester.pumpAndSettle();
+
+    // The wide layout turns the line rows into a grid with one header.
+    expect(find.text('المادة'), findsOneWidget);
+    expect(find.text('الوحدة'), findsOneWidget);
+    expect(find.text('الكمية'), findsOneWidget);
+    expect(find.text('خصم %'), findsOneWidget);
+
+    // The header follows the RTL order of the columns.
+    expect(
+      tester.getTopLeft(find.text('المادة')).dx,
+      greaterThan(tester.getTopLeft(find.text('الكمية')).dx),
+    );
+
+    // The cells of the row sit under the header.
+    expect(
+      tester.getTopLeft(find.text('اختر مادة')).dy,
+      greaterThan(tester.getTopLeft(find.text('المادة')).dy),
+    );
+  });
+
   testWidgets('picks a material through the searchable picker', (tester) async {
     await _pumpWorkspace(tester);
     await tester.tap(find.text('فواتير البيع').first);

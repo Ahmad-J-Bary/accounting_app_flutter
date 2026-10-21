@@ -114,6 +114,21 @@ A column may declare:
 - Keep the page chrome above the table fixed (`MasterDataPageLayout`): the table
   owns the remaining height and scrolls internally.
 
+### Document line grid
+
+The invoice and return editors show their lines as a grid, like the React
+`GenericDocumentGrid`:
+
+- One template (`_lineGridColumns`) holds the label and the width of every
+  column, so the header and the rows stay aligned.
+- The grid is used from 780 px upward and scrolls horizontally when the
+  columns do not fit; below that width each line keeps its stacked card
+  layout, because a grid would need horizontal scrolling for every field.
+- In the grid the cells are bare (no floating label) because the header names
+  the column; the stacked layout keeps its labels.
+- The column order is: المادة، الوحدة، الكمية، السعر، خصم %، الإجمالي، ثم
+  زر حذف البند.
+
 ### Master-data page layout
 
 `MasterDataPageLayout` owns the shared chrome of the customers, suppliers and

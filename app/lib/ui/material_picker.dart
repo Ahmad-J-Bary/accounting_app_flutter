@@ -18,6 +18,7 @@ class AppMaterialPicker extends StatelessWidget {
     required this.onSelected,
     this.isSales = true,
     this.emptyMessage = 'لا توجد مواد مطابقة.',
+    this.hideLabel = false,
   });
 
   final String label;
@@ -30,6 +31,10 @@ class AppMaterialPicker extends StatelessWidget {
   final bool isSales;
   final String emptyMessage;
 
+  /// Hides the floating label of the field, for the line grid where the
+  /// column header already names it.
+  final bool hideLabel;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -41,7 +46,7 @@ class AppMaterialPicker extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: InputDecorator(
         decoration: InputDecoration(
-          labelText: label,
+          labelText: hideLabel ? null : label,
           prefixIcon: const Icon(Icons.inventory_2_outlined),
           suffixIcon: const Icon(Icons.search, size: 18),
         ),
