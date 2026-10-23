@@ -14,7 +14,7 @@ class AppPreferences {
 
   const AppPreferences({
     this.themeMode = AppThemeMode.system,
-    this.density = AppDensity.comfortable,
+    this.density = AppDensity.compact,
     this.language = AppLanguage.arabic,
     this.fontScale = 1.0,
     this.reduceMotion = false,

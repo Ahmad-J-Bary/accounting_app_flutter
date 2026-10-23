@@ -6,8 +6,18 @@ import 'setup.dart';
 import 'theme/app_theme.dart';
 import 'ui/app_ui.dart';
 
-void main() {
-  runApp(AccountingApp(gateway: RustLedgerGateway()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final settingsService = SettingsService(InMemorySettingsRepository());
+  await settingsService.load();
+
+  runApp(
+    ChangeNotifierProvider<SettingsService>.value(
+      value: settingsService,
+      child: AccountingApp(gateway: RustLedgerGateway()),
+    ),
+  );
 }
 
 class AccountingApp extends StatefulWidget {
