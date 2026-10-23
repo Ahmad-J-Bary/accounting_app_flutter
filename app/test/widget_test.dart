@@ -1,6 +1,3 @@
-import 'package:accounting_app_flutter/settings/settings_model.dart';
-import 'package:accounting_app_flutter/settings/settings_service.dart';
-import 'package:accounting_app_flutter/settings/settings_store.dart';
 import 'package:accounting_app_flutter/ledger.dart';
 import 'package:accounting_app_flutter/main.dart';
 import 'package:flutter/material.dart';
@@ -429,20 +426,16 @@ class _InvoiceGateway extends _FakeGateway {
 
 Future<void> _pumpWorkspace(
   WidgetTester tester, {
+  bool setupComplete = true,
   LedgerGateway? gateway,
 }) async {
-  final settings = SettingsService(
-    InMemorySettingsStore(
-      const AppSettings(
-        appearance: AppearanceSettings(themeMode: ThemeMode.light),
-      ),
-    ),
-  );
-  await settings.load();
+  tester.view.physicalSize = const Size(1440, 1024);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
     AccountingApp(
-      gateway: gateway ?? _FakeGateway(),
-      settingsService: settings,
+      gateway: gateway ?? _FakeGateway(setupComplete: setupComplete),
     ),
   );
   await tester.pumpAndSettle();
@@ -754,6 +747,13 @@ void main() {
     await _pumpWorkspace(tester);
 
     expect(find.byTooltip('الوضع الداكن'), findsOneWidget);
+
+    // B1-b: default themeMode is `system`. First tap: system → light.
+    await tester.tap(find.byTooltip('الوضع الداكن'));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('الوضع الداكن'), findsOneWidget);
+
+    // Second tap: light → dark.
     await tester.tap(find.byTooltip('الوضع الداكن'));
     await tester.pumpAndSettle();
 
