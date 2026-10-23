@@ -1,62 +1,85 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'app_shell.dart';
 import 'ledger.dart';
+import 'settings/settings_model.dart';
+import 'settings/settings_service.dart';
+import 'settings/settings_store.dart';
+import 'settings/settings_store_stub.dart'
+    if (dart.library.io) 'settings/settings_store_io.dart';
 import 'setup.dart';
 import 'theme/app_theme.dart';
 import 'ui/app_ui.dart';
 
-void main() {
-  runApp(AccountingApp(gateway: RustLedgerGateway()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final store = await createSettingsStore();
+  final settingsService = SettingsService(store);
+  await settingsService.load();
+
+  runApp(AccountingApp(
+    gateway: RustLedgerGateway(),
+    settingsService: settingsService,
+  ));
 }
 
 class AccountingApp extends StatefulWidget {
   const AccountingApp({
     super.key,
     required this.gateway,
-    this.initialThemeMode = ThemeMode.light,
+    this.settingsService,
   });
 
   final LedgerGateway gateway;
-  final ThemeMode initialThemeMode;
+  final SettingsService? settingsService;
 
   @override
   State<AccountingApp> createState() => _AccountingAppState();
 }
 
 class _AccountingAppState extends State<AccountingApp> {
-  late final AppThemeController _themeController = AppThemeController(
-    initialMode: widget.initialThemeMode,
-  );
-
-  @override
-  void dispose() {
-    _themeController.dispose();
-    super.dispose();
-  }
+  late final SettingsService _service =
+      widget.settingsService ?? SettingsService(InMemorySettingsStore());
 
   @override
   Widget build(BuildContext context) {
-    return AppThemeScope(
-      controller: _themeController,
+    return ChangeNotifierProvider<SettingsService>.value(
+      value: _service,
       child: AnimatedBuilder(
-        animation: _themeController,
+        animation: _service,
         builder: (context, _) {
+          final a = _service.appearance;
           return MaterialApp(
             title: 'المحاسبة',
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.light(),
-            darkTheme: AppTheme.dark(),
-            themeMode: _themeController.mode,
-            builder: (context, child) => Directionality(
-              textDirection: TextDirection.rtl,
-              child: child ?? const SizedBox.shrink(),
+            theme: _applyDensity(AppTheme.light(), a.density),
+            darkTheme: _applyDensity(AppTheme.dark(), a.density),
+            themeMode: a.themeMode,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(a.fontScale),
+              ),
+              child: Directionality(
+                textDirection: TextDirection.rtl,
+                child: child ?? const SizedBox.shrink(),
+              ),
             ),
             home: LedgerHomePage(gateway: widget.gateway),
           );
         },
       ),
     );
+  }
+
+  ThemeData _applyDensity(ThemeData t, AppDensity d) {
+    final v = switch (d) {
+      AppDensity.compact => VisualDensity.compact,
+      AppDensity.comfortable => VisualDensity.standard,
+      AppDensity.spacious => VisualDensity.comfortable,
+    };
+    return t.copyWith(visualDensity: v);
   }
 }
 

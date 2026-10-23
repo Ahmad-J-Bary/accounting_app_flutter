@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:provider/provider.dart';
+import 'settings/settings_service.dart';
+
 import 'ledger.dart';
 import 'theme/app_theme.dart';
 import 'ui/app_ui.dart';
@@ -128,7 +131,7 @@ class _CompanySetupPageState extends State<CompanySetupPage> {
             tooltip: Theme.of(context).brightness == Brightness.dark
                 ? 'الوضع الفاتح'
                 : 'الوضع الداكن',
-            onPressed: () => AppThemeScope.of(context).toggle(),
+            onPressed: () => context.read<SettingsService>().cycleThemeMode(),
             icon: Icon(
               Theme.of(context).brightness == Brightness.dark
                   ? Icons.light_mode_outlined

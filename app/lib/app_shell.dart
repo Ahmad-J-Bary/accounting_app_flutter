@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'settings/settings_service.dart';
 
 import 'categories.dart';
 import 'dashboard.dart';
@@ -302,7 +304,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
                             onRefresh: () => _load(showRefreshing: true),
                             onSearch: _openCommandPalette,
                             onToggleTheme: () {
-                              AppThemeScope.of(context).toggle();
+                              context.read<SettingsService>().cycleThemeMode();
                             },
                             onNavigate: (section) => _select(section),
                             onNotifications: _openNotifications,
