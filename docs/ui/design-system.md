@@ -1,4 +1,4 @@
-# UI Design System and Data Table
+﻿# UI Design System and Data Table
 
 The Flutter app uses one shared visual language and one shared table contract.
 Pages compose these pieces; they do not fork their own buttons, table headers or
@@ -34,8 +34,16 @@ Rules:
   `AppMetricCard`.
 - Feedback: `AppBadge`, `AppEmptyState`, `AppErrorState`, `AppLoadingState`,
   `AppIconTile`.
-- Input: `AppSearchField`.
-- Data: `AppTableColumn<T>`, `AppDataTable<T>`, `AppTableText`.
+- Input: `AppSearchField`, and `AppMaterialPicker` in
+  `app/lib/ui/material_picker.dart` — a searchable material field that filters
+  by name, code, barcode and unit barcode and shows at most thirty results.
+  The React document grid opens a floating search panel; a dropdown that lists
+  every material is unusable once a company owns a few hundred of them.
+- The invoice editor shows the document state in its app bar («مسودة» /
+  «مرحّلة») and a «المتبقي» row with a «مسدد» badge in the summary panel, the
+  two affordances the React `DocumentStatusBadge` and `SummaryPanel` provide.
+- Data: `AppTableColumn<T>`, `AppDataTable<T>`, `AppTableText`,
+  `AppTableActionButton`.
 - Master-data helpers: `MasterDataPageLayout`, `MasterDataSearchBar`, delete
   confirmation and snackbar helpers in
   `app/lib/features/master_data/master_data_shared.dart`.
@@ -76,7 +84,8 @@ A column may declare:
 | Feature | Behaviour |
 |---|---|
 | Sorting | Click a sortable header; second click reverses. Sorting is by the column's `sortValue`, never by rendered text. Nulls sort last in both directions and equal values keep their source order (stable sort), so tied rows never jump between pages. The sorted list is memoised until the rows or the sort key change. |
-| Column menu | Show/hide, move left/right, reset widths/order/visibility, or restore every hidden column with «إظهار الكل». Required columns cannot be hidden. Hidden columns stop reserving width, so the remaining columns share the freed space. A badge on the toolbar icon shows how many columns are hidden. |
+| Column menu | Show/hide, move left/right, reset widths/order/visibility, or restore every hidden column with «إظهار الكل». Required columns cannot be hidden. Hidden columns stop reserving width, so the remaining columns share the freed space. A badge on the toolbar icon shows how many columns are hidden. The dialog is titled «إعدادات الجدول» and also holds the density and the appearance options. |
+| Appearance | Two switches: «صفوف متناوبة» tints every second row, and «خطوط بين الأعمدة» draws a vertical line between the columns. Both are stored per table, like the density. |
 | Resize | Drag the handle at the column edge; widths clamp to 56–720 px. A double click on the handle returns the column to its automatic share of the table width, so an accidentally narrow column can be recovered without resetting the whole table. |
 | Pagination | Optional local pagination with page sizes 10/25/50/100. Footer shows the visible range and stacks into two rows below 520 px so it never overflows on phones. |
 | Selection | Optional checkboxes with select-all; `onSelectionChanged` reports stable `rowId` values, not row indices. Space toggles the focused row. |
@@ -104,6 +113,24 @@ A column may declare:
   and flex distribution disagree.
 - Keep the page chrome above the table fixed (`MasterDataPageLayout`): the table
   owns the remaining height and scrolls internally.
+
+### Document line grid
+
+The invoice and return editors show their lines as a grid, like the React
+`GenericDocumentGrid`:
+
+- One template (`_lineGridColumns`) holds the label and the width of every
+  column, so the header and the rows stay aligned.
+- The grid is used from 780 px upward and scrolls horizontally when the
+  columns do not fit; below that width each line keeps its stacked card
+  layout, because a grid would need horizontal scrolling for every field.
+- In the grid the cells are bare (no floating label) because the header names
+  the column; the stacked layout keeps its labels.
+- The column order is: المادة، الوحدة، الكمية، السعر، خصم %، الإجمالي، ثم
+  زر حذف البند.
+- On a phone the editor keeps the stacked card layout and the app bar falls
+  back to icon buttons with tooltips, because two labelled save buttons do not
+  fit in 430 px. A widget test guards that viewport.
 
 ### Master-data page layout
 
@@ -164,7 +191,9 @@ application-support directory as `accounting.db`:
       "pageSize": 25,
       "sortColumnId": "name",
       "sortAscending": true,
-      "density": "compact"
+      "density": "compact",
+      "zebraRows": false,
+      "columnDividers": true
     }
   }
 }
@@ -185,6 +214,8 @@ Preferences are untrusted input from an older build. On load:
 - Page size must be one of 10/25/50/100.
 - A sort column that no longer exists is cleared.
 - An unknown density id falls back to `comfortable`.
+- `zebraRows` and `columnDividers` fall back to their defaults when the stored
+  value is not a boolean.
 - If every column would be hidden, the first column is kept visible.
 
 A failed load or save only logs a debug message and keeps the in-memory
@@ -198,7 +229,7 @@ stored entry.
 
 ## Accessibility and RTL
 
-- Every icon-only action has a tooltip (for example `إعدادات الأعمدة`,
+- Every icon-only action has a tooltip (for example `إعدادات الجدول`,
   `الصفحة التالية`, `رجوع`).
 - Table headers expose the sort action through an `InkWell` wrapped in
   `Semantics(button: ...)`; keep the label readable and avoid icon-only headers.
@@ -262,10 +293,12 @@ instance invalidates the cache automatically.
 End, Space), column hiding (including width redistribution, «إظهار الكل» and
 restoring the column), adopting saved preferences when the table id changes,
 pagination, selection, loading/error/empty states, RTL/LTR, single-line cell
-ellipsis, width persistence, stale preference sanitisation, the row densities
-and the column-aligned summary row. It also guards the performance contract:
-one sort-key extraction per row, and a keyboard cursor that rebuilds only the
-rows it touches.
+ellipsis, width persistence, stale preference sanitisation, the row densities,
+the appearance switches and the column-aligned summary row. It also guards the
+performance contract: one sort-key extraction per row, and a keyboard cursor
+that rebuilds only the rows it touches.
 `app/test/row_filter_cache_test.dart` covers the page-level row filter cache.
-Page-level tests live in `app/test/widget_test.dart`, including the 430×900
-customers-page layout and the trial-balance summary row.
+Page-level tests live in `app/test/widget_test.dart`: the 430×900 layouts of
+the customers page, the invoice list and the invoice, return and payment
+editors, the trial-balance summary row, the searchable material picker and the
+unsaved-changes guard.

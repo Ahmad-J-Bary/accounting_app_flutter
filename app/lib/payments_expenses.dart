@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'ledger.dart';
 import 'theme/app_theme.dart';
 import 'ui/app_ui.dart';
+import 'ui/unsaved_changes.dart';
 import 'workspace_data.dart';
 
 enum PaymentListKind { receipts, payments }
@@ -327,6 +328,9 @@ class _PaymentEditorPageState extends State<PaymentEditorPage> {
   DateTime _date = DateTime.now();
   bool _saving = false;
 
+  /// True once the user changed something that is not saved yet.
+  bool _dirty = false;
+
   String get _paymentType {
     if (widget.expenseAccount != null) return 'ExpenseVoucher';
     return widget.isReceipt ? 'Receipt' : 'SupplierPayment';
@@ -432,160 +436,176 @@ class _PaymentEditorPageState extends State<PaymentEditorPage> {
               )
               .toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.expenseAccount != null
-              ? 'سند مصروف - ${widget.expenseAccount!.displayName}'
-              : widget.isReceipt
-              ? 'سند قبض'
-              : 'سند دفع',
-        ),
-        actions: [
-          FilledButton.icon(
-            onPressed: _saving ? null : _save,
-            icon: _saving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.check, size: 18),
-            label: const Text('حفظ وترحيل'),
+    return UnsavedChangesGuard(
+      hasUnsavedChanges: _dirty,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            widget.expenseAccount != null
+                ? 'سند مصروف - ${widget.expenseAccount!.displayName}'
+                : widget.isReceipt
+                ? 'سند قبض'
+                : 'سند دفع',
           ),
-          const SizedBox(width: AppSpacing.lg),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        children: [
-          AppSectionCard(
-            title: 'بيانات السند',
-            child: Wrap(
-              spacing: AppSpacing.lg,
-              runSpacing: AppSpacing.lg,
-              children: [
-                if (widget.expenseAccount == null)
-                  SizedBox(
-                    width: 300,
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _partyId,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                        labelText: widget.isReceipt ? 'العميل' : 'المورد',
-                        prefixIcon: const Icon(Icons.person_outline),
-                      ),
-                      items: parties
-                          .map(
-                            (party) => DropdownMenuItem(
-                              value: party.id,
-                              child: Text(
-                                '${party.name} (${party.code})',
-                                overflow: TextOverflow.ellipsis,
+          actions: [
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: _saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.check, size: 18),
+              label: const Text('حفظ وترحيل'),
+            ),
+            const SizedBox(width: AppSpacing.lg),
+          ],
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          children: [
+            AppSectionCard(
+              title: 'بيانات السند',
+              child: Wrap(
+                spacing: AppSpacing.lg,
+                runSpacing: AppSpacing.lg,
+                children: [
+                  if (widget.expenseAccount == null)
+                    SizedBox(
+                      width: 300,
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _partyId,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          labelText: widget.isReceipt ? 'العميل' : 'المورد',
+                          prefixIcon: const Icon(Icons.person_outline),
+                        ),
+                        items: parties
+                            .map(
+                              (party) => DropdownMenuItem(
+                                value: party.id,
+                                child: Text(
+                                  '${party.name} (${party.code})',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
+                            )
+                            .toList(),
+                        onChanged: (value) => setState(() {
+                          _partyId = value;
+                          _dirty = true;
+                        }),
+                      ),
+                    ),
+                  if (widget.expenseAccount != null)
+                    SizedBox(
+                      width: 300,
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'بند المصروف',
+                          prefixIcon: Icon(Icons.category_outlined),
+                        ),
+                        child: Text(widget.expenseAccount!.displayName),
+                      ),
+                    ),
+                  SizedBox(
+                    width: 200,
+                    child: TextField(
+                      controller: _amountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      onChanged: (_) => setState(() => _dirty = true),
+                      decoration: const InputDecoration(
+                        labelText: 'المبلغ',
+                        prefixIcon: Icon(Icons.payments_outlined),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 190,
+                    child: InkWell(
+                      onTap: () async {
+                        final value = await showDatePicker(
+                          context: context,
+                          initialDate: _date,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (value != null) {
+                          setState(() {
+                            _date = value;
+                            _dirty = true;
+                          });
+                        }
+                      },
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'التاريخ',
+                          prefixIcon: Icon(Icons.event_outlined),
+                        ),
+                        child: Text(_formatDate(_date.toIso8601String())),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 190,
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _currency,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'العملة',
+                        prefixIcon: Icon(Icons.currency_exchange_outlined),
+                      ),
+                      items: widget.data.currencies
+                          .map(
+                            (currency) => DropdownMenuItem(
+                              value: currency.code,
+                              child: Text(currency.code),
                             ),
                           )
                           .toList(),
-                      onChanged: (value) => setState(() => _partyId = value),
+                      onChanged: (value) => setState(() {
+                        _currency = value ?? _currency;
+                        _dirty = true;
+                      }),
                     ),
                   ),
-                if (widget.expenseAccount != null)
                   SizedBox(
-                    width: 300,
-                    child: InputDecorator(
+                    width: 260,
+                    child: TextField(
+                      controller: _referenceController,
+                      onChanged: (_) => setState(() => _dirty = true),
                       decoration: const InputDecoration(
-                        labelText: 'بند المصروف',
-                        prefixIcon: Icon(Icons.category_outlined),
+                        labelText: 'المرجع',
+                        prefixIcon: Icon(Icons.tag_outlined),
                       ),
-                      child: Text(widget.expenseAccount!.displayName),
                     ),
                   ),
-                SizedBox(
-                  width: 200,
-                  child: TextField(
-                    controller: _amountController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: 'المبلغ',
-                      prefixIcon: Icon(Icons.payments_outlined),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 190,
-                  child: InkWell(
-                    onTap: () async {
-                      final value = await showDatePicker(
-                        context: context,
-                        initialDate: _date,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (value != null) setState(() => _date = value);
-                    },
-                    child: InputDecorator(
+                  SizedBox(
+                    width: 360,
+                    child: TextField(
+                      controller: _notesController,
+                      onChanged: (_) => setState(() => _dirty = true),
                       decoration: const InputDecoration(
-                        labelText: 'التاريخ',
-                        prefixIcon: Icon(Icons.event_outlined),
+                        labelText: 'ملاحظات',
+                        prefixIcon: Icon(Icons.notes_outlined),
                       ),
-                      child: Text(_formatDate(_date.toIso8601String())),
                     ),
                   ),
-                ),
-                SizedBox(
-                  width: 190,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _currency,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: 'العملة',
-                      prefixIcon: Icon(Icons.currency_exchange_outlined),
-                    ),
-                    items: widget.data.currencies
-                        .map(
-                          (currency) => DropdownMenuItem(
-                            value: currency.code,
-                            child: Text(currency.code),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) =>
-                        setState(() => _currency = value ?? _currency),
-                  ),
-                ),
-                SizedBox(
-                  width: 260,
-                  child: TextField(
-                    controller: _referenceController,
-                    decoration: const InputDecoration(
-                      labelText: 'المرجع',
-                      prefixIcon: Icon(Icons.tag_outlined),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 360,
-                  child: TextField(
-                    controller: _notesController,
-                    decoration: const InputDecoration(
-                      labelText: 'ملاحظات',
-                      prefixIcon: Icon(Icons.notes_outlined),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          AppInfoBanner(
-            title: 'ترحيل تلقائي',
-            message:
-                'عند الحفظ يُنشئ النظام قيدًا متوازنًا: النقدية مقابل حساب الطرف أو بند المصروف.',
-            icon: Icons.verified_outlined,
-          ),
-        ],
+            const SizedBox(height: AppSpacing.xl),
+            AppInfoBanner(
+              title: 'ترحيل تلقائي',
+              message:
+                  'عند الحفظ يُنشئ النظام قيدًا متوازنًا: النقدية مقابل حساب الطرف أو بند المصروف.',
+              icon: Icons.verified_outlined,
+            ),
+          ],
+        ),
       ),
     );
   }

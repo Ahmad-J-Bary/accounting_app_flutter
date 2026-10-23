@@ -127,7 +127,10 @@ keyboard-driven (arrows, `Home`/`End`, `PageUp`/`PageDown` move a row cursor,
 line, so long values never overflow a row. Sorting reads each row's sort key
 once and the keyboard cursor repaints only the rows it touches, so long lists
 stay responsive. Three row densities (compact, comfortable, spacious) are
-persisted per table. Section history backs the top-bar
+persisted per table, together with the appearance switches (alternating rows
+and the line between the columns). The invoice and return editors show their
+lines as an aligned grid, pick the material from a searchable panel, and warn
+before they discard unsaved changes. Section history backs the top-bar
 back button, Android system back, `Alt+Left` and `Escape`; forms warn before
 discarding unsaved changes. CI builds Windows (ZIP/EXE/MSI), Android (three
 APKs) and Linux (x64 tarball) from the same tagged commit.

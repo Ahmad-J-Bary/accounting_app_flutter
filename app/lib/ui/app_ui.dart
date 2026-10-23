@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -1098,6 +1098,9 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
 
   double get _headerHeight => widget.headerHeight ?? _density.headerHeight;
 
+  /// Vertical line between the columns, as in the React grid.
+  bool get _showColumnDividers => _preferences?.value.columnDividers ?? true;
+
   int get _pageSize => _preferences?.value.pageSize ?? _localPageSize;
 
   void _setPageSize(int pageSize) {
@@ -1445,7 +1448,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
           builder: (context, _) {
             final value = preferences.value;
             return AlertDialog(
-              title: const Text('أعمدة الجدول'),
+              title: const Text('إعدادات الجدول'),
               content: SizedBox(
                 width: 380,
                 child: ListView(
@@ -1486,6 +1489,35 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
                           ),
                         ],
                       ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('المظهر', style: theme.textTheme.labelLarge),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            title: const Text('صفوف متناوبة'),
+                            value: value.zebraRows,
+                            onChanged: (enabled) =>
+                                preferences.setZebraRows(enabled),
+                          ),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            title: const Text('خطوط بين الأعمدة'),
+                            value: value.columnDividers,
+                            onChanged: (enabled) =>
+                                preferences.setColumnDividers(enabled),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Divider(
+                      height: AppSpacing.lg,
+                      color: theme.colorScheme.outline,
                     ),
                     for (var index = 0; index < value.order.length; index++)
                       _ColumnSettingsRow(
@@ -1660,7 +1692,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
             const Spacer(),
           if (_preferences != null && widget.showColumnMenu)
             IconButton(
-              tooltip: 'إعدادات الأعمدة',
+              tooltip: 'إعدادات الجدول',
               onPressed: _openColumnSettings,
               icon: Badge.count(
                 count: _preferences!.value.hidden.length,
@@ -2030,6 +2062,7 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     final theme = Theme.of(context);
     final id = widget.rowId?.call(row);
     final selected = id != null && _selected.contains(id);
+    final zebra = _preferences?.value.zebraRows ?? false;
     final content = Container(
       height: _rowHeight,
       foregroundDecoration: focused
@@ -2040,6 +2073,8 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
       decoration: BoxDecoration(
         color: selected
             ? theme.colorScheme.primary.withValues(alpha: 0.06)
+            : zebra && index.isOdd
+            ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
             : null,
         border: isLast
             ? null
@@ -2065,12 +2100,13 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
                 ),
               ),
             ),
-          for (final column in columns)
+          for (var columnIndex = 0; columnIndex < columns.length; columnIndex++)
             _cell(
               context,
-              column,
-              column.builder(context, row),
-              width: widths[idByColumn[column]!] ?? 0,
+              columns[columnIndex],
+              columns[columnIndex].builder(context, row),
+              width: widths[idByColumn[columns[columnIndex]]!] ?? 0,
+              showDivider: _showColumnDividers && columnIndex > 0,
             ),
         ],
       ),
@@ -2097,14 +2133,30 @@ class _AppDataTableState<T> extends State<AppDataTable<T>> {
     AppTableColumn<T> column,
     Widget child, {
     required double width,
+    required bool showDivider,
   }) {
-    return SizedBox(
-      width: width,
-      child: Align(
-        alignment: column.alignment,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: child,
+    final theme = Theme.of(context);
+    // A `DecoratedBox` instead of a `Container`: the border of a container
+    // decoration adds its width to the padding of the child, which would make
+    // a cell one pixel too narrow for its content.
+    return DecoratedBox(
+      decoration: showDivider
+          ? BoxDecoration(
+              border: BorderDirectional(
+                start: BorderSide(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.45),
+                ),
+              ),
+            )
+          : const BoxDecoration(),
+      child: SizedBox(
+        width: width,
+        child: Align(
+          alignment: column.alignment,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: child,
+          ),
         ),
       ),
     );

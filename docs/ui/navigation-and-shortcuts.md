@@ -40,7 +40,8 @@ shell does not try to close dialogs imperatively.
 ### Unsaved changes
 
 `UnsavedChangesGuard` (`app/lib/ui/unsaved_changes.dart`) wraps the customer,
-supplier and material forms. It uses `PopScope`:
+supplier and material forms **and the invoice, return and payment editors**. It
+uses `PopScope`:
 
 - `canPop` is false while the form is dirty.
 - A back attempt shows `تغييرات غير محفوظة` with `البقاء` and
@@ -52,6 +53,10 @@ supplier and material forms. It uses `PopScope`:
 Dirty tracking is driven by `Form.onChanged` plus the controls that do not
 participate in form validation (switches, add/remove extra units). If a new
 control is added to a form, mark the form dirty from its callback as well.
+
+The document editors (invoice, return, payment) track their dirty state
+directly: every field, the line rows and the line actions set the flag, and a
+successful save clears it before the editor pops.
 
 ## Keyboard shortcuts
 

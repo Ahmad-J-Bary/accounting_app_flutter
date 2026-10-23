@@ -1,5 +1,9 @@
-import 'package:accounting_app_flutter/ledger.dart';
+﻿import 'package:accounting_app_flutter/ledger.dart';
 import 'package:accounting_app_flutter/main.dart';
+import 'package:accounting_app_flutter/payments_expenses.dart';
+import 'package:accounting_app_flutter/theme/app_theme.dart';
+import 'package:accounting_app_flutter/trade_documents.dart';
+import 'package:accounting_app_flutter/workspace_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -565,6 +569,90 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('shows the aligned line grid in the invoice editor', (
+    tester,
+  ) async {
+    await _pumpWorkspace(tester);
+    await tester.tap(find.text('فواتير البيع').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('إنشاء فاتورة'));
+    await tester.pumpAndSettle();
+
+    // The wide layout turns the line rows into a grid with one header.
+    expect(find.text('المادة'), findsOneWidget);
+    expect(find.text('الوحدة'), findsOneWidget);
+    expect(find.text('الكمية'), findsOneWidget);
+    expect(find.text('خصم %'), findsOneWidget);
+
+    // The header follows the RTL order of the columns.
+    expect(
+      tester.getTopLeft(find.text('المادة')).dx,
+      greaterThan(tester.getTopLeft(find.text('الكمية')).dx),
+    );
+
+    // The cells of the row sit under the header.
+    expect(
+      tester.getTopLeft(find.text('اختر مادة')).dy,
+      greaterThan(tester.getTopLeft(find.text('المادة')).dy),
+    );
+  });
+
+  testWidgets('picks a material through the searchable picker', (tester) async {
+    await _pumpWorkspace(tester);
+    await tester.tap(find.text('فواتير البيع').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('إنشاء فاتورة'));
+    await tester.pumpAndSettle();
+
+    // The line editor opens a searchable panel instead of a long dropdown.
+    await tester.tap(find.text('اختر مادة'));
+    await tester.pumpAndSettle();
+
+    final search = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText?.contains('ابحث بالاسم') == true,
+    );
+    expect(search, findsOneWidget);
+
+    await tester.enterText(search, 'M001');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('قمح'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('اختر مادة'), findsNothing);
+    expect(find.text('قمح (M001)'), findsOneWidget);
+  });
+
+  testWidgets('warns before leaving the invoice editor with unsaved changes', (
+    tester,
+  ) async {
+    await _pumpWorkspace(tester);
+    await tester.tap(find.text('فواتير البيع').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('إنشاء فاتورة'));
+    await tester.pumpAndSettle();
+
+    final notes = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText?.contains('ملاحظات') == true,
+    );
+    expect(notes, findsOneWidget);
+    await tester.enterText(notes, 'تسوية');
+    await tester.pumpAndSettle();
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(find.text('تغييرات غير محفوظة'), findsOneWidget);
+
+    await tester.tap(find.text('البقاء'));
+    await tester.pumpAndSettle();
+    expect(find.text('فاتورة بيع جديدة'), findsOneWidget);
+  });
+
   testWidgets('opens the sales invoice editor and validates the party', (
     tester,
   ) async {
@@ -799,6 +887,109 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('keeps the invoice editor usable on a narrow screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final gateway = _FakeGateway();
+    final data = await WorkspaceData.load(gateway);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InvoiceEditorPage(
+            gateway: gateway,
+            data: data,
+            kind: InvoiceListKind.sales,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The narrow layout keeps the stacked line card with its labels, and no
+    // grid header.
+    expect(find.text('المادة 1'), findsOneWidget);
+    expect(find.text('اختر مادة'), findsOneWidget);
+    expect(find.text('خصم %'), findsOneWidget);
+    expect(find.text('المادة'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps the return and payment editors usable on a phone', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final gateway = _FakeGateway();
+    final data = await WorkspaceData.load(gateway);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: ReturnEditorPage(
+            gateway: gateway,
+            data: data,
+            kind: ReturnListKind.sales,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('بيانات المرتجع'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: PaymentEditorPage(
+            gateway: gateway,
+            data: data,
+            isReceipt: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('بيانات السند'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps the invoice list usable on a narrow screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(AccountingApp(gateway: _FakeGateway()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('القائمة'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('فواتير البيع').last);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('إصدار فواتير البيع وترحيلها إلى المخزون والقيود.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('keeps the customers table usable on a narrow screen', (
     tester,
   ) async {
@@ -817,7 +1008,7 @@ void main() {
 
     expect(find.text('العملاء'), findsWidgets);
     expect(find.text('أحمد محمد'), findsOneWidget);
-    expect(find.byTooltip('إعدادات الأعمدة'), findsOneWidget);
+    expect(find.byTooltip('إعدادات الجدول'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

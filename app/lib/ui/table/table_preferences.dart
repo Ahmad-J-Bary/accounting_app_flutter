@@ -55,6 +55,8 @@ class TablePreferences {
     this.sortColumnId,
     this.sortAscending = true,
     this.density = 'comfortable',
+    this.zebraRows = false,
+    this.columnDividers = true,
   });
 
   final List<String> order;
@@ -67,6 +69,12 @@ class TablePreferences {
   /// Stored [TableDensity.id]; unknown ids fall back to comfortable.
   final String density;
 
+  /// Alternating row background, as in the React table.
+  final bool zebraRows;
+
+  /// Vertical line between the columns, as in the React grid.
+  final bool columnDividers;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'order': order,
     'hidden': hidden.toList()..sort(),
@@ -75,6 +83,8 @@ class TablePreferences {
     if (sortColumnId != null) 'sortColumnId': sortColumnId,
     'sortAscending': sortAscending,
     'density': density,
+    'zebraRows': zebraRows,
+    'columnDividers': columnDividers,
   };
 
   @override
@@ -86,7 +96,9 @@ class TablePreferences {
         other.pageSize == pageSize &&
         other.sortColumnId == sortColumnId &&
         other.sortAscending == sortAscending &&
-        other.density == density;
+        other.density == density &&
+        other.zebraRows == zebraRows &&
+        other.columnDividers == columnDividers;
   }
 
   @override
@@ -100,6 +112,8 @@ class TablePreferences {
     sortColumnId,
     sortAscending,
     density,
+    zebraRows,
+    columnDividers,
   );
 
   static const List<int> allowedPageSizes = <int>[10, 25, 50, 100];
@@ -112,6 +126,8 @@ class TablePreferences {
     Map<String, double> widths = const <String, double>{},
     int pageSize = 25,
     TableDensity density = TableDensity.comfortable,
+    bool zebraRows = false,
+    bool columnDividers = true,
   }) {
     return TablePreferences(
       order: List<String>.unmodifiable(columnIds),
@@ -119,6 +135,8 @@ class TablePreferences {
       widths: Map<String, double>.unmodifiable(widths),
       pageSize: allowedPageSizes.contains(pageSize) ? pageSize : 25,
       density: density.id,
+      zebraRows: zebraRows,
+      columnDividers: columnDividers,
     );
   }
 
@@ -199,6 +217,14 @@ class TablePreferences {
         ? storedDensity
         : fallback.density;
 
+    final storedZebra = raw['zebraRows'];
+    final zebraRows = storedZebra is bool ? storedZebra : fallback.zebraRows;
+
+    final storedDividers = raw['columnDividers'];
+    final columnDividers = storedDividers is bool
+        ? storedDividers
+        : fallback.columnDividers;
+
     return TablePreferences(
       order: List<String>.unmodifiable(order),
       hidden: Set<String>.unmodifiable(hidden),
@@ -207,6 +233,8 @@ class TablePreferences {
       sortColumnId: sortColumnId,
       sortAscending: storedAscending is bool ? storedAscending : true,
       density: density,
+      zebraRows: zebraRows,
+      columnDividers: columnDividers,
     );
   }
 }
@@ -326,6 +354,8 @@ class TablePreferencesController extends ChangeNotifier {
         sortColumnId: _value.sortColumnId,
         sortAscending: _value.sortAscending,
         density: _value.density,
+        zebraRows: _value.zebraRows,
+        columnDividers: _value.columnDividers,
       ),
     );
   }
@@ -348,6 +378,8 @@ class TablePreferencesController extends ChangeNotifier {
         sortColumnId: _value.sortColumnId,
         sortAscending: _value.sortAscending,
         density: _value.density,
+        zebraRows: _value.zebraRows,
+        columnDividers: _value.columnDividers,
       ),
     );
   }
@@ -368,6 +400,8 @@ class TablePreferencesController extends ChangeNotifier {
         sortColumnId: _value.sortColumnId,
         sortAscending: _value.sortAscending,
         density: _value.density,
+        zebraRows: _value.zebraRows,
+        columnDividers: _value.columnDividers,
       ),
     );
   }
@@ -391,6 +425,8 @@ class TablePreferencesController extends ChangeNotifier {
         sortColumnId: _value.sortColumnId,
         sortAscending: _value.sortAscending,
         density: _value.density,
+        zebraRows: _value.zebraRows,
+        columnDividers: _value.columnDividers,
       ),
     );
   }
@@ -415,6 +451,8 @@ class TablePreferencesController extends ChangeNotifier {
         sortColumnId: columnId,
         sortAscending: nextAscending,
         density: _value.density,
+        zebraRows: _value.zebraRows,
+        columnDividers: _value.columnDividers,
       ),
     );
   }
@@ -432,6 +470,8 @@ class TablePreferencesController extends ChangeNotifier {
         sortColumnId: _value.sortColumnId,
         sortAscending: _value.sortAscending,
         density: _value.density,
+        zebraRows: _value.zebraRows,
+        columnDividers: _value.columnDividers,
       ),
     );
   }
@@ -450,6 +490,48 @@ class TablePreferencesController extends ChangeNotifier {
         sortColumnId: _value.sortColumnId,
         sortAscending: _value.sortAscending,
         density: density.id,
+        zebraRows: _value.zebraRows,
+        columnDividers: _value.columnDividers,
+      ),
+    );
+  }
+
+  /// Turns the alternating row background on or off.
+  void setZebraRows(bool enabled) {
+    if (_value.zebraRows == enabled) {
+      return;
+    }
+    _update(
+      TablePreferences(
+        order: _value.order,
+        hidden: _value.hidden,
+        widths: _value.widths,
+        pageSize: _value.pageSize,
+        sortColumnId: _value.sortColumnId,
+        sortAscending: _value.sortAscending,
+        density: _value.density,
+        zebraRows: enabled,
+        columnDividers: _value.columnDividers,
+      ),
+    );
+  }
+
+  /// Turns the vertical line between the columns on or off.
+  void setColumnDividers(bool enabled) {
+    if (_value.columnDividers == enabled) {
+      return;
+    }
+    _update(
+      TablePreferences(
+        order: _value.order,
+        hidden: _value.hidden,
+        widths: _value.widths,
+        pageSize: _value.pageSize,
+        sortColumnId: _value.sortColumnId,
+        sortAscending: _value.sortAscending,
+        density: _value.density,
+        zebraRows: _value.zebraRows,
+        columnDividers: enabled,
       ),
     );
   }
