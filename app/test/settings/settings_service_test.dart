@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/settings/settings.dart';
+import 'package:accounting_app_flutter/settings/settings.dart';
 
 void main() {
   group('SettingsService', () {
