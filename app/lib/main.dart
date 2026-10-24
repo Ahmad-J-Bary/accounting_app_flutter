@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'app_shell.dart';
 import 'l10n/l10n.dart';
 import 'ledger.dart';
 import 'settings/settings_model.dart';
-import 'settings/settings_page.dart';
 import 'settings/settings_service.dart';
 import 'settings/settings_store.dart';
 import 'settings/settings_store_stub.dart'
@@ -29,10 +27,6 @@ Future<void> main() async {
   ));
 }
 
-class _OpenSettingsIntent extends Intent {
-  const _OpenSettingsIntent();
-}
-
 class AccountingApp extends StatefulWidget {
   const AccountingApp({
     super.key,
@@ -48,15 +42,8 @@ class AccountingApp extends StatefulWidget {
 }
 
 class _AccountingAppState extends State<AccountingApp> {
-  final GlobalKey<NavigatorState> _navKey = GlobalKey<NavigatorState>();
   late final SettingsService _service =
       widget.settingsService ?? SettingsService(InMemorySettingsStore());
-
-  void _openSettings() {
-    _navKey.currentState?.push(
-      MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +59,6 @@ class _AccountingAppState extends State<AccountingApp> {
           return MaterialApp(
             title: strings.appTitle,
             debugShowCheckedModeBanner: false,
-            navigatorKey: _navKey,
             theme: AppTheme.light().copyWith(
               visualDensity: visualDensityFor(a.density),
             ),
@@ -80,30 +66,13 @@ class _AccountingAppState extends State<AccountingApp> {
               visualDensity: visualDensityFor(a.density),
             ),
             themeMode: a.themeMode,
-            builder: (context, child) => Shortcuts(
-              shortcuts: const {
-                SingleActivator(LogicalKeyboardKey.comma, control: true):
-                    _OpenSettingsIntent(),
-              },
-              child: Actions(
-                actions: {
-                  _OpenSettingsIntent: CallbackAction<_OpenSettingsIntent>(
-                    onInvoke: (_) {
-                      _openSettings();
-                      return null;
-                    },
-                  ),
-                },
-                child: MediaQuery(
-                  data: MediaQuery.of(context).copyWith(
-                    textScaler: TextScaler.linear(a.fontScale),
-                  ),
-                  child: Directionality(
-                    textDirection:
-                        isRtl ? TextDirection.rtl : TextDirection.ltr,
-                    child: child ?? const SizedBox.shrink(),
-                  ),
-                ),
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(a.fontScale),
+              ),
+              child: Directionality(
+                textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+                child: child ?? const SizedBox.shrink(),
               ),
             ),
             home: LedgerHomePage(gateway: widget.gateway),

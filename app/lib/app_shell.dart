@@ -32,6 +32,7 @@ enum WorkspaceSection {
   customers,
   suppliers,
   materials,
+  settings,
 }
 
 class WorkspaceShell extends StatefulWidget {
@@ -217,13 +218,8 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
       WorkspaceSection.customers => s.navCustomers,
       WorkspaceSection.suppliers => s.navSuppliers,
       WorkspaceSection.materials => s.navMaterials,
+      WorkspaceSection.settings => s.settingsTitle,
     };
-  }
-
-  void _openSettings() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
-    );
   }
 
   @override
@@ -234,6 +230,12 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
             _openCommandPalette,
         const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): _goBack,
         const SingleActivator(LogicalKeyboardKey.escape): _goBack,
+        const SingleActivator(LogicalKeyboardKey.comma, control: true): () {
+          if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+            Navigator.of(context).pop();
+          }
+          _select(WorkspaceSection.settings);
+        },
       },
       child: Focus(
         autofocus: true,
@@ -275,10 +277,6 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
                               Navigator.of(context).pop();
                               _openOpeningBalances();
                             },
-                            onSettings: () {
-                              Navigator.of(context).pop();
-                              _openSettings();
-                            },
                             onToggleCollapse: null,
                           ),
                         ),
@@ -296,7 +294,6 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
                         onSelect: _select,
                         onCategories: _openCategories,
                         onOpeningBalances: _openOpeningBalances,
-                        onSettings: _openSettings,
                         onToggleCollapse: () {
                           setState(
                             () => _sidebarCollapsed = !_sidebarCollapsed,
@@ -341,6 +338,10 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
   }
 
   Widget _content() {
+    if (_section == WorkspaceSection.settings) {
+      return const SettingsPage();
+    }
+
     final data = _data;
 
     if (data == null) {
@@ -439,6 +440,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
         onOpenCategories: _openCategories,
         onOpenOpeningBalances: _openOpeningBalances,
       ),
+      WorkspaceSection.settings => const SettingsPage(),
     };
 
     return KeyedSubtree(key: ValueKey(_section), child: page);
@@ -610,7 +612,6 @@ class _Sidebar extends StatelessWidget {
     required this.onSelect,
     required this.onCategories,
     required this.onOpeningBalances,
-    required this.onSettings,
     this.onToggleCollapse,
   });
 
@@ -621,7 +622,6 @@ class _Sidebar extends StatelessWidget {
   final ValueChanged<WorkspaceSection> onSelect;
   final VoidCallback onCategories;
   final VoidCallback onOpeningBalances;
-  final VoidCallback onSettings;
   final VoidCallback? onToggleCollapse;
 
   @override
@@ -823,8 +823,8 @@ class _Sidebar extends StatelessWidget {
                     icon: Icons.settings_outlined,
                     label: context.strings.settingsTitle,
                     collapsed: collapsed,
-                    active: false,
-                    onTap: onSettings,
+                    active: selected == WorkspaceSection.settings,
+                    onTap: () => onSelect(WorkspaceSection.settings),
                   ),
                 ],
               ),

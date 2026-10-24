@@ -36,6 +36,31 @@ abstract class AppStrings {
   String get labelDigitsWestern;
   String get examplePrefix;
   String get sectionAppearance;
+
+  // Settings navigation
+  String get settingsDescription;
+  String get settingsSectionCompany;
+  String get settingsSectionPrefixes;
+  String get settingsSectionCurrencies;
+  String get settingsSectionFinancial;
+  String get settingsSectionWarehouses;
+  String get settingsSectionLocalization;
+  String get settingsSectionExport;
+  String get settingsSectionBackups;
+  String get settingsSectionSecurity;
+  String get settingsSectionAbout;
+  String get settingsAppearanceCategory;
+  String get settingsSectionAppearance;
+  String get settingsSectionTables;
+  String get settingsSectionNavbar;
+  String get settingsSectionSidebarContent;
+  String get settingsSectionPanel;
+  String get settingsSectionPageHeader;
+  String get settingsSectionTabs;
+  String get settingsComingSoon;
+  String get settingsCompanyComingSoon;
+  String get settingsOpenAppearanceNow;
+
   String get labelThemeMode;
   String get labelThemeSystem;
   String get labelThemeLight;
@@ -107,6 +132,32 @@ class ArStrings extends AppStrings {
   @override String get resetConfirm => 'إعادة الضبط';
 
   @override String get loading => 'جارٍ التحميل';
+
+  @override String get settingsDescription =>
+      'تخصيص الخيارات الأساسية، الهوية البصرية، والقواعد المحاسبية.';
+  @override String get settingsSectionCompany => 'بيانات الشركة';
+  @override String get settingsSectionPrefixes => 'الأرقام التسلسلية';
+  @override String get settingsSectionCurrencies => 'إدارة العملات';
+  @override String get settingsSectionFinancial => 'الإعدادات المالية';
+  @override String get settingsSectionWarehouses => 'المستودعات';
+  @override String get settingsSectionLocalization => 'اللغة والمنطقة';
+  @override String get settingsSectionExport => 'إعدادات التصدير';
+  @override String get settingsSectionBackups => 'البيانات والنسخ الاحتياطية';
+  @override String get settingsSectionSecurity => 'الأمان والوصول';
+  @override String get settingsSectionAbout => 'حول التطبيق';
+  @override String get settingsAppearanceCategory => 'المظهر';
+  @override String get settingsSectionAppearance => 'المظهر العام';
+  @override String get settingsSectionTables => 'مظهر الجداول';
+  @override String get settingsSectionNavbar => 'مظهر قائمة التنقل';
+  @override String get settingsSectionSidebarContent => 'محتوى وترتيب القائمة';
+  @override String get settingsSectionPanel => 'لوحة العمليات والنماذج';
+  @override String get settingsSectionPageHeader => 'رأس الصفحة';
+  @override String get settingsSectionTabs => 'التبويبات';
+  @override String get settingsComingSoon =>
+      'هذا القسم قيد التطوير وسيُضاف في الإصدار القادم.';
+  @override String get settingsCompanyComingSoon =>
+      'بيانات الشركة ستُضاف في 1.0.4.';
+  @override String get settingsOpenAppearanceNow => 'تعديل المظهر الآن';
 }
 
 class EnStrings extends AppStrings {
@@ -161,6 +212,33 @@ class EnStrings extends AppStrings {
   @override String get resetConfirm => 'Reset';
 
   @override String get loading => 'Loading';
+
+  @override String get settingsDescription =>
+      'Customize core options, visual identity, and accounting rules.';
+  @override String get settingsSectionCompany => 'Company data';
+  @override String get settingsSectionPrefixes => 'Serial numbers';
+  @override String get settingsSectionCurrencies => 'Currencies';
+  @override String get settingsSectionFinancial => 'Financial settings';
+  @override String get settingsSectionWarehouses => 'Warehouses';
+  @override String get settingsSectionLocalization => 'Language & region';
+  @override String get settingsSectionExport => 'Export settings';
+  @override String get settingsSectionBackups => 'Data & backups';
+  @override String get settingsSectionSecurity => 'Security & access';
+  @override String get settingsSectionAbout => 'About';
+  @override String get settingsAppearanceCategory => 'Appearance';
+  @override String get settingsSectionAppearance => 'General appearance';
+  @override String get settingsSectionTables => 'Table appearance';
+  @override String get settingsSectionNavbar => 'Navigation appearance';
+  @override String get settingsSectionSidebarContent => 'Sidebar content & order';
+  @override String get settingsSectionPanel => 'Operations & forms panel';
+  @override String get settingsSectionPageHeader => 'Page header';
+  @override String get settingsSectionTabs => 'Tabs';
+  @override String get settingsComingSoon =>
+      'This section is under development and will arrive in a future release.';
+  @override String get settingsCompanyComingSoon =>
+      'Company data will arrive in 1.0.4.';
+  @override String get settingsOpenAppearanceNow =>
+      'Customize appearance now';
 }
 
 extension AppLanguageStrings on AppLanguage {
