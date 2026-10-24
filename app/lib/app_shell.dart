@@ -921,68 +921,59 @@ class _SidebarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final semantic = context.semanticColors;
     final theme = Theme.of(context);
-    final content = Material(
+    return Material(
       color: active ? semantic.sidebarAccent : Colors.transparent,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         hoverColor: semantic.sidebarAccent.withValues(alpha: 0.55),
-        child: Container(
-          height: 42,
-          padding: EdgeInsets.symmetric(horizontal: collapsed ? 0 : 11),
-          child: Row(
-            mainAxisAlignment: collapsed
-                ? MainAxisAlignment.center
-                : MainAxisAlignment.start,
-            children: [
-              Icon(
-                icon,
-                size: 19,
-                color: active
-                    ? semantic.sidebarForeground
-                    : semantic.sidebarMuted,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Only show the label when the caller requested it AND the
+            // available width can actually fit icon + gap + a readable
+            // label. This prevents RenderFlex overflow on narrow sidebars.
+            final showLabel =
+                !collapsed && constraints.maxWidth >= 100;
+            return Container(
+              height: 42,
+              padding: EdgeInsets.symmetric(horizontal: showLabel ? 11 : 0),
+              child: Row(
+                mainAxisAlignment: showLabel
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    size: 19,
+                    color: active
+                        ? semantic.sidebarForeground
+                        : semantic.sidebarMuted,
+                  ),
+                  if (showLabel) ...[
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: active
+                              ? semantic.sidebarForeground
+                              : semantic.sidebarMuted,
+                          fontWeight:
+                              active ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              if (!collapsed) ...[
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: active
-                          ? semantic.sidebarForeground
-                          : semantic.sidebarMuted,
-                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                ),
-                if (active)
-                  Container(
-                    width: 5,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: semantic.sidebarForeground,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-              ],
-            ],
-          ),
+            );
+          },
         ),
       ),
-    );
-
-    if (collapsed) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Tooltip(message: label, child: content),
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: content,
     );
   }
 }
