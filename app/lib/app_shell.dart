@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'l10n/l10n.dart';
 import 'settings/settings_service.dart';
+import 'settings/settings_page.dart';
 
 import 'categories.dart';
 import 'dashboard.dart';
@@ -219,6 +220,12 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
     };
   }
 
+  void _openSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return CallbackShortcuts(
@@ -268,6 +275,10 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
                               Navigator.of(context).pop();
                               _openOpeningBalances();
                             },
+                            onSettings: () {
+                              Navigator.of(context).pop();
+                              _openSettings();
+                            },
                             onToggleCollapse: null,
                           ),
                         ),
@@ -285,6 +296,7 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
                         onSelect: _select,
                         onCategories: _openCategories,
                         onOpeningBalances: _openOpeningBalances,
+                        onSettings: _openSettings,
                         onToggleCollapse: () {
                           setState(
                             () => _sidebarCollapsed = !_sidebarCollapsed,
@@ -598,6 +610,7 @@ class _Sidebar extends StatelessWidget {
     required this.onSelect,
     required this.onCategories,
     required this.onOpeningBalances,
+    required this.onSettings,
     this.onToggleCollapse,
   });
 
@@ -608,6 +621,7 @@ class _Sidebar extends StatelessWidget {
   final ValueChanged<WorkspaceSection> onSelect;
   final VoidCallback onCategories;
   final VoidCallback onOpeningBalances;
+  final VoidCallback onSettings;
   final VoidCallback? onToggleCollapse;
 
   @override
@@ -803,6 +817,14 @@ class _Sidebar extends StatelessWidget {
                     collapsed: collapsed,
                     active: false,
                     onTap: onOpeningBalances,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _SidebarItem(
+                    icon: Icons.settings_outlined,
+                    label: context.strings.settingsTitle,
+                    collapsed: collapsed,
+                    active: false,
+                    onTap: onSettings,
                   ),
                 ],
               ),
