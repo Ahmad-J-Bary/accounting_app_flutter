@@ -1,63 +1,66 @@
 import 'package:flutter/material.dart';
 
+import 'design_tokens.dart';
+
 /// Design tokens mirrored from the React desktop workspace.
 ///
-/// The React app stores its palette as HSL custom properties in
-/// `apps/desktop/src/index.css`; the values below are the RGB equivalents so
-/// Flutter and the web app stay visually aligned.
+/// Values live in `design_tokens.dart` (single source of truth).
+/// AD-019 direction: "Modern Fintech" royal-blue seed #2563EB,
+/// IBM Plex Sans Arabic. Material Symbols icons are deferred to F4-b.
 abstract final class AppColors {
-  static const Color background = Color(0xFFF8FAFC);
-  static const Color foreground = Color(0xFF0F172A);
-  static const Color card = Color(0xFFFFFFFF);
-  static const Color primary = Color(0xFF1F3A61);
-  static const Color primaryForeground = Color(0xFFF8FAFC);
-  static const Color secondary = Color(0xFFF1F5F9);
-  static const Color secondaryForeground = Color(0xFF0F172A);
-  static const Color muted = Color(0xFFF1F5F9);
+  static const Color background = Color(ColorTokens.background);
+  static const Color foreground = Color(ColorTokens.textPrimary);
+  static const Color card = Color(ColorTokens.surface);
+  static const Color primary = Color(ColorTokens.primary);
+  static const Color primaryForeground = Color(ColorTokens.onPrimary);
+  static const Color secondary = Color(ColorTokens.surfaceVariant);
+  static const Color secondaryForeground = Color(ColorTokens.textPrimary);
+  static const Color muted = Color(ColorTokens.surfaceVariant);
   static const Color mutedForeground = Color(0xFF64748B);
   static const Color accent = Color(0xFFE9EEF5);
-  static const Color accentForeground = Color(0xFF0F172A);
-  static const Color destructive = Color(0xFFDC2626);
-  static const Color destructiveForeground = Color(0xFFFFFFFF);
+  static const Color accentForeground = Color(ColorTokens.textPrimary);
+  static const Color destructive = Color(ColorTokens.error);
+  static const Color destructiveForeground = Color(ColorTokens.onError);
   static const Color success = Color(0xFF1B9E6B);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color info = Color(0xFF3B82F6);
-  static const Color border = Color(0xFFE2E8F0);
-  static const Color input = Color(0xFFE2E8F0);
-  static const Color ring = Color(0xFF1F3A61);
+  static const Color warning = Color(ColorTokens.warning);
+  static const Color info = Color(ColorTokens.info);
+  static const Color border = Color(ColorTokens.outline);
+  static const Color input = Color(ColorTokens.outline);
+  static const Color ring = Color(ColorTokens.primary);
 
-  static const Color sidebarBackground = Color(0xFF0B2442);
-  static const Color sidebarForeground = Color(0xFFF1F5F9);
-  static const Color sidebarMuted = Color(0xFFA8B8CC);
-  static const Color sidebarAccent = Color(0xFF26405A);
-  static const Color sidebarBorder = Color(0xFF32465A);
+  static const Color sidebarBackground = Color(ColorTokens.sidebarBackground);
+  static const Color sidebarForeground = Color(ColorTokens.sidebarForeground);
+  static const Color sidebarMuted = Color(ColorTokens.sidebarMuted);
+  static const Color sidebarAccent = Color(ColorTokens.sidebarAccent);
+  static const Color sidebarBorder = Color(ColorTokens.sidebarBorder);
 
-  static const Color darkBackground = Color(0xFF0B1220);
-  static const Color darkCard = Color(0xFF0F172A);
-  static const Color darkForeground = Color(0xFFF1F5F9);
-  static const Color darkMuted = Color(0xFF1E293B);
-  static const Color darkMutedForeground = Color(0xFF94A3B8);
+  static const Color darkBackground = Color(ColorTokens.darkBackground);
+  static const Color darkCard = Color(ColorTokens.darkSurface);
+  static const Color darkForeground = Color(ColorTokens.darkTextPrimary);
+  static const Color darkMuted = Color(ColorTokens.darkSurfaceVariant);
+  static const Color darkMutedForeground = Color(ColorTokens.darkTextSecondary);
   static const Color darkBorder = Color(0xFF263449);
-  static const Color darkPrimary = Color(0xFF5B7FA8);
-  static const Color darkSidebarBackground = Color(0xFF070D18);
+  static const Color darkPrimary = Color(0xFF3B82F6);
+  static const Color darkSidebarBackground =
+      Color(ColorTokens.darkSidebarBackground);
 }
 
 abstract final class AppRadius {
-  static const double sm = 6;
-  static const double md = 8;
-  static const double lg = 12;
-  static const double xl = 16;
-  static const double xxl = 24;
-  static const double pill = 999;
+  static const double sm = RadiusTokens.sm;
+  static const double md = RadiusTokens.md;
+  static const double lg = RadiusTokens.lg;
+  static const double xl = RadiusTokens.xl;
+  static const double xxl = RadiusTokens.xxl;
+  static const double pill = RadiusTokens.pill;
 }
 
 abstract final class AppSpacing {
-  static const double xs = 4;
-  static const double sm = 8;
-  static const double md = 12;
-  static const double lg = 16;
-  static const double xl = 24;
-  static const double xxl = 32;
+  static const double xs = SpacingTokens.xs;
+  static const double sm = SpacingTokens.sm;
+  static const double md = SpacingTokens.md;
+  static const double lg = SpacingTokens.lg;
+  static const double xl = SpacingTokens.xl;
+  static const double xxl = SpacingTokens.xxl;
 }
 
 @immutable
@@ -160,14 +163,16 @@ abstract final class AppTheme {
       primary: primary,
       onPrimary: onPrimary,
       primaryContainer: isDark
-          ? const Color(0xFF243B57)
-          : const Color(0xFFDCE7F5),
-      onPrimaryContainer: isDark ? AppColors.darkForeground : AppColors.primary,
+          ? const Color(0xFF1E3A8A)
+          : const Color(0xFFDBEAFE),
+      onPrimaryContainer: isDark
+          ? AppColors.darkForeground
+          : const Color(0xFF1E3A8A),
       secondary: isDark ? AppColors.darkMuted : AppColors.secondary,
       onSecondary: foreground,
       secondaryContainer: isDark
           ? const Color(0xFF243044)
-          : const Color(0xFFE9EEF5),
+          : const Color(0xFFE0E7FF),
       onSecondaryContainer: foreground,
       tertiary: isDark ? const Color(0xFFD7A85B) : AppColors.warning,
       onTertiary: isDark ? AppColors.darkBackground : Colors.white,
@@ -183,7 +188,9 @@ abstract final class AppTheme {
       scrim: Colors.black,
       inverseSurface: foreground,
       onInverseSurface: card,
-      inversePrimary: isDark ? AppColors.primary : const Color(0xFFA8BEDC),
+      inversePrimary: isDark
+          ? AppColors.primary
+          : const Color(0xFF93C5FD),
       surfaceTint: Colors.transparent,
     );
 
@@ -194,8 +201,8 @@ abstract final class AppTheme {
         ).black.apply(
           bodyColor: foreground,
           displayColor: foreground,
-          fontFamily: 'Cairo',
-          fontFamilyFallback: const ['Tajawal', 'Segoe UI', 'Arial'],
+          fontFamily: TypographyTokens.fontFamily,
+          fontFamilyFallback: TypographyTokens.fontFamilyFallback,
         );
 
     final textTheme = baseText.copyWith(
@@ -295,7 +302,7 @@ abstract final class AppTheme {
       sidebarMuted: AppColors.sidebarMuted,
       sidebarAccent: AppColors.sidebarAccent,
       sidebarBorder: AppColors.sidebarBorder,
-      overlay: Colors.black.withValues(alpha: 0.48),
+      overlay: Color(ColorTokens.overlay),
     );
 
     final buttonShape = RoundedRectangleBorder(
@@ -306,8 +313,8 @@ abstract final class AppTheme {
       useMaterial3: true,
       brightness: brightness,
       colorScheme: colorScheme,
-      fontFamily: 'Cairo',
-      fontFamilyFallback: const ['Tajawal', 'Segoe UI', 'Arial'],
+      fontFamily: TypographyTokens.fontFamily,
+      fontFamilyFallback: TypographyTokens.fontFamilyFallback,
       textTheme: textTheme,
       scaffoldBackgroundColor: background,
       canvasColor: background,
@@ -316,7 +323,10 @@ abstract final class AppTheme {
       shadowColor: Colors.black.withValues(alpha: 0.08),
       disabledColor: mutedForeground.withValues(alpha: 0.55),
       splashFactory: InkSparkle.splashFactory,
-      visualDensity: VisualDensity.standard,
+      visualDensity: const VisualDensity(
+        horizontal: DensityTokens.comfortableHorizontal,
+        vertical: DensityTokens.comfortableVertical,
+      ),
       extensions: <ThemeExtension<dynamic>>[semantic],
       appBarTheme: AppBarTheme(
         backgroundColor: card,
@@ -497,7 +507,7 @@ abstract final class AppTheme {
         behavior: SnackBarBehavior.floating,
         backgroundColor: isDark ? AppColors.darkMuted : AppColors.foreground,
         contentTextStyle: textTheme.bodyMedium?.copyWith(color: Colors.white),
-        actionTextColor: isDark ? primary : const Color(0xFF9EC1EA),
+        actionTextColor: isDark ? primary : const Color(0xFF93C5FD),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
@@ -593,7 +603,7 @@ abstract final class AppTheme {
 extension AppThemeContext on BuildContext {
   AppSemanticColors get semanticColors =>
       Theme.of(this).extension<AppSemanticColors>() ??
-      const AppSemanticColors(
+      AppSemanticColors(
         success: AppColors.success,
         warning: AppColors.warning,
         info: AppColors.info,
@@ -602,7 +612,7 @@ extension AppThemeContext on BuildContext {
         sidebarMuted: AppColors.sidebarMuted,
         sidebarAccent: AppColors.sidebarAccent,
         sidebarBorder: AppColors.sidebarBorder,
-        overlay: Color(0x7A000000),
+        overlay: Color(ColorTokens.overlay),
       );
 
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
