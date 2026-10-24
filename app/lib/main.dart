@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'app_shell.dart';
 import 'ledger.dart';
 import 'settings/settings_model.dart';
+import 'settings/settings_page.dart';
 import 'settings/settings_service.dart';
 import 'settings/settings_store.dart';
 import 'settings/settings_store_stub.dart'
     if (dart.library.io) 'settings/settings_store_io.dart';
 import 'setup.dart';
 import 'theme/app_theme.dart';
+import 'theme/density_mapper.dart';
 import 'ui/app_ui.dart';
 
 Future<void> main() async {
@@ -23,6 +26,10 @@ Future<void> main() async {
     gateway: RustLedgerGateway(),
     settingsService: settingsService,
   ));
+}
+
+class _OpenSettingsIntent extends Intent {
+  const _OpenSettingsIntent();
 }
 
 class AccountingApp extends StatefulWidget {
@@ -40,8 +47,15 @@ class AccountingApp extends StatefulWidget {
 }
 
 class _AccountingAppState extends State<AccountingApp> {
+  final GlobalKey<NavigatorState> _navKey = GlobalKey<NavigatorState>();
   late final SettingsService _service =
       widget.settingsService ?? SettingsService(InMemorySettingsStore());
+
+  void _openSettings() {
+    _navKey.currentState?.push(
+      MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,16 +68,37 @@ class _AccountingAppState extends State<AccountingApp> {
           return MaterialApp(
             title: 'المحاسبة',
             debugShowCheckedModeBanner: false,
-            theme: _applyDensity(AppTheme.light(), a.density),
-            darkTheme: _applyDensity(AppTheme.dark(), a.density),
+            navigatorKey: _navKey,
+            theme: AppTheme.light().copyWith(
+              visualDensity: visualDensityFor(a.density),
+            ),
+            darkTheme: AppTheme.dark().copyWith(
+              visualDensity: visualDensityFor(a.density),
+            ),
             themeMode: a.themeMode,
-            builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                textScaler: TextScaler.linear(a.fontScale),
-              ),
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: child ?? const SizedBox.shrink(),
+            builder: (context, child) => Shortcuts(
+              shortcuts: const {
+                SingleActivator(LogicalKeyboardKey.comma, control: true):
+                    _OpenSettingsIntent(),
+              },
+              child: Actions(
+                actions: {
+                  _OpenSettingsIntent: CallbackAction<_OpenSettingsIntent>(
+                    onInvoke: (_) {
+                      _openSettings();
+                      return null;
+                    },
+                  ),
+                },
+                child: MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    textScaler: TextScaler.linear(a.fontScale),
+                  ),
+                  child: Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                ),
               ),
             ),
             home: LedgerHomePage(gateway: widget.gateway),
@@ -71,15 +106,6 @@ class _AccountingAppState extends State<AccountingApp> {
         },
       ),
     );
-  }
-
-  ThemeData _applyDensity(ThemeData t, AppDensity d) {
-    final v = switch (d) {
-      AppDensity.compact => VisualDensity.compact,
-      AppDensity.comfortable => VisualDensity.standard,
-      AppDensity.spacious => VisualDensity.comfortable,
-    };
-    return t.copyWith(visualDensity: v);
   }
 }
 
@@ -210,12 +236,12 @@ class _BootstrapScaffold extends StatelessWidget {
                 gradient: const LinearGradient(
                   begin: Alignment.topRight,
                   end: Alignment.bottomLeft,
-                  colors: [Color(0xFF3B6EA5), Color(0xFF1F3A61)],
+                  colors: [Color(0xFF2563EB), Color(0xFF6366F1)],
                 ),
                 borderRadius: BorderRadius.circular(AppRadius.xl),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF1F3A61).withValues(alpha: 0.22),
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.24),
                     blurRadius: 24,
                     offset: const Offset(0, 10),
                   ),
