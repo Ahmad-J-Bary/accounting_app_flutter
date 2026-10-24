@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'l10n/l10n.dart';
 import 'settings/settings_service.dart';
 
 import 'categories.dart';
@@ -201,19 +202,20 @@ class _WorkspaceShellState extends State<WorkspaceShell> {
   }
 
   String _sectionLabel(WorkspaceSection section) {
+    final s = context.strings;
     return switch (section) {
-      WorkspaceSection.dashboard => 'لوحة التحكم',
-      WorkspaceSection.journal => 'قيود اليومية',
-      WorkspaceSection.salesInvoices => 'فواتير البيع',
-      WorkspaceSection.purchaseInvoices => 'فواتير الشراء',
-      WorkspaceSection.salesReturns => 'مرتجعات البيع',
-      WorkspaceSection.purchaseReturns => 'مرتجعات الشراء',
-      WorkspaceSection.receipts => 'المقبوضات',
-      WorkspaceSection.payments => 'المدفوعات',
-      WorkspaceSection.expenses => 'بنود المصاريف',
-      WorkspaceSection.customers => 'العملاء',
-      WorkspaceSection.suppliers => 'الموردون',
-      WorkspaceSection.materials => 'المواد',
+      WorkspaceSection.dashboard => s.navDashboard,
+      WorkspaceSection.journal => s.navJournal,
+      WorkspaceSection.salesInvoices => s.navSalesInvoices,
+      WorkspaceSection.purchaseInvoices => s.navPurchaseInvoices,
+      WorkspaceSection.salesReturns => s.navSalesReturns,
+      WorkspaceSection.purchaseReturns => s.navPurchaseReturns,
+      WorkspaceSection.receipts => s.navReceipts,
+      WorkspaceSection.payments => s.navPayments,
+      WorkspaceSection.expenses => s.navExpenses,
+      WorkspaceSection.customers => s.navCustomers,
+      WorkspaceSection.suppliers => s.navSuppliers,
+      WorkspaceSection.materials => s.navMaterials,
     };
   }
 

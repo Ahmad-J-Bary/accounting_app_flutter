@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'app_shell.dart';
+import 'l10n/l10n.dart';
 import 'ledger.dart';
+import 'settings/settings_model.dart';
 import 'settings/settings_page.dart';
 import 'settings/settings_service.dart';
 import 'settings/settings_store.dart';
@@ -64,8 +66,11 @@ class _AccountingAppState extends State<AccountingApp> {
         animation: _service,
         builder: (context, _) {
           final a = _service.appearance;
+          final loc = _service.locale;
+          final strings = loc.language.strings;
+          final isRtl = loc.language == AppLanguage.arabic;
           return MaterialApp(
-            title: 'المحاسبة',
+            title: strings.appTitle,
             debugShowCheckedModeBanner: false,
             navigatorKey: _navKey,
             theme: AppTheme.light().copyWith(
@@ -94,7 +99,8 @@ class _AccountingAppState extends State<AccountingApp> {
                     textScaler: TextScaler.linear(a.fontScale),
                   ),
                   child: Directionality(
-                    textDirection: TextDirection.rtl,
+                    textDirection:
+                        isRtl ? TextDirection.rtl : TextDirection.ltr,
                     child: child ?? const SizedBox.shrink(),
                   ),
                 ),
@@ -108,8 +114,6 @@ class _AccountingAppState extends State<AccountingApp> {
   }
 }
 
-/// Boots the Rust core, shows the first-run setup when needed and then hands
-/// control to the persistent workspace shell.
 class LedgerHomePage extends StatefulWidget {
   const LedgerHomePage({super.key, required this.gateway});
 
@@ -139,15 +143,11 @@ class _LedgerHomePageState extends State<LedgerHomePage> {
 
     try {
       final status = await widget.gateway.loadStatus();
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       if (!status.setupComplete) {
         final currencies = await widget.gateway.availableCurrencies();
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
         setState(() {
           _status = status;
           _currencies = currencies;
@@ -161,9 +161,7 @@ class _LedgerHomePageState extends State<LedgerHomePage> {
         _bootstrapping = false;
       });
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       setState(() {
         _error = error;
         _bootstrapping = false;
@@ -173,14 +171,14 @@ class _LedgerHomePageState extends State<LedgerHomePage> {
 
   Future<void> _completeSetup() async {
     final status = await widget.gateway.loadStatus();
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
     setState(() => _status = status);
   }
 
   @override
   Widget build(BuildContext context) {
+    final strings = context.strings;
+
     if (_bootstrapping) {
       return const _BootstrapScaffold();
     }
@@ -193,7 +191,7 @@ class _LedgerHomePageState extends State<LedgerHomePage> {
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.xl),
               child: AppErrorState(
-                title: 'تعذّر فتح قاعدة البيانات',
+                title: strings.errorOpenDatabase,
                 message: describeError(_error!),
                 onRetry: _bootstrap,
               ),
@@ -223,6 +221,7 @@ class _BootstrapScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final strings = context.strings;
     return Scaffold(
       body: Center(
         child: Column(
@@ -253,7 +252,7 @@ class _BootstrapScaffold extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('المحاسبة', style: theme.textTheme.titleLarge),
+            Text(strings.appName, style: theme.textTheme.titleLarge),
             const SizedBox(height: AppSpacing.sm),
             const SizedBox(
               width: 26,
@@ -262,7 +261,7 @@ class _BootstrapScaffold extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'جارٍ تهيئة قاعدة البيانات…',
+              strings.bootstrapLoading,
               style: theme.textTheme.bodySmall,
             ),
           ],

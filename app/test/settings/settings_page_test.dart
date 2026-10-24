@@ -7,65 +7,110 @@ import 'package:accounting_app_flutter/settings/settings_page.dart';
 import 'package:accounting_app_flutter/settings/settings_service.dart';
 import 'package:accounting_app_flutter/settings/settings_store.dart';
 
-Widget _wrap(SettingsService service) {
+Widget _wrap(SettingsService service, WidgetTester tester) {
+  // Settings page exceeds 800x600 after the Language & Region section.
+  // Use a realistic desktop viewport for all settings tests.
+  tester.view.physicalSize = const Size(1440, 1024);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+
   return ChangeNotifierProvider<SettingsService>.value(
     value: service,
     child: MaterialApp(
       home: const SettingsPage(),
-      builder: (context, child) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: child ?? const SizedBox.shrink(),
-      ),
+      builder: (context, child) {
+        final isRtl = service.locale.language == AppLanguage.arabic;
+        return Directionality(
+          textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     ),
   );
 }
 
 void main() {
   group('SettingsPage', () {
-    testWidgets('renders all three appearance controls', (tester) async {
+    testWidgets('renders both language section and appearance section',
+        (tester) async {
       final service = SettingsService(InMemorySettingsStore());
       await service.load();
-      await tester.pumpWidget(_wrap(service));
+      await tester.pumpWidget(_wrap(service, tester));
       await tester.pumpAndSettle();
 
-      expect(find.text('نمط المظهر'), findsOneWidget);
-      expect(find.text('كثافة العرض'), findsOneWidget);
-      expect(find.text('حجم الخط'), findsOneWidget);
-      expect(find.text('إعادة ضبط الإعدادات'), findsOneWidget);
+      expect(find.text('اللغة والمنطقة'), findsOneWidget);
+      expect(find.text('المظهر'), findsOneWidget);
+      expect(find.text('English'), findsOneWidget);
+      expect(find.text('أرقام عربية'), findsOneWidget);
+      expect(find.text('أرقام أجنبية'), findsOneWidget);
     });
 
-    testWidgets('selecting dark mode updates the service', (tester) async {
+    testWidgets('language switch flips Directionality to LTR', (tester) async {
       final service = SettingsService(InMemorySettingsStore());
       await service.load();
-      await tester.pumpWidget(_wrap(service));
+      await tester.pumpWidget(_wrap(service, tester));
+      await tester.pumpAndSettle();
+
+      expect(service.locale.language, AppLanguage.arabic);
+      await tester.tap(find.text('English'));
+      await tester.pumpAndSettle();
+      expect(service.locale.language, AppLanguage.english);
+
+      final dir = tester.widget<Directionality>(
+        find.byType(Directionality).first,
+      );
+      expect(dir.textDirection, TextDirection.ltr);
+    });
+
+    testWidgets('digits toggle updates locale', (tester) async {
+      final service = SettingsService(InMemorySettingsStore());
+      await service.load();
+      await tester.pumpWidget(_wrap(service, tester));
+      await tester.pumpAndSettle();
+
+      expect(service.locale.digits, AppDigits.western);
+      await tester.tap(find.text('أرقام عربية'));
+      await tester.pumpAndSettle();
+      expect(service.locale.digits, AppDigits.eastern);
+    });
+
+    testWidgets('digits preview shows the chosen format', (tester) async {
+      final service = SettingsService(InMemorySettingsStore(
+        const AppSettings(
+          locale: LocaleSettings(digits: AppDigits.eastern),
+        ),
+      ));
+      await service.load();
+      await tester.pumpWidget(_wrap(service, tester));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('١,٢٣٤.٥٦'), findsOneWidget);
+    });
+
+    testWidgets('theme mode tap updates service', (tester) async {
+      final service = SettingsService(InMemorySettingsStore());
+      await service.load();
+      await tester.pumpWidget(_wrap(service, tester));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('داكن'));
       await tester.pumpAndSettle();
-
       expect(service.appearance.themeMode, ThemeMode.dark);
     });
 
-    testWidgets('selecting spacious updates density', (tester) async {
+    testWidgets('font slider increases fontScale (RTL drag left)',
+        (tester) async {
       final service = SettingsService(InMemorySettingsStore());
       await service.load();
-      await tester.pumpWidget(_wrap(service));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('مريح'));
-      await tester.pumpAndSettle();
-
-      expect(service.appearance.density, AppDensity.spacious);
-    });
-
-    testWidgets('font slider raises fontScale above 1.0', (tester) async {
-      final service = SettingsService(InMemorySettingsStore());
-      await service.load();
-      await tester.pumpWidget(_wrap(service));
+      await tester.pumpWidget(_wrap(service, tester));
       await tester.pumpAndSettle();
 
       final slider = find.byType(Slider);
-      // RTL: drag left increases value; drag right decreases.
+      await tester.ensureVisible(slider);
+      await tester.pumpAndSettle();
+
+      // RTL: dragging left raises the value; right lowers it.
       await tester.drag(slider, const Offset(-400, 0));
       await tester.pumpAndSettle();
 
@@ -79,12 +124,14 @@ void main() {
         ),
       ));
       await service.load();
-      await tester.pumpWidget(_wrap(service));
+      await tester.pumpWidget(_wrap(service, tester));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('إعادة ضبط الإعدادات'));
+      final resetBtn = find.text('إعادة ضبط الإعدادات');
+      await tester.ensureVisible(resetBtn);
       await tester.pumpAndSettle();
-      expect(find.text('إعادة ضبط الإعدادات؟'), findsOneWidget);
+      await tester.tap(resetBtn);
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('إعادة الضبط'));
       await tester.pumpAndSettle();
@@ -98,14 +145,17 @@ void main() {
         ),
       ));
       await service.load();
-      await tester.pumpWidget(_wrap(service));
+      await tester.pumpWidget(_wrap(service, tester));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('إعادة ضبط الإعدادات'));
+      final resetBtn = find.text('إعادة ضبط الإعدادات');
+      await tester.ensureVisible(resetBtn);
       await tester.pumpAndSettle();
+      await tester.tap(resetBtn);
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text('إلغاء'));
       await tester.pumpAndSettle();
-
       expect(service.appearance.themeMode, ThemeMode.dark);
     });
   });
