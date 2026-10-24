@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import 'app_shell.dart';
 import 'ledger.dart';
-import 'settings/settings_model.dart';
 import 'settings/settings_page.dart';
 import 'settings/settings_service.dart';
 import 'settings/settings_store.dart';

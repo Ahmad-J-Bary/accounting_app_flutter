@@ -65,7 +65,8 @@ void main() {
       await tester.pumpAndSettle();
 
       final slider = find.byType(Slider);
-      await tester.drag(slider, const Offset(400, 0));
+      // RTL: drag left increases value; drag right decreases.
+      await tester.drag(slider, const Offset(-400, 0));
       await tester.pumpAndSettle();
 
       expect(service.appearance.fontScale, greaterThan(1.0));
