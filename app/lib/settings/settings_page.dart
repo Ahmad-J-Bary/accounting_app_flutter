@@ -486,27 +486,112 @@ class _LocalizationSection extends StatelessWidget {
     final service = context.watch<SettingsService>();
     final locale = service.locale;
     final strings = context.strings;
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
 
     return _SectionCard(
       title: strings.sectionLanguageRegion,
       children: [
         Text(
           strings.sectionLanguageRegionSubtitle,
-          style: Theme.of(context).textTheme.bodySmall,
+          style: textTheme.bodySmall,
         ),
-        const SizedBox(height: AppSpacing.lg),
-        _LanguageRow(
-          value: locale.language,
-          strings: strings,
-          onChanged: (lang) =>
-              service.updateLocale(locale.copyWith(language: lang)),
+        const SizedBox(height: AppSpacing.xl),
+
+        // ── Interface language ───────────────────────────────
+        Row(
+          children: [
+            Icon(
+              Icons.language_outlined,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              strings.labelInterfaceLanguage,
+              style: textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ],
         ),
-        const SizedBox(height: AppSpacing.lg),
-        _DigitsRow(
-          value: locale.digits,
-          strings: strings,
-          onChanged: (d) =>
-              service.updateLocale(locale.copyWith(digits: d)),
+        const SizedBox(height: AppSpacing.md),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: [
+            _LanguagePill(
+              label: strings.labelLanguageArabic,
+              selected: locale.language == AppLanguage.arabic,
+              onTap: () => service.updateLocale(
+                locale.copyWith(language: AppLanguage.arabic),
+              ),
+            ),
+            _LanguagePill(
+              label: strings.labelLanguageEnglish,
+              selected: locale.language == AppLanguage.english,
+              onTap: () => service.updateLocale(
+                locale.copyWith(language: AppLanguage.english),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: AppSpacing.xl),
+
+        // ── Numerals ─────────────────────────────────────────
+        Row(
+          children: [
+            Icon(
+              Icons.numbers,
+              size: 18,
+              color: theme.colorScheme.tertiary,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              strings.labelDigits,
+              style: textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(strings.labelDigitsSubtitle, style: textTheme.bodySmall),
+        const SizedBox(height: AppSpacing.md),
+
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final twoCols = constraints.maxWidth >= 480;
+            final easternCard = _NumeralCard(
+              selected: locale.digits == AppDigits.eastern,
+              label: strings.labelDigitsArabic,
+              preview: applyDigits('0123456789', AppDigits.eastern),
+              example:
+                  '${strings.examplePrefix}: ${formatWithDigits(1234.56, AppDigits.eastern)}',
+              onTap: () => service.updateLocale(
+                locale.copyWith(digits: AppDigits.eastern),
+              ),
+            );
+            final westernCard = _NumeralCard(
+              selected: locale.digits == AppDigits.western,
+              label: strings.labelDigitsWestern,
+              preview: '0123456789',
+              example:
+                  '${strings.examplePrefix}: ${formatWithDigits(1234.56, AppDigits.western)}',
+              onTap: () => service.updateLocale(
+                locale.copyWith(digits: AppDigits.western),
+              ),
+            );
+            if (!twoCols) {
+              return Column(
+                children: [
+                  easternCard,
+                  const SizedBox(height: AppSpacing.md),
+                  westernCard,
+                ],
+              );
+            }
+            return IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [Expanded(child: easternCard), const SizedBox(width: AppSpacing.md), Expanded(child: westernCard)]));
+          },
         ),
       ],
     );
@@ -585,95 +670,163 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-class _LanguageRow extends StatelessWidget {
-  const _LanguageRow({
-    required this.value,
-    required this.strings,
-    required this.onChanged,
+class _LanguagePill extends StatelessWidget {
+  const _LanguagePill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
   });
 
-  final AppLanguage value;
-  final AppStrings strings;
-  final ValueChanged<AppLanguage> onChanged;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(strings.labelInterfaceLanguage,
-            style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: AppSpacing.sm),
-        SegmentedButton<AppLanguage>(
-          segments: [
-            ButtonSegment(
-                value: AppLanguage.arabic,
-                label: Text(strings.labelLanguageArabic)),
-            ButtonSegment(
-                value: AppLanguage.english,
-                label: Text(strings.labelLanguageEnglish)),
-          ],
-          selected: {value},
-          onSelectionChanged: (s) => onChanged(s.first),
+    final theme = Theme.of(context);
+    return Material(
+      color: selected
+          ? theme.colorScheme.primaryContainer
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: selected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outline,
+              width: selected ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: selected
+                  ? theme.colorScheme.onPrimaryContainer
+                  : theme.colorScheme.onSurface,
+            ),
+          ),
         ),
-      ],
+      ),
     );
   }
 }
 
-class _DigitsRow extends StatelessWidget {
-  const _DigitsRow({
-    required this.value,
-    required this.strings,
-    required this.onChanged,
+class _NumeralCard extends StatelessWidget {
+  const _NumeralCard({
+    required this.selected,
+    required this.label,
+    required this.preview,
+    required this.example,
+    required this.onTap,
   });
 
-  final AppDigits value;
-  final AppStrings strings;
-  final ValueChanged<AppDigits> onChanged;
+  final bool selected;
+  final String label;
+  final String preview;
+  final String example;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(strings.labelDigits, style: textTheme.titleSmall),
-        const SizedBox(height: AppSpacing.xs),
-        Text(strings.labelDigitsSubtitle, style: textTheme.bodySmall),
-        const SizedBox(height: AppSpacing.sm),
-        SegmentedButton<AppDigits>(
-          segments: [
-            ButtonSegment(
-              value: AppDigits.eastern,
-              label: Column(
-                mainAxisSize: MainAxisSize.min,
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    return Material(
+      color: selected
+          ? theme.colorScheme.primaryContainer.withValues(alpha: 0.35)
+          : theme.colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: selected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outlineVariant,
+              width: selected ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          child: Stack(
+            children: [
+              if (selected)
+                PositionedDirectional(
+                  top: 0,
+                  start: 0,
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.check,
+                      size: 14,
+                      color: theme.colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(strings.labelDigitsArabic),
-                  Text('٠١٢٣٤٥٦٧٨٩', style: textTheme.labelSmall),
+                  Icon(
+                    Icons.language_outlined,
+                    size: 32,
+                    color: selected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    label,
+                    style: textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: selected
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    preview,
+                    textAlign: TextAlign.center,
+                    style: textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2,
+                      color: selected
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    example,
+                    textAlign: TextAlign.center,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: selected
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
-            ),
-            ButtonSegment(
-              value: AppDigits.western,
-              label: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(strings.labelDigitsWestern),
-                  Text('0123456789', style: textTheme.labelSmall),
-                ],
-              ),
-            ),
-          ],
-          selected: {value},
-          onSelectionChanged: (s) => onChanged(s.first),
+            ],
+          ),
         ),
-        const SizedBox(height: AppSpacing.sm),
-        Text(
-          '${strings.examplePrefix}: ${formatWithDigits(1234.56, value)}',
-          style: textTheme.bodySmall,
-        ),
-      ],
+      ),
     );
   }
 }
