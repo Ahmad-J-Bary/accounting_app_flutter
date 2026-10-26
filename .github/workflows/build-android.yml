@@ -22,7 +22,7 @@ jobs:
           # fails when the tag is moved or deleted after the run starts.
           ref: ${{ github.sha }}
       - name: Install Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
@@ -36,7 +36,7 @@ jobs:
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" "ndk;28.2.13676358" "cmake;3.22.1"
       - name: Install pinned Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1.16.1
+        uses: actions-rust-lang/setup-rust-toolchain@v2.0.0
       - name: Install Rust stable and Android targets
         run: |
           rustup toolchain install stable --profile minimal --no-self-update
@@ -75,7 +75,7 @@ jobs:
           done
           sha256sum app-*-release.apk > sha256sums.txt
       - name: Upload Android artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: android-release
           path: |

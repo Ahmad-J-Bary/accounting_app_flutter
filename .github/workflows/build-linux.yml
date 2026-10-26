@@ -33,7 +33,7 @@ jobs:
             liblzma-dev \
             libstdc++-12-dev
       - name: Install pinned Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1.16.1
+        uses: actions-rust-lang/setup-rust-toolchain@v2.0.0
       - name: Read application version
         id: version
         run: |
@@ -85,7 +85,7 @@ jobs:
           tar -tzf "dist/$ARCHIVE" | grep -q '^\./lib/libaccounting_app_flutter_isolates\.so$'
           ls -lh dist
       - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: linux-x64-${{ steps.version.outputs.version }}
           path: |
